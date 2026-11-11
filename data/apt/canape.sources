@@ -1,0 +1,5 @@
+Types: deb
+URIs: https://mawena.github.io/Canape/apt
+Suites: stable
+Components: main
+Signed-By: /usr/share/keyrings/canape.gpg

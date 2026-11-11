@@ -1,0 +1,48 @@
+#!/bin/sh
+set -e
+
+if [ "$1" = "configure" ]; then
+    # Utilisateur système « canape » : il fait tourner le service et possède /var/lib/canape
+    if ! getent passwd canape >/dev/null; then
+        adduser --system --group --quiet --home /var/lib/canape --no-create-home \
+            --gecos "Canape" --shell /usr/sbin/nologin canape
+    fi
+
+    # /var/lib/canape/films : inscriptible par le groupe canape (setgid), pour qu'un administrateur ajouté
+    # à ce groupe puisse y copier des films. Créé une fois ; un dossier existant n'est jamais modifié.
+    install -d -o canape -g canape -m 0755 /var/lib/canape
+    if [ ! -d /var/lib/canape/films ]; then
+        install -d -o canape -g canape -m 2775 /var/lib/canape/films
+    fi
+
+    # Mot de passe commun et secret des sessions : dans secrets.conf, jamais dans canape.conf (fichier de
+    # configuration de dpkg : le modifier ferait poser une question à chaque mise à jour). Créé seulement
+    # s'il n'existe pas, donc le mot de passe survit aux mises à jour.
+    install -d -m 0755 /etc/canape
+    if [ ! -e /etc/canape/secrets.conf ]; then
+        mot_de_passe=""
+        for _ in 1 2 3 4; do
+            groupe="$(head -c 256 /dev/urandom | tr -dc 'abcdefghjkmnpqrstuvwxyz23456789' | head -c 4)"
+            mot_de_passe="${mot_de_passe:+$mot_de_passe-}$groupe"
+        done
+        secret="$(head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n')"
+        ancien_umask="$(umask)"
+        umask 077
+        {
+            echo "# Créé à l'installation de Canapé. Lu avant canape.conf, qui peut le surcharger."
+            echo "# Changer le mot de passe : modifier la ligne ci-dessous, puis : sudo systemctl restart canape"
+            echo "CANAPE_MOT_DE_PASSE=$mot_de_passe"
+            echo "CANAPE_SECRET=$secret"
+        } > /etc/canape/secrets.conf.tmp
+        umask "$ancien_umask"
+        chown root:canape /etc/canape/secrets.conf.tmp
+        chmod 0640 /etc/canape/secrets.conf.tmp
+        mv /etc/canape/secrets.conf.tmp /etc/canape/secrets.conf
+        echo "canape : mot de passe commun créé. Pour le lire : pkexec cat /etc/canape/secrets.conf" >&2
+    fi
+    echo "canape : films dans /var/lib/canape/films ; interface sur http://localhost:8080 (réglages : /etc/canape/canape.conf)." >&2
+fi
+
+#DEBHELPER#
+
+exit 0

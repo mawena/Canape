@@ -1,0 +1,21 @@
+#!/usr/bin/make -f
+
+LIB = debian/canape/usr/lib/canape
+
+%:
+	dh $@
+
+# Rien à compiler. Les tests (`make test`) sont lancés par scripts/build-deb.sh avant la construction.
+override_dh_auto_build:
+override_dh_auto_test:
+
+# Application dans /usr/lib/canape ; dépendances de production seulement (ws), installées d'après package-lock.json.
+override_dh_auto_install:
+	install -d $(LIB)
+	cp -a bin src public package.json package-lock.json $(LIB)/
+	cd $(LIB) && npm ci --omit=dev --ignore-scripts --no-audit --no-fund --cache "$(CURDIR)/debian/.npm-cache"
+	rm -rf debian/.npm-cache
+	rm -f $(LIB)/package-lock.json $(LIB)/node_modules/.package-lock.json
+	find $(LIB)/node_modules \( -iname '*.md' -o -iname '.npmignore' -o -iname '*.d.ts' \) -type f -delete
+	find $(LIB) -type f -name '*.js' -perm /u+x ! -path '*/bin/*' -exec chmod a-x {} +
+	find $(LIB) -type d -empty -delete
