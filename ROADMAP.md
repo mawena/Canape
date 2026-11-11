@@ -7,7 +7,7 @@ passent en même temps. Conception : [docs/CONCEPTION.md](docs/CONCEPTION.md).
 ## Phase 1 — Fondations
 
 - [x] Dépôt git, git flow (`main`, `develop`)
-- [ ] Dépôt distant en SSH
+- [x] Dépôt distant en SSH (`git@github.com:mawena/Canape.git`, public)
 - [x] Conception et contrat commun (`docs/CONCEPTION.md`), feuille de route, `.gitignore`
 
 ## Phase 2 — Serveur
@@ -38,9 +38,9 @@ passent en même temps. Conception : [docs/CONCEPTION.md](docs/CONCEPTION.md).
 ## Phase 5 — Paquet Debian et dépôt APT
 
 - [ ] Paquet `.deb` : service systemd, utilisateur `canape`, `/etc/canape/canape.conf`, `/var/lib/canape/films`
-- [ ] Clé de signature du dépôt APT, source deb822 et clé installées par le paquet
-- [ ] `scripts/publier-apt.sh`, page d'accueil du site et `installer.sh`
-- [ ] README (site, installation par apt, utilisation, configuration, HTTPS, TURN)
+- [x] Clé de signature du dépôt APT, source deb822 et clé installées par le paquet
+- [x] `scripts/publier-apt.sh`, page d'accueil du site et `installer.sh`
+- [x] README (site, installation par apt, utilisation, configuration, HTTPS, TURN)
 
 ## Phase 6 — Release
 
