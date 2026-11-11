@@ -1,0 +1,35 @@
+.TH CANAPE 1 "novembre 2026" "canape" "Canapé"
+.SH NOM
+canape \- serveur pour regarder un film à deux, chacun chez soi
+.SH SYNOPSIS
+.B canape
+[\fB\-\-config\fR \fIfichier\fR] [\fB\-\-version\fR]
+.SH DESCRIPTION
+.B canape
+lance le serveur web de Canapé. Les films restent sur le serveur ; chaque navigateur les lit lui\-même, la lecture
+est synchronisée, caméras et micros passent en WebRTC. Le paquet le démarre comme service systemd
+.BR canape.service .
+.SH OPTIONS
+.TP
+.BI \-\-config " fichier"
+Lit en plus un fichier \fICLÉ=valeur\fR. Les variables déjà présentes dans l'environnement l'emportent sur le fichier.
+.TP
+.B \-\-version
+Affiche la version.
+.SH ENVIRONNEMENT
+Voir \fI/etc/canape/canape.conf\fR : CANAPE_HOTE, CANAPE_PORT, CANAPE_FILMS, CANAPE_MOT_DE_PASSE, CANAPE_SECRET,
+CANAPE_TLS_CERT, CANAPE_TLS_CLE, CANAPE_DERRIERE_PROXY, CANAPE_ICE, CANAPE_TURN_URLS, CANAPE_TURN_SECRET.
+.SH FICHIERS
+.TP
+.I /etc/canape/canape.conf
+Réglages du service.
+.TP
+.I /etc/canape/secrets.conf
+Mot de passe commun et secret des sessions, créés à l'installation.
+.TP
+.I /var/lib/canape/films
+Dossier des films par défaut.
+.SH VOIR AUSSI
+.BR canape\-convertir (1)
+.SH AUTEUR
+mawena. https://mawena.github.io/Canape/

@@ -1,0 +1,13 @@
+#!/bin/sh
+set -e
+
+if [ "$1" = "purge" ]; then
+    # Le mot de passe et le secret partent à la purge. /var/lib/canape (les films) reste toujours, ainsi que
+    # l'utilisateur « canape » qui en est propriétaire : on ne les supprime que sur décision de l'utilisateur.
+    rm -f /etc/canape/secrets.conf /etc/canape/secrets.conf.tmp
+    rmdir --ignore-fail-on-non-empty /etc/canape 2>/dev/null || true
+fi
+
+#DEBHELPER#
+
+exit 0
