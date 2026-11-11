@@ -1,0 +1,57 @@
+#!/usr/bin/env node
+'use strict';
+const fs = require('fs');
+const path = require('path');
+const src = path.join(__dirname, '..', 'src');
+const { charger } = require(path.join(src, 'config'));
+const { creer } = require(path.join(src, 'serveur'));
+const journal = require(path.join(src, 'journal'));
+const version = require(path.join(src, 'version'));
+
+const AIDE = `Canapé ${version} : regarder un film à deux, chacun chez soi.
+
+Utilisation : canape [--config <fichier>] [--version] [--aide]
+
+  --config <fichier>  lit en plus un fichier CLÉ=valeur (les variables d'environnement l'emportent)
+  --version           affiche la version
+  --aide              affiche ce message
+
+Réglages (variables d'environnement, ou fichier --config / CANAPE_CONFIG) :
+  CANAPE_HOTE (0.0.0.0)        CANAPE_PORT (8080)          CANAPE_FILMS (./films)
+  CANAPE_MOT_DE_PASSE          CANAPE_SECRET               CANAPE_DERRIERE_PROXY (0)
+  CANAPE_TLS_CERT, CANAPE_TLS_CLE
+  CANAPE_ICE, CANAPE_TURN_URLS, CANAPE_TURN_SECRET
+`;
+
+function main() {
+  const args = process.argv.slice(2);
+  let fichier = process.env.CANAPE_CONFIG || null;
+  for (let i = 0; i < args.length; i++) {
+    const a = args[i];
+    if (a === '--aide' || a === '-h' || a === '--help') { process.stdout.write(AIDE); return; }
+    if (a === '--version' || a === '-v') { console.log(version); return; }
+    if (a === '--config') { fichier = args[++i]; if (!fichier) { console.error('--config demande un fichier.'); process.exit(2); } continue; }
+    if (a.startsWith('--config=')) { fichier = a.slice(9); continue; }
+    console.error(`Option inconnue : ${a}\n\n${AIDE}`); process.exit(2);
+  }
+
+  let config;
+  try { config = charger(process.env, fichier); } catch (e) { console.error(`Configuration invalide : ${e.message}`); process.exit(1); }
+
+  const app = creer(config);
+  journal.info(`Canapé ${version}`);
+  if (!fs.existsSync(config.films)) journal.avertir(`le dossier des films n'existe pas : ${config.films}`);
+  if (!config.motDePasse) journal.avertir('aucun mot de passe (CANAPE_MOT_DE_PASSE) : le salon est ouvert à toute personne qui connaît l\'adresse.');
+  if (config.secretAleatoire) journal.info('CANAPE_SECRET absent : les sessions seront perdues au redémarrage.');
+  if (!app.tls && !config.derriereProxy) journal.info('HTTP simple : la caméra et le micro ne marchent que sur http://localhost ; utilisez HTTPS (proxy ou CANAPE_TLS_*) sinon.');
+
+  app.demarrer().then((adr) => {
+    journal.info(`écoute sur ${app.tls ? 'https' : 'http'}://${config.hote}:${adr.port}, films dans ${config.films}`);
+  }).catch((e) => { journal.erreur(`impossible de démarrer : ${e.message}`); process.exit(1); });
+
+  const quitter = (signal) => { journal.info(`${signal} reçu, arrêt`); app.arreter().then(() => process.exit(0)); setTimeout(() => process.exit(0), 3000).unref(); };
+  process.on('SIGINT', () => quitter('SIGINT'));
+  process.on('SIGTERM', () => quitter('SIGTERM'));
+}
+
+main();

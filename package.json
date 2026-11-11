@@ -1,0 +1,17 @@
+{
+  "name": "canape",
+  "version": "0.0.0",
+  "description": "Regarder un film à deux, chacun chez soi : lecture synchronisée, caméras et voix en WebRTC.",
+  "license": "MIT",
+  "private": true,
+  "main": "src/serveur.js",
+  "bin": { "canape": "bin/canape" },
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "start": "node bin/canape",
+    "test": "node --test tests/"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}
