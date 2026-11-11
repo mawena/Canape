@@ -23,3 +23,11 @@ License: MIT
  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  SOFTWARE.
+
+Files: usr/lib/canape/node_modules/ws/*
+Copyright: 2011 Einar Otto Stangvik <einaros@gmail.com>
+           2013 Arnout Kazemier and contributors
+           2016 Luigi Pinca and contributors
+License: MIT
+ La bibliothèque ws est installée sous /usr/lib/canape/node_modules/ws avec sa
+ licence (fichier LICENSE), qui est la licence MIT ci-dessus.

@@ -1,2 +1,7 @@
 # Voulu : le paquet installe sa propre source APT (dépôt signé du projet) pour que « apt upgrade » le mette à jour.
 canape: package-installs-apt-sources [etc/apt/sources.list.d/canape.sources]
+# Voulu : la licence MIT de la dépendance ws reste dans son dossier, comme l'exige sa licence, et l'interface web
+# (public/) est un ensemble de fichiers de l'application, pas une documentation.
+canape: extra-license-file [usr/lib/canape/node_modules/ws/LICENSE]
+canape: package-contains-documentation-outside-usr-share-doc [usr/lib/canape/node_modules/ws/LICENSE]
+canape: package-contains-documentation-outside-usr-share-doc [usr/lib/canape/public/index.html]
