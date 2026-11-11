@@ -34,7 +34,10 @@ RestrictRealtime=true
 RestrictSUIDSGID=true
 LockPersonality=true
 RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
-SystemCallFilter=@system-service
+# @pkey : V8 (le moteur de Node) protège sa mémoire par pkey_alloc/pkey_mprotect ; sans lui Node meurt au démarrage.
+# Un appel refusé renvoie EPERM au lieu de tuer le service.
+SystemCallFilter=@system-service @pkey
+SystemCallErrorNumber=EPERM
 SystemCallArchitectures=native
 # Un port inférieur à 1024 (80, 443) reste possible sans être root.
 AmbientCapabilities=CAP_NET_BIND_SERVICE
