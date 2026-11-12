@@ -163,7 +163,7 @@ le VPS pour tous les torrents. Contrat : [docs/CONCEPTION.md](docs/CONCEPTION.md
 L'hôte peut retrouver et envoyer le lien de la séance quand elle est déjà lancée, film en cours : la personne invitée
 arrive dans la salle au bon moment du film.
 
-- [ ] Interface : bouton « Inviter » dans la salle (pendant le film, plein écran compris, sans pause) et dans le sas : lien, « Copier le lien », « Partager » sur téléphone ; « Copier le lien » dans la liste des séances ; seulement pour l'hôte
-- [ ] Arrivée en cours de film : la personne qui rejoint par le lien est synchronisée au bon moment (corrigé si besoin)
-- [ ] Essais (unitaires, Playwright : invitation pendant le film, troisième personne qui rejoint, invité sans le bouton), captures
+- [x] Interface : bouton « Inviter » dans la salle (pendant le film, plein écran compris, sans pause) et dans le sas : lien, « Copier le lien », « Partager » sur téléphone ; « Copier le lien » dans la liste des séances ; seulement pour l'hôte
+- [x] Arrivée en cours de film : la personne qui rejoint par le lien est synchronisée au bon moment (corrigé si besoin)
+- [x] Essais (unitaires, Playwright : invitation pendant le film, troisième personne qui rejoint, invité sans le bouton), captures
 - [ ] Release 1.5.0 et mise en production
