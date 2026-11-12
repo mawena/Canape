@@ -37,6 +37,8 @@ export interface Config {
   torrentPort: number;
   /** Interne (essais) : ni DHT, ni trackers publics, ni UPnP/NAT-PMP, ni découverte locale ; suivi plus rapide. */
   torrentIsole: boolean;
+  /** Interne (essais) : pairs `hôte:port` ajoutés à chaque torrent (un `.torrent` ne dit pas où est le pair local). */
+  torrentPairs: string[];
   /** Octets. */
   televersementMax: number;
   quotaDefaut: number;
@@ -163,6 +165,7 @@ export function chargerConfig(env: Record<string, string | undefined> = process.
     torrentPartage: decimal(v['CANAPE_TORRENT_PARTAGE'], 0, 'CANAPE_TORRENT_PARTAGE', 0, 1000),
     torrentPort: entier(v['CANAPE_TORRENT_PORT'], 0, 'CANAPE_TORRENT_PORT', 0, 65535),
     torrentIsole: booleen(v['CANAPE_TORRENT_ISOLE'], false),
+    torrentPairs: (v['CANAPE_TORRENT_PAIRS'] || '').split(',').map((s) => s.trim()).filter(Boolean),
     televersementMax: taille(v['CANAPE_TELEVERSEMENT_MAX'], '100G', 'CANAPE_TELEVERSEMENT_MAX'),
     quotaDefaut: taille(v['CANAPE_QUOTA_DEFAUT'], '100G', 'CANAPE_QUOTA_DEFAUT'),
     cacheMax: taille(v['CANAPE_CACHE_MAX'], '20G', 'CANAPE_CACHE_MAX'),

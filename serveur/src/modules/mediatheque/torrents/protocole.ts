@@ -13,6 +13,8 @@ export interface OptionsEnfant {
   envoiMax: number;
   /** Essais : ni DHT, ni trackers, ni découverte locale, ni UPnP/NAT-PMP. */
   isole: boolean;
+  /** Essais : pairs `hôte:port` ajoutés à chaque torrent. */
+  pairs: string[];
   /** Intervalle de l'état périodique (ms). */
   intervalleMs: number;
 }

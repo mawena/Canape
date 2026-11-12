@@ -65,6 +65,9 @@ function ajouter(m: Extract<VersEnfant, { t: 'ajouter' }>): void {
   }
   const e: Entree = { id: m.id, dossier: m.dossier, torrent, choix: m.choix ? new Set(m.choix) : null, selectionnes: new Set(), termine: false, partage: null };
   entrees.set(m.id, e);
+  if (options.pairs?.length) {
+    torrent.once('infoHash', () => { for (const pair of options.pairs) { try { torrent.addPeer(pair); } catch { /* torrent arrêté */ } } });
+  }
   torrent.on('metadata', () => {
     envoyer({
       t: 'metadonnees', id: m.id, infoHash: torrent.infoHash, nom: torrent.name,

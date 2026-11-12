@@ -66,6 +66,7 @@ export class Moteur extends EventEmitter<EvenementsMoteur> {
       debitMax: c.torrentDebitMax,
       envoiMax: c.torrentEnvoiMax,
       isole: c.torrentIsole,
+      pairs: c.torrentPairs,
       intervalleMs: c.torrentIsole ? 200 : 1000,
     };
     const enfant = fork(FICHIER_ENFANT, [JSON.stringify(options)], {
