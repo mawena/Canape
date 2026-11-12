@@ -28,7 +28,7 @@ export interface Participant {
   utilisateur: UtilisateurPublic;
   micro: boolean;
   camera: boolean;
-  /** Lit-il en ce moment sans être en train de mettre en mémoire ? (utile à l'indicateur de synchro) */
+  /** Met-il en mémoire en ce moment (son `cid` figure dans `EtatSeance.attente`) ? */
   tampon: boolean;
 }
 
@@ -70,6 +70,7 @@ export type MessageClient =
   | { t: 'sous_titres'; cle: string | null }
   | { t: 'compte_a_rebours' }
   | { t: 'tampon'; enCours: boolean }
+  | { t: 'ignorer_attente'; cid: string }
   | { t: 'media'; micro: boolean; camera: boolean }
   | { t: 'reaction'; emoji: Emoji }
   | { t: 'message'; texte: string }
@@ -78,15 +79,34 @@ export type MessageClient =
 
 // ---- Serveur -> client ----
 
+/**
+ * Pourquoi l'état a changé (`par` = `cid` de l'auteur, `null` si c'est le serveur : fin du compte à rebours, film supprimé).
+ * - `lecture` `pause` `aller` `film` `audio` `sous_titres` `compte_a_rebours` : commande de `par` ;
+ * - `fin` : `par` a signalé la fin du film (`pause` avec `fin`) ;
+ * - `tampon` : la liste `attente` a changé (et la lecture s'est arrêtée si elle tournait) ;
+ * - `reprise` : plus personne n'attend, la lecture suspendue reprend ;
+ * - `depart` : une connexion s'est fermée (départ ou perte de connexion) ; `par` vaut alors **le prénom** de la personne
+ *   partie (et non un `cid`). La lecture, si elle tournait, est mise en pause pour tous ; pas de changement d'état si la
+ *   personne garde un autre onglet dans la séance (sauf si son départ vide `attente` : alors `reprise`) ;
+ * - `attente-ignoree` : `par` (le `cid` de qui a cliqué) a retiré le `cid` demandé de la liste d'attente ;
+ * - `compte_a_rebours` avec `par` = `null` : le compte à rebours est fini (la lecture démarre : `lecture` vaut `true`,
+ *   ou reste `false` avec `attente` non vide si quelqu'un met encore en mémoire).
+ */
 export type RaisonEtat =
   | 'lecture' | 'pause' | 'aller' | 'film' | 'audio' | 'sous_titres' | 'compte_a_rebours'
-  | 'tampon' | 'arrivee' | 'depart' | 'fin' | 'rattrapage';
+  | 'tampon' | 'reprise' | 'depart' | 'attente-ignoree' | 'fin';
+
+/** Codes de `erreur {code}` (la connexion reste ouverte sauf mention contraire). */
+export type CodeErreurWs =
+  | 'message_invalide' | 'type_inconnu' | 'trop_vite' | 'texte_invalide' | 'texte_trop_long'
+  | 'film_inconnu' | 'piste_invalide' | 'destinataire_inconnu' | 'serveur';
 
 export type MessageServeur =
   | {
       t: 'bienvenue';
       moi: { cid: string; utilisateur: UtilisateurPublic };
       serveur: number;
+      /** Les autres connexions de la salle (pas `moi`). */
       participants: Participant[];
       etat: EtatSeance;
       messages: MessageChatWs[];
@@ -99,7 +119,13 @@ export type MessageServeur =
   | { t: 'message'; message: MessageChatWs }
   | { t: 'signal'; de: string; donnees: unknown }
   | { t: 'pong'; c: number; s: number }
-  | { t: 'erreur'; code: string; message: string };
+  | { t: 'erreur'; code: CodeErreurWs; message: string };
 
 export type TypeMessageClient = MessageClient['t'];
 export type TypeMessageServeur = MessageServeur['t'];
+
+/** Codes HTTP de refus avant la poignée de main : 401 sans session, 403 `Origin` étrangère, 404 séance inconnue ou non accessible, 503 salle pleine. */
+export const REFUS_WS = { nonConnecte: 401, origine: 403, introuvable: 404, pleine: 503 } as const;
+
+/** Pause d'une séance : intervalle (ms) des ping de maintien envoyés par le serveur. */
+export const INTERVALLE_MAINTIEN_WS = 25_000;
