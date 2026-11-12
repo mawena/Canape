@@ -1,0 +1,77 @@
+name: CI
+
+# Vérifications : types, tests, construction, essais Playwright (Chromium, Firefox, WebKit).
+# Déclenché par un push sur develop, par les pull requests, et appelé par deploiement.yml avant de déployer.
+on:
+  push:
+    branches: [develop]
+  pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
+
+# Une seule exécution par branche : une nouvelle annule la précédente (sauf quand deploiement.yml nous appelle :
+# c'est lui qui gère sa propre concurrence).
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verifier:
+    name: Types, tests, construction, navigateurs
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+          cache: npm
+
+      - name: ffmpeg et ffprobe (les tests de lecture et de conversion en ont besoin)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ffmpeg
+
+      - name: Dépendances
+        run: npm ci
+
+      - name: Types
+        run: npm run typecheck
+
+      - name: Tests
+        run: npm test
+
+      - name: Construction
+        run: npm run build
+
+      - name: Essais de bout en bout présents ?
+        id: e2e
+        run: |
+          if [ -d e2e ] && node -e 'process.exit(require("./package.json").scripts?.e2e ? 0 : 1)'; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "Pas encore d'essais e2e : étape ignorée."
+          fi
+
+      - name: Navigateurs de Playwright
+        if: steps.e2e.outputs.present == 'true'
+        run: npx playwright install --with-deps chromium firefox webkit
+
+      - name: Essais de bout en bout
+        if: steps.e2e.outputs.present == 'true'
+        run: npm run e2e
+
+      - name: Rapport Playwright (en cas d'échec)
+        if: failure() && steps.e2e.outputs.present == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: rapport-playwright
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7
