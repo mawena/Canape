@@ -35,7 +35,7 @@ Les fichiers d'essai sont hors dépôt : `/tmp/claude-1000/-home-charles-gamligo
    segment que lorsque le fichier définitif existe, et attend (sondage 100 ms, délai max ~30 s) sinon.
 5. **GOP fixe aligné sur les segments** : `-force_key_frames "expr:gte(t,n_forced*6)"` + `-sc_threshold 0` ; ainsi
    chaque segment est autonome et **les segments produits par deux lancements différents sont identiques en vidéo**
-   (essai ci-dessous : 144 paquets vidéo, pts identiques à l'image près).
+   (essai ci-dessous : 144 paquets vidéo, pts identiques à l'image près). **Cela vaut pour le transcodage ; la copie vidéo se fait en une passe (1.3).**
 6. **fMP4 (`-hls_segment_type fmp4`)** : un seul `init.mp4` par (film, audio) ; hls.js et Safari le lisent.
 7. **Le préréglage x264 se choisit d'après la vitesse mesurée** (voir 1.6) ; **HDR→SDR : `zscale` + `tonemap=mobius`
    (ou `hable`), réduction de taille AVANT** ; ni libplacebo ni carte graphique (pas de GPU sur un VPS).
@@ -84,37 +84,44 @@ Résultats (concaténation `init.mp4` + segments, `ffprobe -show_entries packet=
 - Jellyfin ajoute `-hls_segment_options movflags=+frag_discont+skip_sidx` (fMP4 vidéo) **[doc]**, `-max_delay 5000000`,
   `-max_muxing_queue_size`≥128 ; non nécessaires dans mon essai.
 
-### 1.3 Découpage en copie vidéo, aligné sur les images clés **[essai + doc]**
+### 1.3 Copie vidéo : une seule passe séquentielle, pas de relance par segment **[essai]**
 
-Cas « 2 : seul le son est converti » (H.264 8 bits SDR dans un conteneur/son non lisible). La vidéo est copiée : on ne
-peut couper qu'aux images clés, donc **les segments ont des durées variables** et la liste doit les connaître **avant**.
+Cas « 2 : seul le son est converti » (vidéo copiée). En copie on ne coupe qu'aux images clés : **les segments ont des
+durées variables** et la liste doit les connaître avant que le lecteur les demande.
 
-1. **Index des images clés**, calculé une fois (rapide : on ne décode pas) et mis en cache en JSON :
-   ```sh
-   ffprobe -v error -select_streams v:0 -skip_frame nokey -show_entries frame=pts_time -of csv=p=0 film.mkv
-   ```
-   (`-skip_frame nokey` + `-show_entries frame=pts_time`, ~quelques secondes pour un film). Sur `extrait1` :
-   `0, 6,625, 13,291, 21,291, 29,208, 36,792, 45,208, 47,875, 55,166, 57,958, 59,75, 63,04`. Sur `extrait2` :
-   `0, 3,336, 5,63, 10,135, 18,351, 26,985, …` (intervalles de 2 à 8 s : typique des encodes web).
-   `ffprobe` ne gère pas toujours `-read_intervals` en copie : on lit l'index entier. Pour un MKV de 2 h compter
-   5 000 à 20 000 images clés = quelques centaines de ko.
-2. **Segmentation gloutonne** : on parcourt les images clés ; un segment finit à la première image clé dont l'écart
-   avec le début du segment dépasse ≥ 6 s (cible) ; si un écart dépasse ~10 s, la copie reste valable mais
-   `EXT-X-TARGETDURATION` = arrondi supérieur du plus long ; si la source a des images clés > 20 s ou aucune image
-   clé exploitable : **passer au cas 3 (transcodage)**.
-3. **Production d'un segment `i`** : `ffmpeg -ss <début_i> -noaccurate_seek -i film -t <durée_i> -map 0:v:0 -map 0:a:N
-   -c:v copy -c:a aac -ac 2 -b:a 160k -copyts -avoid_negative_ts disabled -f hls -hls_segment_type fmp4 …` avec
-   `-start_number i` (comme Jellyfin) ; pour de l'**HEVC** ajouter `-tag:v hvc1` (Safari). La coupure doit tomber
-   **exactement** sur l'image clé : `-ss` placé juste **sur** l'image clé (valeur du pts de l'index) + un tout petit
-   `-ss` plus bas (début − 0,001) pour ne pas la manquer.
-4. **Piège connu (Emby/Jellyfin, forum)** : un segment sans image clé au début casse hls.js ; des durées de liste qui
-   ne correspondent pas aux durées réelles font geler certains lecteurs **[doc]**. D'où l'index calculé d'avance et
-   la vérification à la production : si l'image clé n'est pas à la position prévue, **échec du segment et repli en
-   transcodage**.
-5. Jellyfin ne sait pas couper hors image clé en copie (« HLS implementation doesn't support non-keyframe breaks »).
+**Constat d'essai (important)** : sur `extrait1` (HEVC), la relance par segment en copie **ne marche pas de façon
+fiable**. `ffmpeg -ss 13.3117 [-noaccurate_seek] -i … -c:v copy … -output_ts_offset …` est reparti de l'image clé
+**6,6 s** (précédente) et non de 13,3 s, et avec `-copyts -t` la durée est comptée en absolu (segment de 1,4 s au lieu
+de 7,9 s) ; la liste des images clés de `ffprobe -skip_frame nokey` (13,291) diffère aussi de 17 ms de la vraie
+position des paquets (13,308) et certaines images « clés » HEVC sont des CRA (points d'accès à GOP ouvert) où le
+saut tombe plus tôt. Un index d'images clés à la Jellyfin est donc **fragile en HEVC**.
 
-Piège ffmpeg : `-hls_time 6` seul avec `-c:v copy` coupe à la première image clé ≥ 6 s, donc les durées de liste
-sont inconnues à l'avance : **ne pas utiliser `-hls_time` pour dériver la liste ; la liste vient de l'index**.
+**Recommandation** : en copie vidéo, **une seule passe séquentielle sur tout le film**, qui laisse ffmpeg choisir les
+coupures (le son AAC est encodé en même temps, très peu coûteux) :
+
+```sh
+ffmpeg -y -i film.mkv -map 0:v:0 -map 0:a:N -c:v copy -tag:v hvc1 -c:a aac -ac 2 -b:a 160k \
+  -f hls -hls_time 6 -hls_segment_type fmp4 -hls_fmp4_init_filename init.mp4 -hls_list_size 0 \
+  -hls_playlist_type vod -hls_flags independent_segments+temp_file -hls_segment_filename "s%d.m4s" o.m3u8
+```
+(`-tag:v hvc1` pour HEVC ; inutile en H.264.) Résultat **[essai]** sur `extrait1` : segments qui commencent tous sur une
+image clé (`K`, pts 0,017 / 6,641 / 13,308), durées réelles 6,625 / 6,666 / 8,000 / 7,917 / 7,583 / 8,417 / 2,667 /
+7,291 / 2,792 / 5,083 / 1,805 s (cible 6 s, images clés espacées), décodage sans erreur.
+- Vitesse : copie + AAC = limitée par le disque, plusieurs dizaines de fois le temps réel (un film de 2 h : ~1 à 3 min) ;
+  l'extrait de 60 s a pris moins d'une seconde.
+- **La liste de lecture vient du `.m3u8` de ffmpeg** (durées exactes), pas d'un calcul : on la sert dès que ffmpeg a
+  fini (quelques minutes) ; avant, ou pour démarrer plus vite, on peut servir la liste **partielle** en
+  `#EXT-X-PLAYLIST-TYPE:EVENT` (sans `ENDLIST`) puis la liste VOD complète. Plus simple : **ne pas proposer ce mode
+  tant que la passe n'est pas terminée** (attente affichée par le composant Préparation) ; la vidéo H.264 en copie se
+  lit alors comme une version préparée (cas 4) obtenue en quelques minutes.
+- Pour un film en **H.264** déjà lisible dans son MP4 mais avec un son non supporté : même commande, même résultat ; c'est
+  un cas 2 sans HEVC et donc sans le problème de GOP ouvert ; Safari et Chrome lisent.
+- **Garde-fous** : si la plus longue durée d'un segment dépasse 12 s ou si l'index est trop clairsemé (images clés
+  espacées de > 10 s : mauvais pour le saut), **basculer en transcodage (cas 3)**. Ne pas copier de l'HEVC pour
+  Chrome/Firefox : seul Safari lit l'HEVC en MSE ; la copie HEVC est donc **réservée à Safari**, sinon cas 3.
+- Si vraiment une production à la demande par segment est voulue en copie : seul un **index de paquets** (`ffprobe
+  -show_entries packet=pts_time,flags` flux vidéo, drapeau `K`, pts + dts) calcule des coupures exactes, et il faut
+  vérifier chaque segment produit (première image = `K` à la position prévue) avec repli en transcodage.
 
 ### 1.4 HDR → SDR **[essai]**
 
