@@ -83,6 +83,8 @@ export interface OptionsUtilisateurTest {
   /** Si absent : un hachage commun pour `MOT_DE_PASSE_TEST` (calculé une fois). */
   motDePasse?: string;
   peutTeleverser?: boolean;
+  peutTorrent?: boolean;
+  origine?: 'installation' | 'invitation' | 'inscription';
   quotaOctets?: number | null;
   actif?: boolean;
   couleur?: string | null;
@@ -117,10 +119,11 @@ export async function creerUtilisateur(t: Pick<AppTest, 'db'> | { db: Base }, op
   const identifiant = options.identifiant ?? `${prenom.toLowerCase()}-${n}`;
   const maintenant = new Date();
   const r = t.db.prepare(
-    `INSERT INTO utilisateurs (prenom, identifiant, mot_de_passe, role, peut_televerser, quota_octets, actif, couleur, cree_le)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO utilisateurs (prenom, identifiant, mot_de_passe, role, peut_televerser, peut_torrent, origine, quota_octets, actif, couleur, cree_le)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   ).run(
     prenom, identifiant, hachage, role, options.peutTeleverser === false ? 0 : 1,
+    options.peutTorrent === false ? 0 : 1, options.origine ?? 'invitation',
     options.quotaOctets === undefined ? null : options.quotaOctets, options.actif === false ? 0 : 1,
     options.couleur ?? null, maintenantIso(maintenant),
   );
