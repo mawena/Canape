@@ -2,6 +2,39 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) ; versions selon [SemVer](https://semver.org/lang/fr/).
 
+## [1.3.0] — 2026-11-12
+
+Inscription libre : n'importe qui peut venir sur le site, créer son compte et ajouter ses films, sans invitation.
+
+### Ajouté
+
+- **Page « Créer un compte »** (`/inscription`, lien sur la connexion) : prénom, identifiant (lettres, chiffres,
+  `.`, `_`, `-`, ou une adresse e-mail), mot de passe d'au moins 10 caractères avec sa jauge, couleur, acceptation des
+  **règles d'usage** (nouvelle page `/regles`). Erreurs claires sous chaque champ ; « Les inscriptions sont fermées »
+  ou « complètes » quand c'est le cas.
+- **Garde-fous** : jeton anti-robot signé et horodaté, champ piège invisible, 3 inscriptions par heure et par adresse
+  IP, 30 par jour en tout, 100 comptes inscrits au plus.
+- **Réglages de l'administration** : ouvrir ou fermer les inscriptions (aussi `canape admin inscriptions
+  ouvrir|fermer` sur le serveur), quota de chaque inscrit (20 Go par défaut), torrents pour les inscrits (fermés par
+  défaut : un inconnu ne fait pas télécharger de torrents au serveur sans ton accord), nombre maximal de comptes.
+  La liste des comptes montre leur origine (installation, invitation, inscription) et le droit aux torrents de
+  chacun.
+- **Partager un film ou inviter à une séance par identifiant** (« Ajouter quelqu'un : son identifiant »), en plus de
+  la liste des personnes que tu connais déjà.
+
+### Changé
+
+- **Vie privée entre inconnus** : un spectateur ne voit plus la liste de tous les comptes, seulement ceux qu'il connaît
+  (films partagés, séances, la personne qui l'a invité, les administrateurs) ; la recherche ne trouve que l'identifiant
+  exact. La visibilité « tous » d'un film s'appelle « Tous les inscrits » et prévient que ce sont des inconnus quand les
+  inscriptions sont ouvertes.
+- L'ajout par torrent demande aussi le droit aux torrents du compte (accordé aux comptes invités et à l'administrateur).
+
+### Essais
+
+- 319 tests serveur et client ; essais Playwright de l'inscription, des droits et de la vie privée sur Chromium et
+  Firefox.
+
 ## [1.2.0] — 2026-11-12
 
 Nouveau design : plus lumineux, plus professionnel, plus facile à prendre en main.
