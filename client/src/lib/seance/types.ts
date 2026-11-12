@@ -12,6 +12,8 @@ export interface LecteurVideo {
   readonly paused: boolean;
   playbackRate: number;
   readonly readyState: number;
+  /** `NETWORK_IDLE` (1) : le navigateur a cessé de charger. */
+  readonly networkState: number;
   readonly seeking: boolean;
   readonly duration: number;
   play(): Promise<void>;

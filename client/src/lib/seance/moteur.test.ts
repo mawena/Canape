@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { afterEach, beforeEach, mock, test } from 'node:test';
-import { DELAI_TAMPON, MoteurSynchro } from './moteur.ts';
+import { DELAI_TAMPON, DELAI_TAMPON_LONG, MoteurSynchro } from './moteur.ts';
 import type { EtatSeance, LecteurVideo, MessageClient } from './types.ts';
 
 class FauxLecteur implements LecteurVideo {
@@ -8,6 +8,7 @@ class FauxLecteur implements LecteurVideo {
   paused = true;
   playbackRate = 1;
   readyState = 4;
+  networkState = 1;
   seeking = false;
   duration = 7200;
   refuser = false;
@@ -108,6 +109,58 @@ test('tampon : signalé après 1 s de chargement seulement, levé quand le lecte
   m.surPret();
   assert.deepEqual(envoyes.at(-1), { t: 'tampon', enCours: false });
   assert.equal(envoyes.length, 2);
+});
+
+test('navigateur qui ne charge pas en pause (Safari, WebKit) : prêt quand il cesse de charger, délai plus long ensuite', () => {
+  m.surChargement();
+  envoyes.length = 0;
+  video.readyState = 2;
+  video.networkState = 2; // il charge encore
+  m.appliquerEtat(etat({ lecture: false, attente: ['moi'] }));
+  assert.deepEqual(envoyes, []);
+  video.networkState = 1; // il a cessé de charger, image courante seulement : attendre ne servirait à rien
+  m.tic();
+  assert.deepEqual(envoyes, [{ t: 'tampon', enCours: false }]);
+  // à la reprise, un chargement d'une seconde n'arrête plus tout le monde…
+  video.paused = false;
+  m.surWaiting();
+  mock.timers.tick(DELAI_TAMPON + 10);
+  assert.equal(envoyes.length, 1);
+  // … mais un vrai blocage oui
+  mock.timers.tick(DELAI_TAMPON_LONG);
+  assert.deepEqual(envoyes.at(-1), { t: 'tampon', enCours: true });
+  // une fois la lecture vraiment repartie, le délai normal revient
+  video.readyState = 4;
+  m.surPret();
+  m.surWaiting();
+  mock.timers.tick(DELAI_TAMPON);
+  assert.deepEqual(envoyes.at(-1), { t: 'tampon', enCours: true });
+});
+
+test('annonce « je charge » périmée (canplay arrivé avant l’annonce) : rattrapée au tic suivant', () => {
+  m.surChargement();
+  assert.deepEqual(envoyes, [{ t: 'tampon', enCours: true }]);
+  // aucun événement canplay ne viendra : le lecteur était déjà prêt
+  m.appliquerEtat(etat({ lecture: false, attente: [] }));
+  assert.deepEqual(envoyes.at(-1), { t: 'tampon', enCours: false });
+});
+
+test('demande de lecture restée sans réponse : refaite après 4 s', () => {
+  let lancements = 0;
+  video.play = () => { lancements++; return new Promise<void>(() => {}); }; // ne se résout jamais
+  const debut = Date.now();
+  const vrai = Date.now;
+  try {
+    Date.now = () => debut;
+    m.appliquerEtat(etat({ lecture: true, position: 0, instant: maintenant }));
+    m.tic();
+    assert.equal(lancements, 1);
+    Date.now = () => debut + 4100;
+    m.tic();
+    assert.equal(lancements, 2);
+  } finally {
+    Date.now = vrai;
+  }
 });
 
 test('un chargement bref ne signale rien', () => {

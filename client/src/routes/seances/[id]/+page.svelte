@@ -13,7 +13,7 @@
   - `annonce` (chaque geste partagé), `raccourcis`
 -->
 <script lang="ts">
-  import { onDestroy, onMount } from 'svelte';
+  import { onDestroy, onMount, untrack } from 'svelte';
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
   import ChevronLeft from '@lucide/svelte/icons/chevron-left';
@@ -66,8 +66,11 @@
     salle.quitter();
   });
 
+  // Ne dépend que de l'élément <video> : sans `untrack`, l'effet suivrait aussi l'état lu dans `lierVideo` et
+  // rebrancherait le lecteur (nouveau moteur de synchro, qui oublie son « je charge ») à chaque message reçu.
   $effect(() => {
-    if (video) return salle.lierVideo(video);
+    const v = video;
+    if (v) return untrack(() => salle.lierVideo(v));
   });
 
   const portrait = $derived(largeur <= 640 && hauteur > largeur);

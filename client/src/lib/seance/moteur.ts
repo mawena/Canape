@@ -6,8 +6,19 @@ import type { EtatSeance, LecteurVideo, MessageClient } from './types.ts';
 
 /** Durée de chargement au-delà de laquelle on signale `tampon` (ms). */
 export const DELAI_TAMPON = 1000;
+/**
+ * Délai avant de signaler `tampon` après une reprise décidée « à l'arrêt » (voir `tic`) : le navigateur ne charge que
+ * pendant la lecture, il lui faut un peu de temps avant d'arrêter tout le monde de nouveau.
+ */
+export const DELAI_TAMPON_LONG = 5000;
 /** `readyState` à partir duquel on peut lire : HAVE_FUTURE_DATA. */
 const PRET = 3;
+/** Délai après lequel une demande de lecture restée sans réponse est refaite (ms). */
+const RELANCE_LECTURE = 4000;
+/** `readyState` HAVE_CURRENT_DATA : l'image courante est là. */
+const IMAGE_COURANTE = 2;
+/** `networkState` NETWORK_IDLE : le navigateur a cessé de charger. */
+const RESEAU_INACTIF = 1;
 
 export interface OptionsMoteur {
   video: LecteurVideo;
@@ -30,6 +41,8 @@ export class MoteurSynchro {
   private minuterie: ReturnType<typeof setTimeout> | null = null;
   private dernierTic = 0;
   private lectureDemandee = false;
+  private lectureDemandeeA = 0;
+  private delaiTampon = DELAI_TAMPON;
 
   private readonly o: OptionsMoteur;
 
@@ -67,8 +80,22 @@ export class MoteurSynchro {
     this.dernierTic = maintenant;
     const etat = this.etat;
     if (!etat || etat.filmId === null || v.readyState === 0) return;
+    // Safari (iPhone) et WebKit ne chargent pas un film en pause : quand tout le monde nous attend, que le lecteur est
+    // à l'arrêt avec son image courante et que le navigateur a cessé de charger, attendre plus longtemps bloquerait la
+    // séance pour toujours. On se dit prêt ; le chargement se fera pendant la lecture, avec un délai plus long avant
+    // d'arrêter de nouveau tout le monde.
+    if (this.tamponEnvoye && !this.minuterie && !etat.lecture && v.paused
+      && v.readyState >= IMAGE_COURANTE && v.readyState < PRET && v.networkState === RESEAU_INACTIF) {
+      this.delaiTampon = DELAI_TAMPON_LONG;
+      this.signalerTampon(false);
+    }
+    // Annonce périmée : on a dit « je charge » mais le lecteur est prêt (son `canplay` est arrivé avant l'annonce, ou
+    // s'est perdu). Sans ce rattrapage, toute la séance attendrait pour toujours.
+    if (this.tamponEnvoye && !this.minuterie && this.pret()) this.signalerTampon(false);
     if (etat.lecture) {
-      if (v.paused && !this.bloque && !this.lectureDemandee) this.lancer();
+      // Une demande de lecture sans réponse depuis 4 s (lecteur coincé) est refaite.
+      const demandeCoincee = this.lectureDemandee && Date.now() - this.lectureDemandeeA > RELANCE_LECTURE;
+      if (v.paused && !this.bloque && (!this.lectureDemandee || demandeCoincee)) this.lancer();
     } else if (!v.paused) {
       v.pause();
     }
@@ -87,6 +114,7 @@ export class MoteurSynchro {
 
   private lancer(): void {
     this.lectureDemandee = true;
+    this.lectureDemandeeA = Date.now();
     this.o.video.play().then(
       () => { this.lectureDemandee = false; },
       (e: unknown) => {
@@ -113,13 +141,14 @@ export class MoteurSynchro {
   /** Événement `waiting` du lecteur : on signale seulement si le chargement dure plus d'une seconde. */
   surWaiting(): void {
     if (this.minuterie || this.tamponEnvoye) return;
-    this.minuterie = setTimeout(() => { this.minuterie = null; this.signalerTampon(true); }, DELAI_TAMPON);
+    this.minuterie = setTimeout(() => { this.minuterie = null; this.signalerTampon(true); }, this.delaiTampon);
   }
 
   /** Événements `canplay` / `playing` : le chargement est fini. */
   surPret(): void {
     this.annulerMinuterie();
     if (this.pret()) this.signalerTampon(false);
+    if (!this.o.video.paused) this.delaiTampon = DELAI_TAMPON; // la lecture a vraiment repris
   }
 
   /** Un nouveau film ou une nouvelle piste se charge : on prévient tout de suite. */

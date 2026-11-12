@@ -59,7 +59,7 @@ jobs:
 
       - name: Navigateurs de Playwright
         if: steps.e2e.outputs.present == 'true'
-        run: npx playwright install --with-deps chromium firefox webkit
+        run: npx playwright install --with-deps chromium firefox webkit chrome
 
       - name: Essais de bout en bout
         if: steps.e2e.outputs.present == 'true'

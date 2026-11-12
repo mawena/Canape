@@ -75,6 +75,9 @@ export default defineConfig({
           // Pas de caméra simulée sous WebKit : la salle doit marcher sans média local.
           name: 'webkit',
           use: { ...devices['Desktop Safari'] },
+          // WebKit sous Linux décode par GStreamer : démarrage des médias lent, surtout sur un poste chargé.
+          timeout: 180_000,
+          expect: { timeout: 30_000 },
         }]
       : []),
     {
