@@ -575,3 +575,257 @@ des clouds) ; ne **pas** mettre le secret côté client. Sources : https://githu
 https://datatracker.ietf.org/doc/html/draft-uberti-behave-turn-rest-00 ; https://www.w3.org/TR/webrtc/#perfect-negotiation-example ;
 https://developer.chrome.com/blog/more-native-echo-cancellation/ ; https://github.com/webrtc/samples/issues/1243 ;
 https://webrtchacks.com/srcobject-intervention/
+
+---
+
+## 5. `node:sqlite` (Node 26), Argon2id, sessions
+
+### 5.1 `node:sqlite` **[essai sur Node 26.4.0 + doc nodejs.org/api/sqlite.html]**
+
+- Stabilité : **1.2 « release candidate »** (depuis v25.7.0) ; plus derrière un drapeau, **aucun avertissement**
+  d'expérimental affiché en 26.4 (constaté). SQLite embarqué : **3.53.2** (constaté).
+- **Nom de classe** : la doc la plus récente (v26.8) appelle la classe **`Database`** et déclare **`DatabaseSync` /
+  `StatementSync` alias dépréciés** (DEP0210/0211). **Node 26.4.0 n'exporte que `DatabaseSync`** (exports constatés :
+  `DatabaseSync, Session, StatementSync, backup, constants`). Pour survivre aux mises à jour mineures :
+  `import * as sqlite from 'node:sqlite'; const Base = (sqlite as any).Database ?? sqlite.DatabaseSync;` dans **un seul**
+  fichier (`serveur/src/db/`) ; `Node 26.x` change vite : épingler la version de Node du VPS (`/opt/canape/node`).
+- Ouverture : `new DatabaseSync(chemin, { timeout: 5000 })` (**`timeout` = `busy_timeout`**, option de la v24.0 ;
+  `PRAGMA busy_timeout` rend bien 5000 **[essai]**). `enableForeignKeyConstraints` est **`true` par défaut**
+  (`PRAGMA foreign_keys` = 1 **[essai]**). `defensive: true` par défaut depuis 25.5/24.14 (désactive les écritures
+  dangereuses sur le schéma).
+- **WAL** : `db.exec('PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL; PRAGMA wal_autocheckpoint = 1000;
+  PRAGMA journal_size_limit = 67108864;')` : retourne `wal` **[essai]**. En WAL : un écrivain + lecteurs simultanés ;
+  les écritures concurrentes **attendent** `busy_timeout`.
+- **API synchrone** : tout bloque la boucle d'événements ; les requêtes de Canapé sont courtes (< 1 ms) → pas de pool ;
+  **une seule connexion** pour le processus ; éviter `SELECT` géants sans `LIMIT`, pas de transaction qui `await` quoi que ce
+  soit (aucune interruption possible entre `BEGIN` et `COMMIT` autrement).
+- **Transactions** : `BEGIN IMMEDIATE` (verrou d'écriture pris d'avance, évite `SQLITE_BUSY` au milieu) ; aide :
+  ```ts
+  function transaction<T>(db, fn: () => T): T {
+    const imbriquee = db.isTransaction;               // propriété `isTransaction` (v24+) [essai : true après BEGIN]
+    const point = imbriquee ? `sp${++n}` : null;
+    db.exec(imbriquee ? `SAVEPOINT ${point}` : 'BEGIN IMMEDIATE');
+    try { const r = fn(); db.exec(imbriquee ? `RELEASE ${point}` : 'COMMIT'); return r; }
+    catch (e) { db.exec(imbriquee ? `ROLLBACK TO ${point}; RELEASE ${point}` : 'ROLLBACK'); throw e; }
+  }
+  ```
+  `fn` est **synchrone** (jamais `async`).
+- **Sauvegarde à chaud** : `import { backup } from 'node:sqlite'; const pages = await backup(db, 'sauvegarde.sqlite',
+  { rate: 100 })` : copie cohérente en cours d'usage, renvoie le nombre de pages (**[essai]** : 2). Alternative simple :
+  `db.exec("VACUUM INTO '/chemin/sauvegarde.sqlite'")` (synchrone, bloque brièvement : acceptable pour une petite base).
+  Avant chaque mise à jour (script `mettre-a-jour`) : `backup` ou `cp` des trois fichiers en arrêtant le service.
+- **Migrations** : dossier `serveur/migrations/NNN_nom.sql` appliqués dans l'ordre, chacun dans `BEGIN IMMEDIATE …
+  COMMIT`, version dans `PRAGMA user_version` (ou table `reglages`) ; **jamais de modification d'une migration publiée**
+  (déjà la règle du contrat) ; `ALTER TABLE … ADD COLUMN` seulement (SQLite ne sait pas tout modifier) ; pour un
+  changement lourd : créer la nouvelle table, copier, `DROP`, renommer, **avec `PRAGMA foreign_keys=OFF` hors transaction**.
+- **Typage** : `INTEGER` hors plage sûre lève `ERR_OUT_OF_RANGE` (rien à craindre ici) ; `undefined` se lie en `NULL` ;
+  paramètres nommés `$nom` avec clés nues par défaut ; les inconnus lèvent une erreur : utile pour attraper les fautes de frappe ;
+  `BLOB` = `Uint8Array`. Les lignes sont des objets à **prototype nul** (`Object: null prototype`) : `JSON.stringify` fonctionne, pas
+  `row.hasOwnProperty`.
+- **Instructions préparées** : les garder en cache (`Map`) ; `createTagStore()` (v24.9+) existe.
+- Performances : plusieurs dizaines de milliers d'insertions/s en transaction ; sans transaction chaque `INSERT` fait un
+  `fsync` (WAL `synchronous=NORMAL` limite le coût). Ne pas mettre `progression` (toutes les 10 s par spectateur) hors
+  transaction groupée si beaucoup d'utilisateurs : `INSERT … ON CONFLICT DO UPDATE` suffit.
+
+### 5.2 Argon2id avec `@node-rs/argon2` 2.2.2 **[essai + doc OWASP]**
+
+- OWASP (Password Storage Cheat Sheet) : minimum **m = 19 MiB, t = 2, p = 1** ; équivalents : 46 MiB/1/1, 12 MiB/3/1,
+  9 MiB/4/1, 7 MiB/5/1. **[essai]** : `hash('motdepasse', { memoryCost: 19456, timeCost: 2, parallelism: 1, algorithm: 2 })` →
+  `$argon2id$v=19$m=19456,t=2,p=1$…` en **34 ms** sur ce poste ; `verify` renvoie `true` / `false`.
+- Recommandation : **m = 47 104 (46 MiB), t = 2, p = 1** (≈ 80 ms ici, à mesurer sur le VPS ; viser 100–300 ms), format PHC
+  (déjà dans le contrat). `algorithm: 2` = Argon2id (à écrire explicitement ; `Algorithm.Argon2id`).
+- **Les fonctions sont asynchrones** (thread pool libuv, 4 fils par défaut) : 4 connexions simultanées × 46 MiB = ~190 Mo ;
+  le **limiteur de débit** de la connexion (5 échecs/min) borne le risque de déni de service par Argon2.
+- **Réhachage** : au succès d'une connexion, parser `m=,t=,p=` dans la chaîne PHC ; si inférieurs aux réglages
+  courants → `hash` et `UPDATE`. Aucune API `needsRehash` n'existe dans la bibliothèque.
+- **Utilisateur inconnu** : faire quand même un `verify` sur un hachage factice (**temps constant**) pour ne pas révéler
+  quels identifiants existent ; même message d'erreur.
+- Poivre : facultatif (OWASP : défense en profondeur ; secret hors base) ; non nécessaire ici.
+- Longueur : accepter 8 à 128 caractères, **ne pas** imposer de composition ; refuser > 1 000 octets (dépense CPU).
+- Binaires précompilés N-API (linux x64 glibc/musl) : **vérifier à l'installation sur le VPS** (`npm ci --omit=dev` dans la CI
+  sur `ubuntu-24.04` = même architecture que le VPS ; si ARM : paquet `linux-arm64-gnu`).
+
+### 5.3 Sessions et cookies
+
+- Jeton : `randomBytes(32).toString('base64url')` ; en base **SHA-256 en hexadécimal** (déjà le contrat) : un hachage rapide
+  suffit pour un jeton à haute entropie ; recherche par `WHERE id = ?` (pas de comparaison à temps constant nécessaire).
+- Cookie `canape_session` : `HttpOnly; SameSite=Lax; Path=/; Secure` (derrière HTTPS) ; `Max-Age` 30 jours ; préfixe
+  **`__Host-canape_session`** possible seulement en HTTPS (Secure, `Path=/`, pas de `Domain`) : le contrat fixe le nom `canape_session` ;
+  garder, et ajouter le préfixe seulement si le module comptes l'accepte (non essayé).
+- **Expiration glissante sans écriture à chaque requête** : mettre à jour `vu_le` et `expire_le` seulement si `vu_le`
+  date de plus de 5 min ; sinon une écriture par requête de média/segment sature le WAL.
+- **Rotation** : nouvel identifiant de session à la connexion (anti-fixation) ; à la déconnexion, suppression de la ligne ;
+  désactivation d'un compte : `DELETE FROM sessions WHERE utilisateur_id = ?` (contrat) **et** fermer ses WebSocket.
+- **CSRF** : `SameSite=Lax` + **contrôle d'`Origin`** sur toutes les requêtes qui modifient (contrat) ; l'`Origin` est parfois
+  absent (vieux navigateurs, requêtes de même origine sans en-tête) : si absent, exiger `Sec-Fetch-Site: same-origin`.
+- Sessions pour `<video>` et segments : **le cookie suffit** (même origine) ; ne pas mettre de jetons dans l'URL des médias
+  (fuite dans les journaux nginx).
+- Limite de débit de la connexion : `@fastify/rate-limit` par IP **et** par identifiant (contrat : 5 échecs/min).
+Sources : https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html ;
+https://nodejs.org/api/sqlite.html ; https://sqlite.org/wal.html ; https://github.com/napi-rs/node-rs/tree/main/packages/argon2 ;
+https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html
+
+---
+
+## 6. Fastify 5
+
+Versions du dépôt : `fastify` 5.12.8, `@fastify/websocket` 11.3.7, `@fastify/static` 10.1.10, `@fastify/rate-limit` 11.2.2,
+`@fastify/cookie` 11.1.5.
+
+- **`@fastify/websocket` avec authentification et `Origin`** **[essai : `recherche/tus/ws.mjs`]** : enregistrer
+  `app.register(websocket, { options: { maxPayload: 65536 } })` (**1009** si un message dépasse, constaté) ; la route
+  `app.get('/ws/seances/:id', { websocket: true, preValidation }, (socket, req) => …)` ; le crochet **`preValidation`** s'exécute
+  **avant la mise à niveau** : y contrôler l'`Origin` (403, constaté), la session (401, constaté) et le droit à la séance (404) :
+  le refus part comme réponse HTTP normale, sans poignée de main (constaté : `unexpected-response 403/401`). Handler :
+  `(socket, req)` (v11 : le premier argument est le `WebSocket` de `ws`, plus d'objet `connection`).
+- **Cœur du WebSocket** : battement par `socket.ping()` toutes les 25 s + fermeture si aucun `pong` en 60 s (nginx coupe
+  à 60 s d'inactivité sans `proxy_read_timeout` long) ; `socket.on('close'|'error')` retirent le participant ; contre-pression :
+  vérifier `socket.bufferedAmount` avant d'envoyer des rafales ; limite de débit de messages **maison** (jetons par
+  connexion : 5/s réactions et messages), `@fastify/rate-limit` ne couvre pas les messages WebSocket.
+- **`@fastify/static` + repli d'une application monopage** : `app.register(fastifyStatic, { root: clientBuild, wildcard: false,
+  index: false, preCompressed: true? })` puis
+  `app.setNotFoundHandler((req, reply) => { if (/^\/(api|media|ws)\//.test(req.url)) return reply.code(404).send({erreur:'introuvable', message:'…'});
+  return reply.header('Cache-Control','no-cache').sendFile('index.html'); })`. Un `GET` d'URL inconnue **sans** extension rend
+  `index.html` ; une ressource manquante avec extension (`.js`, `.png`) doit rester **404**. En-têtes de cache : `/_app/immutable/*` →
+  `public, max-age=31536000, immutable` ; `index.html`, `service-worker.js`, `manifest.webmanifest` → `no-cache`. `wildcard: false` évite
+  l'enregistrement d'une route `*` qui masquerait les routes de l'API. **[doc/mémoire : non rejoué]**
+- **`@fastify/rate-limit`** : `global: false`, `config: { rateLimit: { max: 5, timeWindow: '1 minute', keyGenerator: … } }` par route
+  sensible (connexion, invitation) ; `trustProxy: true` côté Fastify quand `CANAPE_DERRIERE_PROXY=1` (sinon `req.ip` serait celle de
+  nginx) ; stockage en mémoire (un seul processus).
+- **En-têtes de sécurité** (hook `onSend` ; nginx peut y ajouter HSTS) pour SvelteKit `adapter-static` + hls.js :
+  ```
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-…hash du script de démarrage SvelteKit…';
+    style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; worker-src 'self' blob:;
+    connect-src 'self' wss://<hote>; font-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self';
+    frame-ancestors 'none'; form-action 'self'
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: same-origin
+  Permissions-Policy: camera=(self), microphone=(self), geolocation=(), fullscreen=(self)
+  Cross-Origin-Opener-Policy: same-origin
+  ```
+  Raisons : `media-src blob:` et `worker-src blob:` sont requis par **hls.js** (MediaSource → URL `blob:`, worker en `blob:`) ; le
+  script de démarrage inline de SvelteKit se couvre par `kit.csp: { mode: 'hash', directives: {…} }` dans `svelte.config.js`
+  (génère le hachage pour la page de repli : à **vérifier à la construction**) ; `'unsafe-inline'` pour les styles :
+  Svelte injecte des attributs `style` ; **`connect-src` : `wss://hote` explicite** (Safari ancien n'inclut pas `ws:` dans `'self'`) ;
+  **ne pas** mettre `Cross-Origin-Embedder-Policy` (casserait les ressources). **[doc : non essayé dans un navigateur ; à valider
+  par le module livraison/e2e avec la console `Content-Security-Policy`]**.
+- **Journal sous systemd** : Fastify `logger: true` écrit du **JSON (pino) sur stdout** → `journalctl -u canape -o cat | jq`.
+  Recommandé : niveau `info` ; `redact: ['req.headers.cookie', 'req.headers.authorization']` ; **ne pas journaliser** les requêtes de
+  segments et de `Range` (`disableRequestLogging` par route `/media/*` ou hook) ; pas de `pino-pretty` en production ; **pas de dates** dans
+  le message (journald les met : `timestamp: false`). `StandardOutput=journal` (par défaut) ; `SyslogIdentifier=canape`.
+  Arrêt propre : `process.on('SIGTERM', () => app.close())` (systemd envoie SIGTERM : fermer les WebSocket avec le code 1001 et arrêter
+  ffmpeg avant de sortir).
+- `trustProxy`, `bodyLimit` (1 Mo par défaut : bon pour le JSON), `requestTimeout: 0` pour les routes média (**les réponses
+  longues de segments / `Range` ne doivent pas être coupées** : ne pas mettre de `connectionTimeout` global trop court) ; `keepAliveTimeout: 65_000`
+  (supérieur à celui de nginx 60 s en amont si `keepalive` actif).
+- Média : servir les fichiers par `reply.send(fs.createReadStream(chemin, {start, end}))` avec `Accept-Ranges: bytes`, `206`
+  et `Content-Range` ; `@fastify/static` gère déjà `Range` pour des dossiers statiques (utilisable pour `/media/:id/prepare`) ;
+  `Cache-Control: private, no-store` sur les médias authentifiés ; segments immuables : `private, max-age=3600`.
+
+Sources : https://fastify.dev/docs/latest/ ; https://github.com/fastify/fastify-websocket ; https://github.com/fastify/fastify-static ;
+https://github.com/fastify/fastify-rate-limit ; https://kit.svelte.dev/docs/configuration#csp
+
+---
+
+## 7. SvelteKit 2 + Svelte 5 en monopage
+
+Versions du dépôt : `@sveltejs/kit` 2.70.4 (la dernière publiée sur npm est la **3.2.0**, avec `adapter-static` 4 qui exige kit 3 ;
+`kit 2` reste en dist-tag `version-2` : **le contrat reste valable, ne pas migrer en 1.0**), `svelte` 5.57.3, `vite` 7.3.8, `adapter-static` 3.0.11.
+
+- **Monopage** : `svelte.config.js` : `adapter: adapter({ fallback: 'index.html', pages: 'build', assets: 'build' })` ; dans
+  `src/routes/+layout.ts` : `export const ssr = false; export const prerender = false;` (le repli remplace le prérendu) ; routes
+  dynamiques (`/seances/[id]`) fonctionnent grâce au repli côté serveur (section 6). Pas de `+page.server.ts` / `+server.ts` :
+  tout passe par l'API Fastify.
+- **Magasins avec les runes** : fichiers `*.svelte.ts` ; pas d'export d'un `$state` primitif **réassigné** (un module ne peut pas exporter une
+  variable réactive qui change de valeur) : exporter un **objet** ou une **classe** à instance unique :
+  ```ts
+  // client/src/lib/comptes/session.svelte.ts
+  class Session { utilisateur = $state<Utilisateur | null>(null); chargee = $state(false);
+    get connecte() { return this.utilisateur !== null; }       // ou $derived dans la classe
+    async charger() { … } }
+  export const session = new Session();
+  ```
+  `$derived` dans la classe pour les valeurs calculées ; `$effect` seulement pour les effets de bord (abonnement WebSocket, `hls.js`) avec
+  **fonction de nettoyage** retournée ; `$state.raw` pour les gros objets non profondément réactifs (listes de films, états de lecture
+  reçus par WebSocket : remplacés en bloc) ; `untrack` pour lire sans suivre. Passer l'état d'une séance par le **contexte**
+  (`setContext`/`getContext`) plutôt qu'un singleton global (une salle à la fois : le singleton suffit pourtant).
+- **`<video>` et hls.js** : instancier dans `onMount`/`$effect`, `hls.destroy()` au démontage, **`bind:this`** sur l'élément ; ne jamais
+  lier `bind:currentTime` (réactivité à 4 Hz coûteuse et boucles avec la synchro) : lire `video.currentTime` à la demande.
+- **Service worker** (`src/service-worker.ts`, enregistré automatiquement par SvelteKit) : importer `build`, `files`, `version` de
+  `$service-worker` ; `install` : `cache.addAll([...build, ...files])` ; `activate` : supprimer les anciens caches ; `fetch` : **n'intercepter
+  que les `GET` de même origine dont le chemin est dans `build`/`files`**, et **sortir sans `respondWith`** pour tout le reste :
+  `/api/`, `/media/`, `/ws/`, requêtes `Range`, et **toute navigation** (laisser le réseau répondre ; en hors-ligne servir `index.html`
+  du cache **seulement pour les navigations**). **Ne jamais** mettre en cache les médias, l'API, ni `/api/etat`. Pas de
+  `skipWaiting` automatique pendant une séance (recharger casserait la lecture) : afficher « Nouvelle version : recharger ».
+- **Manifeste** (`static/manifest.webmanifest`, `<link rel="manifest">` dans `app.html`) : `name`, `short_name`, `start_url: "/"`, `scope: "/"`,
+  `display: "standalone"`, `background_color`/`theme_color` (même noir que l'interface), `lang: "fr"`, icônes **192, 512 et 512 « maskable »** en PNG
+  (`purpose: "any"` et `"maskable"` séparés), plus `apple-touch-icon` 180 px et `<meta name="theme-color">` ; Chrome exige un service
+  worker avec gestionnaire `fetch` et le manifeste valide pour proposer l'installation ; Safari iOS s'appuie sur `apple-touch-icon`.
+- **Variables et API** : `fetch` typé dans `client/src/lib/api/` ; URL relatives (même origine) : le client ne connaît pas l'hôte ; WebSocket :
+  `new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws/seances/${id}`)`.
+- Construction : `vite build` → `client/build/` ; vérifier `index.html` de repli et que les chemins `_app/immutable` sont servis avec `immutable`.
+Sources : https://svelte.dev/docs/kit/single-page-apps ; https://svelte.dev/docs/kit/service-workers ; https://svelte.dev/docs/svelte/$state ;
+https://svelte.dev/docs/kit/configuration#csp ; https://web.dev/articles/install-criteria
+
+---
+
+## 8. Playwright (`@playwright/test` 1.65.0) **[doc / mémoire ; non rejoué : pas de navigateurs sur ce poste pendant la recherche]**
+
+- **Chromium** : `launchOptions.args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream']` ; permissions du
+  contexte `permissions: ['camera', 'microphone']` ; image et son contrôlés : `--use-file-for-fake-video-capture=/chemin/video.y4m` (ou `.mjpeg`) et
+  `--use-file-for-fake-audio-capture=/chemin/son.wav` ; autoplay : `--autoplay-policy=no-user-gesture-required`.
+- **Firefox** : `launchOptions.firefoxUserPrefs: { 'media.navigator.streams.fake': true, 'media.navigator.permission.disabled': true,
+  'media.autoplay.default': 0, 'media.autoplay.blocking_policy': 0 }`. Sans ces préférences `getUserMedia` reste suspendu (blague
+  classique : le test se bloque sans erreur).
+- **WebKit** : **pas** de périphérique simulé fiable ; Playwright n'expose pas d'option ; sous Linux headless `getUserMedia`
+  échoue (aucune caméra). Plan : sur WebKit tester **lecture, synchro, chat** sans caméra (le client doit fonctionner sans média local :
+  sécurité d'implémentation de la salle : `NotFoundError`/`NotAllowedError` → mode « spectateur » sans micro) ; l'autoplay exige un geste : **cliquer** d'abord sur « Lire ».
+- **Pas de H.264/AAC dans les Chromium/Firefox de Playwright** (builds sans codecs propriétaires) : **les fixtures de test doivent être en
+  WebM VP9/Opus** pour le mode `direct`, et les tests HLS (H.264) ne passent que sur `channel: 'chrome'` (Chrome stable : `npx playwright install chrome`) ou WebKit.
+  **À valider au premier essai du module intégration.** Les fixtures se fabriquent avec ffmpeg (`testsrc2` + `sine`, 10 s, quelques centaines de ko).
+- **Deux contextes qui se voient** : `const a = await browser.newContext({ permissions: […] }); const b = await browser.newContext(…)` : un seul `browser`, deux
+  contextes isolés (cookies séparés), deux `page` ; chacun se connecte avec un compte différent (création par l'API / `canape admin inviter`) ; le
+  WebRTC local fonctionne **sans STUN/TURN** (candidats `host`/mDNS : ajouter `--disable-features=WebRtcHideLocalIpsWithMdns` pour Chromium si les
+  candidats `.local` posent problème en CI) ; vérifier la connexion par `pc.connectionState` exposé dans l'interface (`data-etat="connecte"`).
+- **Test de synchro** : lancer la lecture dans A, attendre `data-etat` ou `video.currentTime` dans B par `expect.poll(() => b.evaluate(() =>
+  document.querySelector('video').currentTime), { timeout: 10_000 }).toBeGreaterThan(1)` ; écart `|tA − tB| < 0,5 s`.
+- **Configuration** : `projects: [{ name: 'chromium' }, { name: 'firefox' }, { name: 'webkit' }]`, `workers: 1` en CI (RAM), `retries: 1`,
+  `use: { trace: 'retain-on-failure', video: 'off' }`, `webServer: { command: 'node serveur/src/index.ts serve --config …', url: '…/api/etat',
+  reuseExistingServer: !process.env.CI }`, `timeout: 60_000`.
+- **CI** : `npx playwright install --with-deps chromium firefox webkit` (≈ 1 Go de téléchargement : mettre `~/.cache/ms-playwright` en cache
+  clé = version de Playwright) ; GitHub-hosted `ubuntu-24.04` convient ; **travail lourd** sur ce poste : jamais hors file Gagarine.
+Sources : https://playwright.dev/docs/api/class-browsertype#browser-type-launch ; https://playwright.dev/docs/ci ;
+https://webrtc.github.io/webrtc-org/testing/ (fake devices) ; https://bugzilla.mozilla.org/show_bug.cgi?id=1771789
+
+---
+
+## 9. GitHub Actions : déploiement par SSH
+
+- **Clé à commande forcée** : `~deploy/.ssh/authorized_keys` :
+  `restrict,command="/opt/canape/bin/recevoir" ssh-ed25519 AAAA… canape-deploiement` (`restrict` = pas de pty, pas de redirections, pas d'agent,
+  pas de X11) ; l'utilisateur `deploy` n'a **aucun** droit hors `sudo -n /opt/canape/bin/mettre-a-jour` (`/etc/sudoers.d/canape` :
+  `deploy ALL=(root) NOPASSWD: /opt/canape/bin/mettre-a-jour`). Côté CI : `ssh -i clé deploy@hote "<sha256>" < dist/canape-X.tar.gz`
+  (le SHA-256 arrive dans `$SSH_ORIGINAL_COMMAND`, validé par `^[0-9a-f]{64}$` ; le paquet est lu sur l'entrée standard, écrit dans un fichier
+  temporaire, vérifié, puis installé) : c'est la conception du contrat.
+- **Empreinte de l'hôte** : secret `SSH_KNOWN_HOSTS` (ligne `known_hosts` obtenue une fois par `ssh-keyscan -t ed25519 hote` **vérifié à la main**) ;
+  `StrictHostKeyChecking=yes` ; ne **pas** faire `ssh-keyscan` dans la CI (confiance aveugle).
+- **Environnement protégé** : job `deploiement` avec `environment: production` ; dans les paramètres : **branches autorisées** : `main` seulement,
+  relecteurs requis facultatifs (un clic « approuver »), **secrets (`SSH_PRIVATE_KEY`, `SSH_KNOWN_HOSTS`, `DEPLOY_HOST`) rattachés à l'environnement**, pas au dépôt.
+- **`concurrency`** : `concurrency: { group: deploiement-production, cancel-in-progress: false }` (deux déploiements ne se croisent
+  jamais ; ne **pas** annuler un déploiement en cours) ; pour la CI des PR : `group: ci-${{ github.ref }}`, `cancel-in-progress: true`.
+- **Permissions** : `permissions: { contents: read }` au niveau du workflow ; `contents: write` seulement dans le job qui crée la release
+  GitHub (`gh release create v$VERSION dist/* --notes-file …`, avec `GITHUB_TOKEN`).
+- **Épinglage** : `uses: actions/checkout@<SHA de 40 caractères> # v5.x.y` pour **toutes** les actions (une étiquette peut être déplacée) ; Dependabot
+  `package-ecosystem: github-actions` met les SHA à jour. Obtenir le SHA : `gh api repos/actions/checkout/git/ref/tags/v5` ; **à vérifier au moment d'écrire**
+  (je n'ai pas figé de SHA ici : ils changent).
+- **Node 26** : `actions/setup-node` avec `node-version: 26` (ou `node-version-file: .node-version` contenant `26.4.0`, identique à
+  `/opt/canape/node`) et `cache: npm` ; Node 26 deviendra LTS à l'automne 2026. Vérifier que l'étiquette `26` est résolue (sinon `check-latest: true`).
+  L'exécution de TypeScript natif : version **identique** entre CI et VPS (le dépôt épingle `26.4.0` dans `engines`).
+- **Playwright dans la CI** : voir 8 ; artefacts : `actions/upload-artifact` sur échec (`playwright-report/`, `retention-days: 7`) ; `timeout-minutes: 20`.
+- **Ordre** du flux `main` : `ci` (types, tests, build) → `paquet` (`scripts/paquet.sh`, `SHA256SUMS`) → `deploiement` (`environment: production`) → `release`.
+  Si l'envoi échoue, **ne pas** créer la release ; `mettre-a-jour` vérifie `/api/etat` et revient en arrière (contrat).
+- **Sécurité** : jamais `pull_request_target` avec le code d'un PR ; les secrets ne sont pas passés aux PR de forks ; `GITHUB_TOKEN` en lecture par défaut ;
+  masquer le chemin du paquet dans les journaux n'est pas nécessaire.
+Sources : https://docs.github.com/actions/security-for-github-actions/security-guides/security-hardening-for-github-actions ;
+https://docs.github.com/actions/deployment/targeting-different-environments ; https://github.com/actions/setup-node ;
+https://man.openbsd.org/sshd#AUTHORIZED_KEYS_FILE_FORMAT
