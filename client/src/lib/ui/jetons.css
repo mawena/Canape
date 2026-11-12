@@ -1,6 +1,6 @@
 /*
- * Jetons de design de Canapé 1.0 : « un salon la nuit, une lampe allumée » (docs/DESIGN.md §3).
- * Un seul thème, sombre. Aucune ressource externe : les polices sont hébergées dans /polices/.
+ * Jetons de design de Canapé, version 2 (phase 14) : thème clair par défaut, thème sombre en option (bleu) (docs/DESIGN.md, « Version 2 »).
+ * Aucune ressource externe : les polices sont hébergées dans /polices/.
  * À importer une seule fois (dans +layout.svelte).
  */
 
@@ -11,81 +11,24 @@
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 @font-face {
-  font-family: "Instrument Serif"; font-style: italic; font-weight: 400; font-display: swap;
-  src: url(/polices/instrument-serif-latin-400-italic.woff2) format("woff2");
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-@font-face {
   font-family: "Instrument Serif"; font-style: normal; font-weight: 400; font-display: swap;
   src: url(/polices/instrument-serif-latin-ext-400-normal.woff2) format("woff2");
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 @font-face {
-  font-family: "Instrument Serif"; font-style: italic; font-weight: 400; font-display: swap;
-  src: url(/polices/instrument-serif-latin-ext-400-italic.woff2) format("woff2");
-  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
-}
-@font-face {
-  font-family: "Hanken Grotesk"; font-style: normal; font-weight: 100 900; font-display: swap;
-  src: url(/polices/hanken-grotesk-latin-wght-normal.woff2) format("woff2");
+  font-family: "Figtree"; font-style: normal; font-weight: 300 900; font-display: swap;
+  src: url(/polices/figtree-latin-wght-normal.woff2) format("woff2");
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 @font-face {
-  font-family: "Hanken Grotesk"; font-style: normal; font-weight: 100 900; font-display: swap;
-  src: url(/polices/hanken-grotesk-latin-ext-wght-normal.woff2) format("woff2");
+  font-family: "Figtree"; font-style: normal; font-weight: 300 900; font-display: swap;
+  src: url(/polices/figtree-latin-ext-wght-normal.woff2) format("woff2");
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 
 :root {
-  /* Surfaces : « nuit prune » */
-  --fond: #14111a;
-  --s1: #1c1824;
-  --s2: #262031;
-  --s3: #312a3d;
-  --bord: #3d3549;          /* séparateurs décoratifs seulement */
-  --bord-champ: #857a95;    /* contours des champs et boutons : 3,4:1 minimum sur toutes les surfaces */
-
-  /* Texte */
-  --texte: #f4eee7;
-  --doux: #b9afc4;
-  --discret: #9a90a7;
-
-  /* La lampe : seule couleur d'action */
-  --lampe: #f4a85b;
-  --lampe-vive: #ffbf7d;
-  --lampe-sur: #1d1208;
-  --lampe-fond: rgba(244, 168, 91, 0.14);
-
-  /* États */
-  --ok: #6fd9b1;
-  --alerte: #ffd166;
-  --mal: #ff7f70;
-  --mal-sur: #2a0d0a;
-  --rose: #e892b0;          /* réservé à l'autre personne */
-  --ok-fond: rgba(111, 217, 177, 0.14);
-  --alerte-fond: rgba(255, 209, 102, 0.14);
-  --mal-fond: rgba(255, 127, 112, 0.14);
-  --rose-fond: rgba(232, 146, 176, 0.14);
-
-  /* Couleurs de présence (ordre d'arrivée : lampe, rose, …) ; texte #16101c dessus */
-  --presence-1: #f4a85b; --presence-2: #e892b0; --presence-3: #8fc7f0;
-  --presence-4: #b4a2f0; --presence-5: #9ad9a0; --presence-6: #f0d27a;
-  --sur-presence: #16101c;
-
-  /* Voile des modales, dégradés sur l'image du film */
-  --voile: rgba(8, 6, 12, 0.7);
-
-  /* Rayons */
-  --r-s: 8px; --r-m: 14px; --r-l: 22px; --r-affiche: 10px; --r-pill: 999px;
-
-  /* Élévations */
-  --ombre-2: 0 10px 24px rgba(0, 0, 0, 0.4);
-  --ombre-3: 0 12px 32px rgba(0, 0, 0, 0.5);
-  --ombre-4: 0 30px 80px rgba(0, 0, 0, 0.6);
-
-  /* Flous */
-  --flou-verre: blur(18px);
-  --fond-verre: rgba(28, 24, 36, 0.82);
+  /* Rayons : champs et boutons 12, cartes 20, grandes surfaces 28 ; pastilles et avatars ronds */
+  --r-s: 8px; --r-m: 12px; --r-l: 20px; --r-xl: 28px; --r-affiche: 12px; --r-pill: 999px;
 
   /* Espacements (base 4 px) */
   --e-1: 4px; --e-2: 8px; --e-3: 12px; --e-4: 16px; --e-5: 20px; --e-6: 24px;
@@ -93,18 +36,146 @@
 
   /* Mouvement */
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ressort: cubic-bezier(0.34, 1.4, 0.5, 1);
   --d-1: 120ms; --d-2: 220ms; --d-3: 420ms;
 
-  /* Polices */
+  /* Polices : Figtree pour toute l'interface, Instrument Serif pour les grands titres seulement */
   --titre: "Instrument Serif", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
-  --texte-police: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --texte-police: "Figtree", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
   /* Mise en page */
   --gouttiere: 16px;
-  --barre-haute: 72px;
+  --barre-haute: 68px;
   --barre-onglets: 64px;
+}
 
-  /* ---- Alias de compatibilité avec le kit de la 0.1 (pages des autres modules déjà écrites) ---- */
+/*
+ * Couleurs, deux thèmes (docs/DESIGN.md, « Version 2 ») : clair par défaut, sombre en option.
+ * L'attribut `data-theme` de <html> (posé avant le premier rendu par app.html) choisit le thème ;
+ * un élément peut aussi porter `data-theme="sombre"` pour rester sombre dans un thème clair
+ * (la salle, le lecteur, les pastilles sur une affiche). Les noms de jetons sont les mêmes dans les deux.
+ */
+:root, [data-theme='clair'] {
+  color-scheme: light;
+
+  /* Surfaces : fond bleuté très clair, cartes blanches, les plans « montent » vers le blanc */
+  --fond: #f5f7fb;
+  --s1: #ffffff;
+  --s2: #f1f4f9;
+  --s3: #e5eaf3;
+  --bord: #e2e8f1;          /* séparateurs décoratifs seulement */
+  --bord-vif: #cdd6e4;      /* contour d'une carte survolée ou mise en avant */
+  --bord-champ: #70829c;    /* contours des champs et boutons : 3,2:1 minimum sur toutes les surfaces */
+  --reflet: rgba(255, 255, 255, 0.9);  /* filet de lumière en haut des surfaces */
+
+  /* Texte */
+  --texte: #0f172a;
+  --doux: #475569;
+  --discret: #54647c;
+
+  /* Le bleu : seule couleur d'action (le nom `lampe` est gardé pour ne rien casser) */
+  --lampe: #1f5ce0;
+  --lampe-vive: #1b4fd1;    /* survol, anneau de focus */
+  --lampe-sur: #ffffff;
+  --lampe-fond: rgba(31, 92, 224, 0.1);
+  --lampe-degrade: linear-gradient(135deg, #2f6df0 0%, #4f46e5 100%);
+  --hero-degrade: linear-gradient(135deg, #1d4ed8 0%, #3b3fe0 55%, #6d3df0 100%);
+
+  /* États (texte lisible sur blanc, AA) */
+  --ok: #13753a;
+  --alerte: #8f4a06;
+  --mal: #c62222;
+  --mal-sur: #ffffff;
+  --info: #0369a1;
+  --rose: #c4165f;          /* réservé à l'autre personne */
+  --ok-fond: rgba(19, 117, 58, 0.1);
+  --alerte-fond: rgba(217, 119, 6, 0.13);
+  --mal-fond: rgba(198, 34, 34, 0.09);
+  --info-fond: rgba(3, 105, 161, 0.1);
+  --rose-fond: rgba(196, 22, 95, 0.09);
+
+  /* Couleurs de présence (ordre d'arrivée) ; texte #16101c dessus */
+  --presence-1: #ffb347; --presence-2: #ff8fb4; --presence-3: #8fc7f0;
+  --presence-4: #b4a2f0; --presence-5: #9ad9a0; --presence-6: #f0d27a;
+  --sur-presence: #16101c;
+
+  --voile: rgba(15, 23, 42, 0.5);
+
+  /* Élévations : ombres douces teintées de bleu */
+  --ombre-1: 0 1px 2px rgba(15, 23, 42, 0.08);
+  --ombre-2: 0 8px 24px -4px rgba(30, 58, 138, 0.12), 0 1px 3px rgba(15, 23, 42, 0.06);
+  --ombre-3: 0 16px 40px -8px rgba(30, 58, 138, 0.18), 0 2px 6px rgba(15, 23, 42, 0.06);
+  --ombre-4: 0 32px 80px -12px rgba(30, 58, 138, 0.32), 0 4px 12px rgba(15, 23, 42, 0.08);
+  --halo-lampe: 0 8px 22px -6px rgba(37, 99, 235, 0.55);
+  --halo-lampe-fort: 0 12px 30px -6px rgba(37, 99, 235, 0.68);
+  --lueur-hero: 0 24px 60px -12px rgba(15, 23, 42, 0.4), 0 0 80px -12px rgba(255, 255, 255, 0.5);
+
+  /* Verre et fond de page */
+  --flou-verre: blur(20px) saturate(1.5);
+  --fond-verre: rgba(255, 255, 255, 0.78);
+  --halo-fond-1: rgba(37, 99, 235, 0.1);
+  --halo-fond-2: rgba(124, 58, 237, 0.07);
+
+  /* Logo */
+  --logo-1: #2563eb; --logo-2: #ec4899; --logo-assise: #0f172a;
+}
+
+[data-theme='sombre'] {
+  color-scheme: dark;
+  color: var(--texte);
+
+  /* Surfaces : bleu nuit */
+  --fond: #0b1220;
+  --s1: #111a2e;
+  --s2: #16213a;
+  --s3: #1e2b4a;
+  --bord: #1f2c47;
+  --bord-vif: #2b3b5e;
+  --bord-champ: #6b7fa3;    /* 3,5:1 minimum sur toutes les surfaces */
+  --reflet: rgba(255, 255, 255, 0.06);
+
+  --texte: #f1f5ff;
+  --doux: #b4c0d8;
+  --discret: #94a3c4;
+
+  --lampe: #60a5fa;
+  --lampe-vive: #93c5fd;
+  --lampe-sur: #071226;
+  --lampe-fond: rgba(96, 165, 250, 0.16);
+  --lampe-degrade: linear-gradient(180deg, #7ab6ff 0%, #559af7 100%);
+  --hero-degrade: linear-gradient(135deg, #1e3a8a 0%, #312e81 60%, #4c1d95 100%);
+
+  --ok: #4ade80;
+  --alerte: #fbbf24;
+  --mal: #ff7b72;
+  --mal-sur: #2a0d0a;
+  --info: #7dd3fc;
+  --rose: #ff8fc0;
+  --ok-fond: rgba(74, 222, 128, 0.14);
+  --alerte-fond: rgba(251, 191, 36, 0.14);
+  --mal-fond: rgba(255, 123, 114, 0.14);
+  --info-fond: rgba(125, 211, 252, 0.14);
+  --rose-fond: rgba(255, 143, 192, 0.14);
+
+  --voile: rgba(3, 7, 18, 0.72);
+
+  --ombre-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --ombre-2: 0 8px 20px rgba(0, 0, 0, 0.38), 0 1px 0 var(--reflet) inset;
+  --ombre-3: 0 14px 36px rgba(0, 0, 0, 0.5), 0 1px 0 var(--reflet) inset;
+  --ombre-4: 0 32px 90px rgba(0, 0, 0, 0.62), 0 1px 0 var(--reflet) inset;
+  --halo-lampe: 0 6px 22px -6px rgba(96, 165, 250, 0.55);
+  --halo-lampe-fort: 0 8px 28px -6px rgba(96, 165, 250, 0.7);
+  --lueur-hero: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 90px -10px rgba(96, 165, 250, 0.45);
+
+  --fond-verre: rgba(17, 26, 46, 0.78);
+  --halo-fond-1: rgba(59, 130, 246, 0.14);
+  --halo-fond-2: rgba(99, 102, 241, 0.1);
+
+  --logo-1: #3b82f6; --logo-2: #f472b6; --logo-assise: #e2e8f0;
+}
+
+/* ---- Alias de compatibilité avec le kit de la 0.1 : recalculés dans chaque thème ---- */
+:root, [data-theme='clair'], [data-theme='sombre'] {
   --fond-2: var(--s1); --fond-3: var(--s2);
   --bordure: var(--bord); --or: var(--lampe); --or-doux: var(--lampe);
   --creme: var(--texte); --velours: var(--mal-fond); --velours-vif: var(--mal);
@@ -112,8 +183,6 @@
   --ombre: var(--ombre-3);
   --espace-1: 4px; --espace-2: 8px; --espace-3: 12px; --espace-4: 16px; --espace-5: 24px; --espace-6: 40px;
   --duree: var(--d-1);
-
-  color-scheme: dark;
 }
 
 @media (min-width: 641px) { :root { --gouttiere: 24px; } }
@@ -139,23 +208,27 @@ html, body { height: 100%; margin: 0; }
 body {
   background-color: var(--fond);
   background-image:
-    radial-gradient(900px 500px at 85% -5%, rgba(244, 168, 91, 0.09), transparent 70%),
-    radial-gradient(800px 500px at -5% 20%, rgba(232, 146, 176, 0.06), transparent 70%);
+    radial-gradient(1100px 600px at 88% -10%, var(--halo-fond-1), transparent 70%),
+    radial-gradient(900px 600px at -10% 15%, var(--halo-fond-2), transparent 70%);
   background-attachment: fixed;
   color: var(--texte);
   font: 400 16px/1.5 var(--texte-police);
+  font-feature-settings: "ss01", "cv11";
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
   overflow-x: hidden;
 }
 h1, h2, h3, h4, p { margin: 0; }
-h1, h2 { font-family: var(--titre); font-weight: 400; }
-h3, h4 { font-family: var(--texte-police); font-weight: 600; }
+h1 { font-family: var(--titre); font-weight: 400; }
+h2 { font-family: var(--texte-police); font-weight: 700; letter-spacing: -0.015em; }
+h3, h4 { font-family: var(--texte-police); font-weight: 650; letter-spacing: -0.005em; }
 [hidden] { display: none !important; }
 button, input, textarea, select { font: inherit; color: inherit; }
 button { cursor: pointer; }
 a { color: var(--lampe); }
+input[type='checkbox'], input[type='radio'] { accent-color: var(--lampe); }
 img, svg { max-width: 100%; }
-::selection { background: rgba(244, 168, 91, 0.35); color: var(--texte); }
+::selection { background: var(--lampe-fond); color: var(--texte); }
 :focus-visible { outline: 3px solid var(--lampe-vive); outline-offset: 3px; border-radius: var(--r-s); }
 .vh {
   position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);
@@ -169,10 +242,10 @@ img, svg { max-width: 100%; }
 ::-webkit-scrollbar-thumb { background: var(--s3); border-radius: 999px; border: 2px solid var(--fond); }
 ::-webkit-scrollbar-track { background: transparent; }
 
-/* Échelle typographique (classes utilitaires) */
+/* Échelle typographique (classes utilitaires) : le serif ne sert qu'aux grands titres (affiche, titre 1) */
 .t-affiche { font: 400 clamp(2.75rem, 7vw, 4.5rem) / 0.97 var(--titre); letter-spacing: -0.01em; }
 .t-titre1 { font: 400 clamp(2.25rem, 5vw, 3.5rem) / 1.02 var(--titre); letter-spacing: -0.01em; }
-.t-titre2 { font: 400 clamp(1.75rem, 3.5vw, 2.25rem) / 1.12 var(--titre); }
-.t-titre3 { font: 600 1.375rem / 1.27 var(--texte-police); }
+.t-titre2 { font: 700 clamp(1.25rem, 2.4vw, 1.5rem) / 1.2 var(--texte-police); letter-spacing: -0.02em; }
+.t-titre3 { font: 650 1.125rem / 1.3 var(--texte-police); letter-spacing: -0.01em; }
 .t-petit { font-size: 0.875rem; line-height: 1.43; }
 .t-legende { font: 500 0.75rem / 1.33 var(--texte-police); }

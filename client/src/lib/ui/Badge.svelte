@@ -16,7 +16,7 @@
   let { ton = 'neutre', icone, surImage = false, children }: Props = $props();
 </script>
 
-<span class="badge {ton}" class:sur-image={surImage}>
+<span class="badge {ton}" class:sur-image={surImage} data-theme={surImage ? 'sombre' : undefined}>
   {#if icone}<Icone nom={icone} taille={14} />{/if}
   {@render children?.()}
 </span>
@@ -24,12 +24,12 @@
 <style>
   .badge {
     display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 0 11px; border-radius: var(--r-pill);
-    background: var(--s2); color: var(--doux); font: 500 13px/1 var(--texte-police); white-space: nowrap;
+    background: var(--s2); color: var(--doux); font: 600 13px/1 var(--texte-police); white-space: nowrap;
   }
   .ok { background: var(--ok-fond); color: var(--ok); }
   .alerte { background: var(--alerte-fond); color: var(--alerte); }
   .mal { background: var(--mal-fond); color: var(--mal); }
   .lampe { background: var(--lampe-fond); color: var(--lampe); }
   .rose { background: var(--rose-fond); color: var(--rose); }
-  .sur-image { background: rgba(20, 17, 26, 0.8); backdrop-filter: blur(6px); }
+  .sur-image { background: rgba(8, 12, 24, 0.78); backdrop-filter: blur(8px); }
 </style>

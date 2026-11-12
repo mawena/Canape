@@ -16,7 +16,7 @@
   let volume = $state(0.8);
   let modale = $state(false);
   let dangereuse = $state(false);
-  const COULEURS = ['#f4a85b', '#e892b0', '#8fc7f0', '#b4a2f0', '#9ad9a0', '#f0d27a', '#14111a', '#857a95', '#f4eee7', '#6fd9b1', '#ffd166', '#ff7f70'];
+  const COULEURS = ['#ffb347', '#ff8fb4', '#8fc7f0', '#b4a2f0', '#9ad9a0', '#f0d27a', '#0d0c12', '#7d7790', '#f7f3ee', '#5fdcae', '#ffd166', '#ff7b6e'];
   const NOMS = ['fond', 'lampe', 'rose', 'bleu', 'violet', 'vert', 'jaune'];
   const FILMS = [
     { id: 'a', titre: 'Les Heures bleues', annee: 2023, duree: 6720, etat: 'pret' as const },
@@ -99,7 +99,7 @@
           <Badge ton="mal" icone="alerte">Son non lisible</Badge><Badge ton="lampe">Nouveau</Badge><Badge ton="rose" icone="utilisateurs">Partagé</Badge>
         </div>
         <div class="rang">
-          <Avatar prenom="Awa" couleur="#f4a85b" present /><Avatar prenom="Léa" couleur="#e892b0" /><Avatar prenom="Sam" couleur="#8fc7f0" taille={56} />
+          <Avatar prenom="Awa" couleur="#ffb347" present /><Avatar prenom="Léa" couleur="#ff8fb4" /><Avatar prenom="Sam" couleur="#8fc7f0" taille={56} />
           <PileAvatars personnes={[{ prenom: 'Awa' }, { prenom: 'Léa' }, { prenom: 'Sam' }, { prenom: 'Mehdi' }, { prenom: 'Zoé' }, { prenom: 'Noa' }]} />
           <Logo mot />
         </div>
@@ -137,7 +137,7 @@
             {#snippet debut()}<MiniAffiche titre="Un été à Sète" largeur={44} />{/snippet}
           </LigneListe>
         </Liste>
-        <div class="lueur-demo"><Lueur couleur="#e892b0" intensite={0.45} /><p>La lueur dépose la couleur du film derrière un élément.</p></div>
+        <div class="lueur-demo"><Lueur couleur="#ff8fb4" intensite={0.45} /><p>La lueur dépose la couleur du film derrière un élément.</p></div>
       </div>
       <div class="colonne">
         <h2 class="t-titre2">États</h2>
@@ -164,7 +164,7 @@
   section { display: grid; gap: var(--e-4); align-content: start; }
   .palette { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
   .teinte { min-height: 80px; border-radius: var(--r-m); border: 1px solid var(--bord); display: flex; align-items: flex-end; padding: 10px; }
-  .n { font-size: 12px; font-weight: 600; background: rgba(20, 17, 26, 0.75); color: var(--texte); padding: 2px 8px; border-radius: 999px; }
+  .n { font-size: 12px; font-weight: 600; background: rgba(13, 12, 18, 0.75); color: var(--texte); padding: 2px 8px; border-radius: 999px; }
   .rang { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
   .icones { gap: 8px; }
   .ic { display: grid; place-items: center; width: 44px; height: 44px; border-radius: var(--r-m); background: var(--s1); border: 1px solid var(--bord); color: var(--doux); }

@@ -5,7 +5,7 @@
   import { api, ErreurApi } from '$lib/api/client.ts';
   import { aideMotDePasse, jaugeMotDePasse } from '$lib/comptes/format.ts';
   import { session } from '$lib/comptes/session.svelte.ts';
-  import { Avatar, BarreProgression, Bouton, Carte, Champ, Chargement, EtatVide } from '$lib/ui/index.ts';
+  import { Avatar, BarreProgression, Bouton, Carte, Champ, Chargement, EtatVide, Logo } from '$lib/ui/index.ts';
 
   const jeton = $derived(page.params['jeton'] ?? '');
   let invitation = $state<InvitationPublique | null>(null);
@@ -59,7 +59,7 @@
 <svelte:head><title>Invitation · Canapé</title></svelte:head>
 
 <main>
-  <h1>Canapé</h1>
+  <a class="marque" href="/connexion" aria-label="Canapé"><Logo taille={44} mot /></a>
   {#if echec}
     <EtatVide titre="Ce lien ne marche pas." texte={echec} />
   {:else if !invitation}
@@ -103,13 +103,17 @@
 </main>
 
 <style>
-  main { min-height: 100%; display: grid; place-content: center; justify-items: center; gap: var(--espace-3); padding: var(--espace-5) var(--espace-4); }
-  h1 { color: var(--or); text-align: center; }
-  main :global(.carte) { width: min(420px, calc(100vw - 2 * var(--espace-4))); }
-  form { display: grid; gap: var(--espace-3); }
-  fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: var(--espace-2); }
-  legend { color: var(--doux); font-size: 0.85rem; padding: 0; margin-bottom: var(--espace-2); }
-  .couleurs { display: flex; flex-wrap: wrap; gap: var(--espace-2); }
-  .couleur { background: none; border: 2px solid transparent; border-radius: 50%; padding: 2px; cursor: pointer; }
-  .couleur.choisie { border-color: var(--creme, #fff); }
+  main {
+    min-height: 100%; display: grid; place-content: center; justify-items: center; gap: var(--e-5); padding: var(--e-7) var(--e-4);
+    background: radial-gradient(700px 420px at 50% 12%, rgba(255, 255, 255, 0.18), transparent 70%), var(--hero-degrade);
+  }
+  .marque { text-decoration: none; --texte: #fff; --logo-1: #bfdbfe; --logo-2: #fbcfe8; --logo-assise: #fff; }
+  main :global(.carte) { width: min(440px, calc(100vw - 2 * var(--e-4))); box-shadow: var(--ombre-3); border-radius: var(--r-xl); padding: var(--e-7); }
+  main :global(.carte h2) { font: 400 clamp(1.9rem, 5vw, 2.4rem) / 1.08 var(--titre); letter-spacing: -0.01em; }
+  form { display: grid; gap: var(--e-4); }
+  fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: var(--e-2); }
+  legend { color: var(--doux); font-size: 14px; font-weight: 600; padding: 0; margin-bottom: var(--e-2); }
+  .couleurs { display: flex; flex-wrap: wrap; gap: var(--e-2); }
+  .couleur { background: none; border: 2px solid transparent; border-radius: 50%; padding: 3px; cursor: pointer; min-width: 44px; min-height: 44px; display: grid; place-items: center; }
+  .couleur.choisie { border-color: var(--texte); }
 </style>
