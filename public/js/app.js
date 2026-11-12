@@ -160,7 +160,7 @@
           auFlux: ajouterFlux, auEtat: etatPair, auRetrait: retirerFlux,
         });
         S.appel.definirLocal({ audio: S.micro.piste, video: S.camera.piste });
-        for (const p of m.participants) { S.participants.set(p.id, p); creerTuile(p.id, p.prenom); majTuileMedia(p.id); S.appel.ajouter(p.id); }
+        for (const p of m.participants) { S.participants.set(p.id, p); creerTuile(p.id, p.prenom); majTuileMedia(p.id); S.appel.ajouter(p.id, { attendreOffre: true }); }
         majPresents();
         envoyerMedia();
         appliquerEtat(m.etat, null, null);
@@ -232,6 +232,7 @@
     $('voile-attente').hidden = !attendent.length;
     if (attendent.length) $('texte-attente').textContent = (attendent.length === 1 ? attendent[0] + ' charge' : attendent.join(', ') + ' chargent') + ' le film…';
     majBoutonLecture();
+    majSynchro();
     synchroniser();
     if (!ancien || ancien.lecture !== etat.lecture) reveiller();
   }
@@ -557,7 +558,7 @@
     }
     const suivant = window.Son.facteurSuivant(S.duck, quelquunParle, S.duckActif);
     if (Math.abs(suivant - S.duck) > 0.001) { S.duck = suivant; appliquerVolumes(); }
-  }, 100);
+  }, 40);
 
   // ------------------------------------------------------------------ caméra et micro
   async function demarrerMedias() {

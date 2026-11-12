@@ -33,8 +33,9 @@ passent en même temps. Conception : [docs/CONCEPTION.md](docs/CONCEPTION.md).
 ## Phase 4 — Tests
 
 - [x] Tests unitaires et d'intégration du serveur (`npm test`)
-- [ ] Essai réel dans un navigateur, à deux participants (caméras simulées), avec corrections
-- [ ] `canape-convertir` essayé sur un vrai fichier
+- [x] Essai réel dans un navigateur, à deux participants (caméras simulées), avec corrections (`npm run essai-navigateur`)
+- [x] `canape-convertir` essayé sur un vrai fichier
+- [x] Tests et essai navigateur sous Node 26 (version du VPS) comme sous Node 18
 
 ## Phase 5 — Déploiement sur le serveur (nginx)
 
