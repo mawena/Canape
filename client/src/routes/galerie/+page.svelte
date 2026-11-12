@@ -180,7 +180,7 @@
 {#if telechargements.peutAjouter}
 <Modale bind:ouverte={choixOuvert} titre="Ajouter un film">
   <div class="choix">
-    <button type="button" class="option" onclick={() => { choixOuvert = false; selecteur?.click(); }}>
+    <button type="button" class="option" data-test="ajouter-ordinateur" onclick={() => { choixOuvert = false; selecteur?.click(); }}>
       <Icone nom="televerser" /><span><strong>Depuis mon ordinateur</strong><span class="t-petit">Choisis ou dépose un fichier vidéo.</span></span>
     </button>
     <button type="button" class="option" data-test="ajouter-torrent" onclick={() => ouvrirTorrent()}>
