@@ -2,7 +2,7 @@ import { rm } from 'node:fs/promises';
 import path from 'node:path';
 import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify';
 import {
-  COULEURS_AVATAR, type Compte, type EtatApi, type InvitationAdmin, type InvitationPublique, type Reglages,
+  COULEURS_AVATAR, type Compte, type EtatApi, type EtatInscription, type InvitationAdmin, type InvitationPublique, type Reglages,
   type Role, type Utilisateur, type UtilisateurAdmin, type UtilisateurPublic,
 } from '@canape/partage';
 import {
@@ -13,6 +13,11 @@ import { maintenantIso } from '../../commun/identifiants.ts';
 import { hasherMotDePasse, verifierMotDePasse } from '../../commun/motdepasse.ts';
 import { version } from '../../commun/version.ts';
 import { transaction } from '../../db/index.ts';
+import { comptesConnus, noterTrouve } from './connus.ts';
+import {
+  etatInscription, inscriptionsDuJour, INSCRIPTIONS_PAR_HEURE_ET_IP, INSCRIPTIONS_PAR_JOUR, insererInscrit,
+  raisonFermeture, TENTATIVES_PAR_IP, validerCorps, verifierJeton,
+} from './inscription.ts';
 import { LimiteEssais } from './limite.ts';
 import {
   chercherInvitation, creerInvitation, ecrireReglages, invitationValide, lienInvitation, lireReglages,
@@ -49,6 +54,9 @@ function administrateursActifsAutres(db: import('../../db/index.ts').Base, id: n
 const moduleComptes: FastifyPluginAsync = async (app) => {
   const { db, config } = app;
   const limite = new LimiteEssais(5, 60_000);
+  const limiteInscriptionsIp = new LimiteEssais(INSCRIPTIONS_PAR_HEURE_ET_IP, 3_600_000);
+  const limiteTentativesIp = new LimiteEssais(TENTATIVES_PAR_IP, 600_000);
+  const limiteRecherches = new LimiteEssais(30, 60_000);
   const calculerStockage = creerCalculStockage(config, db);
   const cleIp = (req: FastifyRequest): string => `ip:${req.ip}`;
 
@@ -67,7 +75,7 @@ const moduleComptes: FastifyPluginAsync = async (app) => {
       const { sessionId: _s, ...sans } = u;
       utilisateur = sans;
     }
-    return { version, utilisateur, installationRequise: nombreComptes(db) === 0 };
+    return { version, utilisateur, installationRequise: nombreComptes(db) === 0, inscriptionOuverte: raisonFermeture(db, config) === null };
   });
 
   // ---- Connexion / déconnexion ------------------------------------------------------------------------------
@@ -107,6 +115,52 @@ const moduleComptes: FastifyPluginAsync = async (app) => {
   app.post('/api/deconnexion', async (req, reply) => {
     supprimerSession(req, reply);
     return reply.status(204).send();
+  });
+
+  // ---- Inscription libre ------------------------------------------------------------------------------------
+  const refuser429 = (reply: FastifyReply, attente: number): never => {
+    reply.header(ENTETE_LIMITE, String(Math.max(1, attente)));
+    throw new ErreurHttp(429, 'trop_de_requetes', attente > 120
+      ? `Trop d'inscriptions depuis ta connexion. Réessaie dans ${Math.ceil(attente / 60)} minutes.`
+      : `Trop d'essais. Réessaie dans ${Math.max(1, attente)} seconde${attente > 1 ? 's' : ''}.`);
+  };
+
+  app.get('/api/inscription', async (_req, reply): Promise<EtatInscription> => {
+    reply.header('Cache-Control', 'no-store');
+    return etatInscription(db, config);
+  });
+
+  app.post<{ Body: Record<string, unknown> }>('/api/inscription', {
+    bodyLimit: 8192,
+    schemaErrorFormatter: schemaErreur,
+    schema: { body: { type: 'object' } },
+  }, async (req, reply) => {
+    const ip = [cleIp(req)];
+    const raison = raisonFermeture(db, config);
+    if (raison) throw new ErreurHttp(403, 'inscriptions_fermees', raison);
+    const attenteTentatives = limiteTentativesIp.attente(ip);
+    if (attenteTentatives > 0) refuser429(reply, attenteTentatives);
+    limiteTentativesIp.echec(ip);
+    const attenteIp = limiteInscriptionsIp.attente(ip);
+    if (attenteIp > 0) refuser429(reply, attenteIp);
+    if (inscriptionsDuJour(db) >= INSCRIPTIONS_PAR_JOUR) {
+      reply.header(ENTETE_LIMITE, '3600');
+      throw new ErreurHttp(429, 'trop_de_requetes', "Beaucoup d'inscriptions aujourd'hui. Réessaie un peu plus tard.");
+    }
+    const corps = req.body;
+    const refus = verifierJeton(db, corps['jeton']);
+    if (refus) throw requeteInvalide(refus);
+    if (corps['site'] !== undefined && corps['site'] !== '') throw requeteInvalide('Le formulaire est invalide. Recharge la page et réessaie.');
+    const champs = validerCorps(corps);
+    if (db.prepare('SELECT 1 FROM utilisateurs WHERE identifiant = ?').get(champs.identifiant)) {
+      throw conflit('identifiant_pris', 'Cet identifiant est déjà pris. Choisis-en un autre.');
+    }
+    const hachage = await hasherMotDePasse(champs.motDePasse);
+    const id = transaction(db, () => insererInscrit(db, config, champs, hachage));
+    limiteInscriptionsIp.echec(ip);
+    supprimerSession(req);
+    creerSession(id, req, reply);
+    return reply.status(201).send(versUtilisateur(ligneUtilisateur(db, id) as LigneUtilisateur));
   });
 
   // ---- Invitations (libres) ---------------------------------------------------------------------------------
@@ -161,10 +215,13 @@ const moduleComptes: FastifyPluginAsync = async (app) => {
         throw conflit('identifiant_pris', 'Cet identifiant est déjà pris. Choisis-en un autre.');
       }
       const ins = db.prepare(
-        `INSERT INTO utilisateurs (prenom, identifiant, mot_de_passe, role, peut_televerser, quota_octets, actif, couleur, cree_le, derniere_connexion)
-         VALUES (?, ?, ?, ?, 1, ?, 1, ?, ?, ?)`,
-      ).run(prenom, identifiant, hachage, role, quota, couleur, maintenantIso(), maintenantIso());
-      return Number(ins.lastInsertRowid);
+        `INSERT INTO utilisateurs (prenom, identifiant, mot_de_passe, role, peut_televerser, peut_torrent, origine, quota_octets, actif, couleur, cree_le, derniere_connexion)
+         VALUES (?, ?, ?, ?, 1, 1, ?, ?, 1, ?, ?, ?)`,
+      ).run(prenom, identifiant, hachage, role, nombreComptes(db) === 0 ? 'installation' : 'invitation', quota, couleur, maintenantIso(), maintenantIso());
+      const nouveau = Number(ins.lastInsertRowid);
+      // Garde qui a invité qui (les comptes « connus » : GET /api/utilisateurs).
+      db.prepare('UPDATE invitations SET utilisateur_id = ? WHERE id = ?').run(nouveau, lien.id);
+      return nouveau;
     });
     supprimerSession(req);
     creerSession(id, req, reply);
@@ -226,9 +283,28 @@ const moduleComptes: FastifyPluginAsync = async (app) => {
     return utilisateurComplet(ligneUtilisateur(db, id) as LigneUtilisateur, octetsParProprietaire(db).get(id) ?? 0);
   });
 
-  app.get('/api/utilisateurs', { onRequest: app.exigerConnexion }, async (): Promise<UtilisateurPublic[]> => {
+  // Admin : tous les comptes actifs. Viewer : les comptes « connus » (voir `connus.ts`). `?identifiant=` : recherche exacte.
+  app.get<{ Querystring: { identifiant?: string } }>('/api/utilisateurs', { onRequest: app.exigerConnexion }, async (req, reply): Promise<UtilisateurPublic[]> => {
+    reply.header('Cache-Control', 'no-store');
+    const moi = req.utilisateur;
+    const q = req.query.identifiant;
+    if (q !== undefined) {
+      if (typeof q !== 'string' || q.trim().length === 0 || q.length > 200) throw requeteInvalide("Indique l'identifiant à chercher.");
+      const cle = [`rech:${moi.id}`];
+      const attente = limiteRecherches.attente(cle);
+      if (attente > 0) {
+        reply.header(ENTETE_LIMITE, String(attente));
+        throw new ErreurHttp(429, 'trop_de_requetes', `Trop de recherches. Réessaie dans ${attente} seconde${attente > 1 ? 's' : ''}.`);
+      }
+      limiteRecherches.echec(cle);
+      const t = db.prepare('SELECT id, prenom, couleur FROM utilisateurs WHERE actif = 1 AND identifiant = ? AND id <> ?').get(q.trim(), moi.id) as UtilisateurPublic | undefined;
+      if (!t) return [];
+      noterTrouve(moi.id, t.id);
+      return [{ id: t.id, prenom: t.prenom, couleur: t.couleur }];
+    }
     const l = db.prepare('SELECT id, prenom, couleur FROM utilisateurs WHERE actif = 1 ORDER BY prenom COLLATE NOCASE, id').all() as unknown as UtilisateurPublic[];
-    return l.map(({ id, prenom, couleur }) => ({ id, prenom, couleur }));
+    const connus = moi.role === 'admin' ? null : comptesConnus(db, moi.id);
+    return l.filter((u) => connus === null || connus.has(u.id)).map(({ id, prenom, couleur }) => ({ id, prenom, couleur }));
   });
 
   // ---- Administration ---------------------------------------------------------------------------------------
@@ -241,7 +317,7 @@ const moduleComptes: FastifyPluginAsync = async (app) => {
       return lignes.map((l) => ({ ...versUtilisateur(l), actif: l.actif === 1, octetsUtilises: octets.get(l.id) ?? 0 }));
     });
 
-    admin.patch<{ Params: { id: number }; Body: { prenom?: string; role?: Role; peutTeleverser?: boolean; quotaOctets?: number | null; actif?: boolean } }>('/utilisateurs/:id', {
+    admin.patch<{ Params: { id: number }; Body: { prenom?: string; role?: Role; peutTeleverser?: boolean; peutTorrent?: boolean; quotaOctets?: number | null; actif?: boolean } }>('/utilisateurs/:id', {
       schemaErrorFormatter: schemaErreur,
       schema: {
         params: { type: 'object', properties: { id: { type: 'integer', minimum: 1 } } },
@@ -251,6 +327,7 @@ const moduleComptes: FastifyPluginAsync = async (app) => {
             prenom: { type: 'string', minLength: PRENOM_MIN, maxLength: PRENOM_MAX + 20 },
             role: { type: 'string', enum: ['admin', 'viewer'] },
             peutTeleverser: { type: 'boolean' },
+            peutTorrent: { type: 'boolean' },
             quotaOctets: { type: ['integer', 'null'], minimum: 0, maximum: Number.MAX_SAFE_INTEGER },
             actif: { type: 'boolean' },
           },
@@ -272,6 +349,7 @@ const moduleComptes: FastifyPluginAsync = async (app) => {
         if (prenom !== undefined) db.prepare('UPDATE utilisateurs SET prenom = ? WHERE id = ?').run(prenom, id);
         if (b.role !== undefined) db.prepare('UPDATE utilisateurs SET role = ? WHERE id = ?').run(b.role, id);
         if (b.peutTeleverser !== undefined) db.prepare('UPDATE utilisateurs SET peut_televerser = ? WHERE id = ?').run(b.peutTeleverser ? 1 : 0, id);
+        if (b.peutTorrent !== undefined) db.prepare('UPDATE utilisateurs SET peut_torrent = ? WHERE id = ?').run(b.peutTorrent ? 1 : 0, id);
         if (b.quotaOctets !== undefined) db.prepare('UPDATE utilisateurs SET quota_octets = ? WHERE id = ?').run(b.quotaOctets, id);
         if (b.actif !== undefined) {
           db.prepare('UPDATE utilisateurs SET actif = ? WHERE id = ?').run(b.actif ? 1 : 0, id);
@@ -313,7 +391,7 @@ const moduleComptes: FastifyPluginAsync = async (app) => {
     });
 
     admin.get('/invitations', async (): Promise<InvitationAdmin[]> => {
-      db.prepare("DELETE FROM invitations WHERE expire_le < ? AND (utilisee_le IS NULL OR utilisee_le < ?)").run(
+      db.prepare("DELETE FROM invitations WHERE expire_le < ? AND (utilisee_le IS NULL OR (utilisee_le < ? AND utilisateur_id IS NULL))").run(
         maintenantIso(new Date(Date.now() - 30 * 86_400_000)), maintenantIso(new Date(Date.now() - 30 * 86_400_000)),
       );
       const l = db.prepare('SELECT * FROM invitations ORDER BY id DESC LIMIT 200').all() as unknown as LigneInvitation[];
