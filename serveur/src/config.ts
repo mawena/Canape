@@ -21,6 +21,22 @@ export interface Config {
   films: string;
   cache: string;
   televersements: string;
+  /** Torrents activés (`CANAPE_TORRENTS`). */
+  torrents: boolean;
+  /** Données des torrents en cours (`<id>/…`) et `.torrent` gardés (`.torrents/`). */
+  telechargements: string;
+  /** Téléchargements actifs en même temps. */
+  torrentSimultanes: number;
+  /** Octets/s reçus au plus (0 = sans limite). */
+  torrentDebitMax: number;
+  /** Octets/s envoyés au plus (0 = sans limite). */
+  torrentEnvoiMax: number;
+  /** Ratio de partage après la fin (0 = on arrête dès la fin). */
+  torrentPartage: number;
+  /** Port d'écoute des pairs (0 = au hasard). */
+  torrentPort: number;
+  /** Interne (essais) : ni DHT, ni trackers publics, ni UPnP/NAT-PMP, ni découverte locale ; suivi plus rapide. */
+  torrentIsole: boolean;
   /** Octets. */
   televersementMax: number;
   quotaDefaut: number;
@@ -86,6 +102,15 @@ function booleen(v: string | undefined, defaut: boolean): boolean {
   return ['1', 'true', 'oui', 'yes', 'on'].includes(v.toLowerCase());
 }
 
+function decimal(v: string | undefined, defaut: number, nom: string, min: number, max: number): number {
+  if (v === undefined || v === '') return defaut;
+  const n = Number(v.replace(',', '.'));
+  if (!Number.isFinite(n) || n < min || n > max) {
+    throw new Error(`${nom} doit être un nombre entre ${min} et ${max} (reçu « ${v} »).`);
+  }
+  return n;
+}
+
 function taille(v: string | undefined, defaut: string, nom: string): number {
   return analyserTaille(v === undefined || v === '' ? defaut : v, nom);
 }
@@ -130,6 +155,14 @@ export function chargerConfig(env: Record<string, string | undefined> = process.
     films: path.resolve(v['CANAPE_FILMS'] || './films'),
     cache: path.resolve(v['CANAPE_CACHE'] || './cache'),
     televersements: path.resolve(v['CANAPE_TELEVERSEMENTS'] || './televersements'),
+    torrents: booleen(v['CANAPE_TORRENTS'], true),
+    telechargements: path.resolve(v['CANAPE_TELECHARGEMENTS'] || './telechargements'),
+    torrentSimultanes: entier(v['CANAPE_TORRENT_SIMULTANES'], 2, 'CANAPE_TORRENT_SIMULTANES', 1, 50),
+    torrentDebitMax: taille(v['CANAPE_TORRENT_DEBIT_MAX'], '0', 'CANAPE_TORRENT_DEBIT_MAX'),
+    torrentEnvoiMax: taille(v['CANAPE_TORRENT_ENVOI_MAX'], '1M', 'CANAPE_TORRENT_ENVOI_MAX'),
+    torrentPartage: decimal(v['CANAPE_TORRENT_PARTAGE'], 0, 'CANAPE_TORRENT_PARTAGE', 0, 1000),
+    torrentPort: entier(v['CANAPE_TORRENT_PORT'], 0, 'CANAPE_TORRENT_PORT', 0, 65535),
+    torrentIsole: booleen(v['CANAPE_TORRENT_ISOLE'], false),
     televersementMax: taille(v['CANAPE_TELEVERSEMENT_MAX'], '100G', 'CANAPE_TELEVERSEMENT_MAX'),
     quotaDefaut: taille(v['CANAPE_QUOTA_DEFAUT'], '100G', 'CANAPE_QUOTA_DEFAUT'),
     cacheMax: taille(v['CANAPE_CACHE_MAX'], '20G', 'CANAPE_CACHE_MAX'),
