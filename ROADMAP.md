@@ -119,7 +119,7 @@ Ajouter un film par un lien magnet ou un fichier `.torrent` et suivre son télé
 - [x] Recherche : applications de streaming et de visionnage à deux de 2026, palettes, typographie, composants
 - [x] Nouvelle palette et jetons (contrastes AA vérifiés), typographie, élévations, mouvement
 - [x] Kit d'interface et navigation repris (boutons, cartes, champs, modales, panneaux, états vides, chargements)
-- [ ] Écrans repris un par un : accueil, galerie et fiche, téléchargements, séances, salle, compte, administration, connexion et invitation
-- [ ] Facilité d'usage : premiers pas guidés, textes d'aide, messages d'erreur clairs, retours visuels, cibles tactiles
+- [x] Écrans repris un par un : accueil, galerie et fiche, téléchargements, séances, salle, compte, administration, connexion et invitation
+- [x] Facilité d'usage : premiers pas guidés, textes d'aide, messages d'erreur clairs, retours visuels, cibles tactiles
 - [ ] Captures avant / après (ordinateur et téléphone), DESIGN.md à jour, essais Playwright verts
 - [ ] Release du nouveau design (version mineure : rien d'incompatible)
