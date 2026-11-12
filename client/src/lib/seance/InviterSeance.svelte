@@ -122,6 +122,7 @@
   .inviter { position: relative; display: inline-block; }
   button { color: inherit; font: inherit; }
   .rond, .secondaire { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 0; background: transparent; min-height: 44px; transition: background 120ms; }
+  .inviter > button:first-child { position: relative; z-index: 32; }
   .rond { min-width: 44px; padding: 0 12px; border-radius: 999px; }
   .rond:hover { background: rgba(255, 255, 255, 0.12); }
   .rond.actif { background: var(--lampe-fond); color: var(--lampe, #1f5ce0); }
