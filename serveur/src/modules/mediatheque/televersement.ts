@@ -26,11 +26,15 @@ export function lireMetadonnees(brut: string | undefined): Record<string, string
   return r;
 }
 
-/** Octets déjà pris par l'utilisateur : films + envois en cours (hors envoi `sauf`). */
-export function octetsUtilises(app: FastifyInstance, utilisateurId: number): number {
+/** Octets déjà pris par l'utilisateur : films + envois en cours + téléchargements par torrent en cours (hors le téléchargement `sauf`). */
+export function octetsUtilises(app: FastifyInstance, utilisateurId: number, sauf = ''): number {
   const a = app.db.prepare('SELECT COALESCE(SUM(taille), 0) AS n FROM films WHERE proprietaire_id = ?').get(utilisateurId) as { n: number };
   const b = app.db.prepare('SELECT COALESCE(SUM(taille), 0) AS n FROM televersements WHERE utilisateur_id = ?').get(utilisateurId) as { n: number };
-  return a.n + b.n;
+  // Un torrent compte dès que la taille de ses fichiers choisis est connue ; une fois importé, ce sont les films qui comptent.
+  const c = app.db.prepare(
+    "SELECT COALESCE(SUM(octets_total), 0) AS n FROM telechargements WHERE proprietaire_id = ? AND id <> ? AND etat IN ('metadonnees', 'telechargement', 'pause')",
+  ).get(utilisateurId, sauf) as { n: number };
+  return a.n + b.n + c.n;
 }
 
 function idDeUrl(url: string): string | null {

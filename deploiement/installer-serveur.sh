@@ -526,7 +526,7 @@ reglages() {
     if grep -qE '^(CANAPE_MOT_DE_PASSE|CANAPE_SECRET)=' "$CONF"; then
       if en_essai; then
         echo "  [essai] $CONF (réglages 0.1) : copie $CONF.pre-1.0, CANAPE_MOT_DE_PASSE et CANAPE_SECRET commentés (les comptes les remplacent),"
-        echo "  [essai]   CANAPE_URL_PUBLIQUE, CANAPE_DONNEES, CANAPE_CACHE, CANAPE_TELEVERSEMENTS ajoutés ; port gardé (${port_conf:-8080})"
+        echo "  [essai]   CANAPE_URL_PUBLIQUE, CANAPE_DONNEES, CANAPE_CACHE, CANAPE_TELEVERSEMENTS, CANAPE_TELECHARGEMENTS ajoutés ; port gardé (${port_conf:-8080})"
         return 0
       fi
       [ -e "$CONF.pre-1.0" ] || cp -p "$CONF" "$CONF.pre-1.0"
@@ -571,6 +571,7 @@ reglages() {
   conf_definir CANAPE_FILMS "$FILMS"
   conf_definir CANAPE_CACHE "$SRV/cache"
   conf_definir CANAPE_TELEVERSEMENTS "$SRV/televersements"
+  conf_definir CANAPE_TELECHARGEMENTS "$SRV/telechargements"
 }
 
 # ---------------------------------------------------------------------------------------------------------
@@ -643,7 +644,7 @@ installer_application() {
   dossier 0755 root root "$APP" "$APP/versions"
   if [ -d "$FILMS" ] && ! en_essai; then echo "$FILMS existe : les films ne sont pas touchés."; fi
   dossier 2775 root canape "$SRV" "$FILMS"
-  dossier 0750 canape canape "$SRV/donnees" "$SRV/cache" "$SRV/televersements"
+  dossier 0750 canape canape "$SRV/donnees" "$SRV/cache" "$SRV/televersements" "$SRV/telechargements"
   dossier 0750 root canape "$(dirname "$CONF")"
   if en_root && [ -n "${SUDO_USER:-}" ] && [ "$SUDO_USER" != root ]; then
     if ! id -nG "$SUDO_USER" 2>/dev/null | tr ' ' '\n' | grep -qx canape; then

@@ -177,6 +177,7 @@
   {/if}
 </main>
 
+{#if telechargements.peutAjouter}
 <Modale bind:ouverte={choixOuvert} titre="Ajouter un film">
   <div class="choix">
     <button type="button" class="option" onclick={() => { choixOuvert = false; selecteur?.click(); }}>
@@ -188,6 +189,7 @@
   </div>
 </Modale>
 <ModaleAjoutTorrent bind:ouverte={torrentOuvert} fichierInitial={fichierTorrent} />
+{/if}
 
 {#if survol}
   <div class="voile" aria-hidden="true"><p>Dépose pour envoyer</p></div>
