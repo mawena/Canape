@@ -299,6 +299,7 @@ d'`Origin` égale à `CANAPE_URL_PUBLIQUE`. Types dans `partage/src/*.ts`.
 - `GET /api/seances` (à venir, en cours, récentes) ; `POST /api/seances` `{ filmId, titre?, prevueLe?, invites?: number[] }`
 - `GET|PATCH|DELETE /api/seances/:id` ; `POST|DELETE /api/seances/:id/lien` (crée le lien, ou redonne le lien existant → `{ lien }` ; retire)
 - `POST /api/rejoindre/:jeton` → `{ seanceId }` (ajoute aux participants)
+- *Réalisé (phase 17, lien pendant la séance)* : l'hôte seul voit « Inviter » (`client/src/lib/seance/InviterSeance.svelte`, logique pure dans `inviter.ts`) dans la barre de commandes de la salle (enfant de l'élément en plein écran, feuille du bas sur téléphone, sans pause ni effet sur la synchro) et dans le sas ; le lien est demandé à l'ouverture (`POST /api/seances/:id/lien`, idempotent). « Copier le lien » dans la liste des séances à venir dont on est l'hôte. Une personne qui ouvre le lien en cours de film reçoit l'état de lecture du serveur de salle et se cale sur la position attendue ; aucune correction serveur n'a été nécessaire.
 - `GET /api/seances/:id/messages?avant=<id>`
 - `GET /api/reprendre` (films commencés, non terminés) ; `GET /api/historique`
 - `GET /api/ice` → `{ iceServers }` (identifiants TURN temporaires)

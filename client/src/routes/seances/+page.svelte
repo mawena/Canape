@@ -1,10 +1,12 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
-  import type { ListeSeances, Seance } from '@canape/partage';
+  import type { ListeSeances, ReponseLienSeance, Seance } from '@canape/partage';
   import { api, ErreurApi } from '$lib/api/client.ts';
-  import { Avatar, Bouton, Carte, Chargement, EtatVide } from '$lib/ui/index.ts';
+  import { session } from '$lib/interface/session.svelte.ts';
+  import { Avatar, Bouton, Carte, Chargement, EtatVide, toast } from '$lib/ui/index.ts';
   import { dateEnLettres } from '$lib/seance/dates.ts';
+  import { peutInviter } from '$lib/seance/inviter.ts';
   import { urlConnexion } from '$lib/seance/moi.ts';
 
   let liste = $state(null as ListeSeances | null);
@@ -22,6 +24,19 @@
 
   const avenir = $derived(liste ? [...liste.enCours, ...liste.aVenir] : []);
   const visibles = $derived(onglet === 'avenir' ? avenir : (liste?.recentes ?? []));
+  let copieEnCours: string | null = $state(null);
+  async function copierLien(s: Seance): Promise<void> {
+    copieEnCours = s.id;
+    try {
+      const { lien } = await api.post<ReponseLienSeance>(`/api/seances/${encodeURIComponent(s.id)}/lien`);
+      await navigator.clipboard.writeText(lien);
+      toast.ok('Lien copié.');
+    } catch (e) {
+      toast.erreur(e instanceof ErreurApi ? e.message : 'Copie impossible : ouvre la séance et utilise « Inviter ».');
+    } finally {
+      copieEnCours = null;
+    }
+  }
   const titre = (s: Seance): string => s.titre ?? s.filmTitre ?? 'Séance';
   const quand = (s: Seance): Date => new Date(s.prevueLe ?? s.creeLe);
   const jour = (s: Seance): string => String(quand(s).getDate());
@@ -67,6 +82,9 @@
                   <Avatar prenom={u.prenom} couleur={u.couleur} taille={32} />
                 {/each}
               </div>
+              {#if onglet === 'avenir' && peutInviter(s, session.utilisateur?.id)}
+                <Bouton variante="discret" icone="lien" chargement={copieEnCours === s.id} onclick={() => copierLien(s)} data-test="copier-lien-liste">Copier le lien</Bouton>
+              {/if}
               <Bouton href="/seances/{s.id}" variante={onglet === 'avenir' ? 'primaire' : 'secondaire'}>{onglet === 'avenir' ? 'Entrer' : 'Voir'}</Bouton>
             </div>
           </Carte>
