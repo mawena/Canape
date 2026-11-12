@@ -2,6 +2,30 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) ; versions selon [SemVer](https://semver.org/lang/fr/).
 
+## [1.1.0] — 2026-11-12
+
+Ajouter un film à sa galerie par torrent (lien magnet ou fichier `.torrent`) et suivre son téléchargement.
+
+### Ajouté
+
+- **Films par torrent** : dans la galerie, « Ajouter un film » propose « Depuis mon ordinateur » ou « Par torrent » ;
+  coller un lien magnet ou déposer un `.torrent` (aussi par glisser-déposer sur la galerie). À la fin, le film entre
+  seul dans la galerie, avec les sous-titres `.srt`/`.vtt` de son dossier, puis passe par la lecture universelle.
+- **Panneau « Téléchargements »** : progression, reçu / total, débit, temps restant, pairs, état en clair ; pause,
+  reprise, annulation, « Choisir les fichiers » quand le torrent contient plusieurs vidéos ; notification « … est dans
+  ta galerie » ; feuille du bas sur téléphone.
+- **Moteur WebTorrent dans un processus séparé** : un plantage ou une charge du moteur ne touche ni les séances ni
+  l'API ; relancé seul, il reprend les téléchargements là où ils étaient (morceaux reçus revérifiés).
+- **Règles** : seule la plus grosse vidéo et ses sous-titres sont choisis d'office (jamais les « sample ») ; quota
+  compté dès que la taille est connue ; au plus deux téléchargements à la fois, à basse priorité, débits plafonnés
+  (envoi 1 Mo/s) ; le torrent cesse d'être partagé dès la fin (`CANAPE_TORRENT_PARTAGE` pour continuer) ; liens
+  magnet nettoyés, jamais de source web donnée par un utilisateur ; `CANAPE_TORRENTS=0` coupe la fonction.
+- **Réglages** `CANAPE_TORRENTS`, `CANAPE_TELECHARGEMENTS`, `CANAPE_TORRENT_SIMULTANES`, `CANAPE_TORRENT_DEBIT_MAX`,
+  `CANAPE_TORRENT_ENVOI_MAX`, `CANAPE_TORRENT_PARTAGE`, `CANAPE_TORRENT_PORT` ; dossier `/srv/canape/telechargements`
+  créé par l'installateur et par `mettre-a-jour`.
+- **Essais** : 20 tests serveur des torrents avec un vrai pair local (sans Internet) ; essais Playwright des torrents
+  sur Chromium et Firefox (magnet, `.torrent`, pause, reprise, annulation, choix des fichiers, erreurs, droits).
+
 ## [1.0.0] — 2026-11-12
 
 Canapé devient une plateforme privée : comptes, galeries, envoi de n'importe quel fichier vidéo, lecture de tous les
@@ -82,5 +106,6 @@ d'écran saccadé de Google Meet, avec le son du film et la voix en même temps.
 - **Tests** : 29 tests Node (unitaires et intégration), essai de bout en bout dans Chrome à deux participants
   (`npm run essai-navigateur`), essai nginx du déploiement (70 vérifications) ; passés sous Node 18 et Node 26.
 
+[1.1.0]: https://github.com/mawena/Canape/releases/tag/v1.1.0
 [1.0.0]: https://github.com/mawena/Canape/releases/tag/v1.0.0
 [0.1.0]: https://github.com/mawena/Canape/releases/tag/v0.1.0
