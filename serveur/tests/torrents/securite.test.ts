@@ -47,7 +47,7 @@ describe('.torrent réécrit avant Transmission', () => {
     for (const cle of ['url-list', 'httpseeds', 'nodes', 'announce']) assert.equal(racine.has(cle), false, cle);
     const liste = (racine.get('announce-list') as Buffer[][]).map((p) => p.map((b) => b.toString()));
     assert.deepEqual(liste, [[PUBLIC]]);
-    const t = await parseTorrent(sortie);
+    const t = (await parseTorrent(sortie)) as unknown as { infoHash: string; private?: boolean; urlList?: string[] };
     assert.equal(t.infoHash, tr.infoHash);
     assert.equal(t.private, true);
     assert.deepEqual(t.urlList, []);
