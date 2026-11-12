@@ -14,6 +14,7 @@ export function formaterTaille(octets: number): string {
 /** 6720 → « 1 h 52 » ; 540 → « 9 min ». */
 export function formaterDuree(secondes: number | null | undefined): string {
   if (!secondes || secondes <= 0) return '';
+  if (secondes < 59.5) return `${Math.max(1, Math.round(secondes))} s`; // extraits, bandes-annonces
   const minutes = Math.round(secondes / 60);
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;

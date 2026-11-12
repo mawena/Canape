@@ -21,6 +21,12 @@ describe('accueil', () => {
     assert.equal(seanceDeCeSoir(lointaine, maintenant), null);
     assert.equal(seanceDeCeSoir(null, maintenant), null);
   });
+  it('prend une séance « tout de suite » (sans date) créée il y a peu', () => {
+    const recente = seance({ id: 'maintenant', prevueLe: null, creeLe: new Date(maintenant.getTime() - 3_600_000).toISOString() });
+    const vieille = seance({ id: 'vieille', prevueLe: null, creeLe: new Date(maintenant.getTime() - 30 * 3_600_000).toISOString() });
+    assert.equal(seanceDeCeSoir({ aVenir: [vieille, recente], enCours: [], recentes: [] }, maintenant)?.id, 'maintenant');
+    assert.equal(seanceDeCeSoir({ aVenir: [vieille], enCours: [], recentes: [] }, maintenant), null);
+  });
   it('préfère une séance en cours', () => {
     const liste: ListeSeances = { aVenir: [seance({ prevueLe: ce21h })], enCours: [seance({ id: 'en-cours' })], recentes: [] };
     assert.equal(seanceDeCeSoir(liste, maintenant)?.id, 'en-cours');

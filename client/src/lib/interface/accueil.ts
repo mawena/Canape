@@ -18,11 +18,18 @@ function memeJour(a: Date, b: Date): boolean {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
-/** Séance « de ce soir » : une séance en cours, sinon la prochaine séance prévue aujourd'hui (ou dans les 12 h). */
+/**
+ * Séance « de ce soir » : une séance en cours, sinon une séance sans date créée dans les 12 dernières heures (« tout
+ * de suite »), sinon la prochaine séance prévue aujourd'hui (ou dans les 12 h).
+ */
 export function seanceDeCeSoir(liste: ListeSeances | null, maintenant: Date): Seance | null {
   if (!liste) return null;
   const enCours = liste.enCours.find((s) => s.termineeLe === null);
   if (enCours) return enCours;
+  const immediate = liste.aVenir
+    .filter((s) => s.prevueLe === null && s.termineeLe === null && maintenant.getTime() - new Date(s.creeLe).getTime() <= 12 * 3_600_000)
+    .sort((a, b) => b.creeLe.localeCompare(a.creeLe))[0];
+  if (immediate) return immediate;
   const prochaines = liste.aVenir
     .filter((s) => s.prevueLe !== null && s.termineeLe === null)
     .sort((a, b) => new Date(a.prevueLe!).getTime() - new Date(b.prevueLe!).getTime());
