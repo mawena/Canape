@@ -63,6 +63,13 @@ export default defineConfig({
       name: 'firefox',
       use: { ...devices['Desktop Firefox'], launchOptions: { firefoxUserPrefs: firefoxPrefs } },
     },
+    {
+      // Google Chrome (installé sur le poste ; `npx playwright install chrome` en CI) : décode le H.264, donc la lecture convertie.
+      name: 'chrome',
+      testMatch: '**/lecture.spec.ts',
+      testIgnore: [],
+      use: { ...devices['Desktop Chrome'], channel: 'chrome', permissions: ['camera', 'microphone'], launchOptions: { args: chromiumArgs } },
+    },
     ...(WEBKIT
       ? [{
           // Pas de caméra simulée sous WebKit : la salle doit marcher sans média local.
