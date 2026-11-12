@@ -187,3 +187,112 @@ test.describe('Torrents', () => {
     await expect(page.getByRole('dialog')).toHaveCount(0);
   });
 });
+
+// Phase 16 : torrents privés, partage après la fin, réponse du tracker. Le serveur n'envoie pas encore ces champs partout :
+// la liste est simulée (page.route), seul le DELETE est intercepté de la même façon.
+base.describe('Torrents : partage et trackers privés (réponses simulées)', () => {
+  const ligneSimulee = (p: Record<string, unknown>) => ({
+    id: 'x', proprietaireId: 1, proprietairePrenom: 'Alix', nom: 'Film', infoHash: 'a'.repeat(40), etat: 'telechargement', progression: 0.4,
+    octetsRecus: 400_000_000, octetsTotal: 1_000_000_000, debit: 3_200_000, debitEnvoi: 0, pairs: 8, resteSecondes: 300, fichiers: [], filmIds: [],
+    erreur: null, prive: false, enPartage: false, ratio: null, messageTracker: null, moteur: 'transmission', creeLe: '2026-11-12T10:00:00Z', termineLe: null, ...p,
+  });
+  const LIGNES = () => [
+    ligneSimulee({ id: 'prive-en-cours', nom: 'Les.Nuits.de.Lisbonne.2019.1080p', prive: true, etat: 'metadonnees', progression: 0, octetsRecus: 0, octetsTotal: null, debit: 0, pairs: 0, resteSecondes: null,
+      messageTracker: 'Le tracker a refusé : client non autorisé.' }),
+    ligneSimulee({ id: 'public', nom: 'Pique-nique.a.Marseille.2016.720p', progression: 0.62, octetsRecus: 620_000_000 }),
+    ligneSimulee({ id: 'prive-partage', nom: 'Le.Phare.du.bout.du.monde.2022.1080p', prive: true, etat: 'termine', progression: 1, octetsRecus: 1_000_000_000, debit: 0, debitEnvoi: 480_000, pairs: 5,
+      resteSecondes: null, filmIds: ['film-1'], enPartage: true, ratio: 1.236, termineLe: '2026-11-12T11:00:00Z' }),
+  ];
+
+  async function simuler(page: Page, lignes: Array<Record<string, unknown>>): Promise<string[]> {
+    const supprimes: string[] = [];
+    await page.route('**/api/torrents', async (r) => {
+      if (r.request().method() !== 'GET') return r.fallback();
+      await r.fulfill({ json: { peutAjouter: true, telechargements: lignes } });
+    });
+    await page.route('**/api/torrents/*', async (r) => {
+      if (r.request().method() !== 'DELETE') return r.fallback();
+      const id = r.request().url().split('/').pop() ?? '';
+      supprimes.push(id);
+      const i = lignes.findIndex((l) => l['id'] === id);
+      if (i >= 0) lignes.splice(i, 1);
+      await r.fulfill({ status: 204, body: '' });
+    });
+    return supprimes;
+  }
+
+  base('pastille Privé, partage avec ratio, arrêt du partage et réponse du tracker', async ({ ouvrir, monde }) => {
+    const { page } = await ouvrir(monde.admin);
+    const supprimes = await simuler(page, LIGNES());
+    await page.goto('/galerie');
+    await expect(ligne(page)).toHaveCount(3);
+
+    // Pastille Privé (deux lignes privées, aucune sur la publique) avec son aide.
+    await expect(page.getByTestId('pastille-prive')).toHaveCount(2);
+    const publique = ligne(page).filter({ hasText: 'Pique-nique' });
+    await expect(publique.getByTestId('pastille-prive')).toHaveCount(0);
+    const partagee = ligne(page).filter({ hasText: 'Le.Phare' });
+    await partagee.getByTestId('pastille-prive').click();
+    await expect(partagee.getByTestId('aide-prive')).toHaveText(/seuls ses trackers donnent des pairs.*comme le demande ton tracker/);
+
+    // Réponse du tracker, et attente des pairs plutôt que « Récupération » quand le tracker a répondu.
+    const attente = ligne(page).filter({ hasText: 'Les.Nuits' });
+    await expect(attente.getByTestId('message-tracker')).toHaveText('Le tracker a refusé : client non autorisé.');
+    await expect(attente).toContainText('En attente des pairs…');
+    await expect(publique.getByTestId('message-tracker')).toHaveCount(0);
+
+    // En partage : section à part, sous les téléchargements en cours.
+    await expect(partagee.getByTestId('detail-partage')).toHaveText('En partage · ratio 1,24 · 480 Ko/s envoyés');
+    await expect(page.getByTestId('telechargements-en-partage').getByTestId('telechargement')).toHaveCount(1);
+    await expect(page.getByTestId('telechargements-en-cours').getByTestId('telechargement')).toHaveCount(2);
+
+    // Arrêter de partager : confirmation courte, DELETE, la ligne disparaît, le film reste (bouton « Voir le film » avant l'arrêt).
+    await expect(partagee.getByTestId('voir-film')).toBeVisible();
+    await partagee.getByTestId('arreter-partage').click();
+    const confirmation = page.getByRole('dialog', { name: 'Arrêter de partager ?' });
+    await expect(confirmation).toContainText('Le film reste dans ta galerie.');
+    await confirmation.getByRole('button', { name: 'Continuer' }).click();
+    expect(supprimes).toEqual([]);
+    await partagee.getByTestId('arreter-partage').click();
+    await page.getByTestId('confirmer-arret-partage').click();
+    await expect(ligne(page)).toHaveCount(2);
+    await expect(page.getByTestId('section-partage')).toHaveCount(0);
+    expect(supprimes).toEqual(['prive-partage']);
+  });
+
+  base('ratio inconnu et serveur sans les nouveaux champs', async ({ ouvrir, monde }) => {
+    const { page } = await ouvrir(monde.admin);
+    const ancienne = ligneSimulee({ id: 'ancien', nom: 'Ancien.Format', etat: 'termine', progression: 1, filmIds: ['f'] }) as Record<string, unknown>;
+    for (const k of ['prive', 'enPartage', 'ratio', 'messageTracker', 'moteur']) delete ancienne[k];
+    await simuler(page, [ligneSimulee({ id: 'sans-ratio', nom: 'Sans.Ratio', etat: 'termine', progression: 1, enPartage: true, ratio: null, filmIds: ['g'] }), ancienne]);
+    await page.goto('/galerie');
+    await expect(ligne(page)).toHaveCount(2);
+    await expect(page.getByTestId('detail-partage')).toHaveText('En partage · ratio —');
+    await expect(page.getByTestId('pastille-prive')).toHaveCount(0);
+    await expect(page.getByTestId('message-tracker')).toHaveCount(0);
+    // Sans `enPartage`, le film fini n'est pas partagé : « Dans ta galerie » et bouton Retirer comme avant.
+    await expect(ligne(page).filter({ hasText: 'Ancien.Format' })).toContainText('Dans ta galerie');
+    await expect(ligne(page).filter({ hasText: 'Ancien.Format' }).getByTestId('annuler-torrent')).toBeVisible();
+  });
+
+  // Captures : CANAPE_E2E_CAPTURES_TORRENTS=/dossier npx playwright test torrents --project=chromium -g captures
+  const dossier = process.env['CANAPE_E2E_CAPTURES_TORRENTS'];
+  base('captures du panneau (ordinateur et téléphone, clair et sombre)', async ({ ouvrir, monde }) => {
+    base.skip(!dossier, 'CANAPE_E2E_CAPTURES_TORRENTS non défini : pas de captures.');
+    const { contexte, page } = await ouvrir(monde.admin);
+    await simuler(page, LIGNES());
+    for (const theme of ['clair', 'sombre'] as const) {
+      await contexte.addInitScript((t) => { try { localStorage.setItem('canape.theme', t); } catch { /* sans stockage */ } }, theme);
+      for (const [nom, taille] of [['ordinateur', { width: 1440, height: 900 }], ['telephone', { width: 390, height: 844 }]] as const) {
+        await page.setViewportSize(taille);
+        await page.goto('/galerie');
+        await expect(ligne(page)).toHaveCount(3);
+        if (nom === 'telephone') await page.getByRole('button', { name: /téléchargement/ }).click();
+        await page.getByTestId('pastille-prive').last().click();
+        await page.waitForTimeout(400);
+        await page.screenshot({ path: path.join(dossier ?? '', `panneau-${nom}-${theme}.png`) });
+        await page.getByTestId('pastille-prive').last().click();
+      }
+    }
+  });
+});

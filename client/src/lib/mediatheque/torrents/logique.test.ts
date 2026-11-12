@@ -1,13 +1,13 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import type { Telechargement } from '@canape/partage';
-import { choixValide, detailChiffres, doitRafraichir, enAttentePlace, erreurFichierTorrent, erreurMagnet, libelleEtat, messageAjout, nomAffiche, nouvellementTermines, suivreInactivite, totalChoisi } from './logique.ts';
+import { choixValide, detailChiffres, detailPartage, doitRafraichir, enAttentePlace, erreurFichierTorrent, erreurMagnet, estEnPartage, estPrive, formaterRatio, libelleEtat, messageAjout, messageTrackerAffiche, metadonneesLongues, nomAffiche, nouvellementTermines, repartir, resumePanneau, suivreInactivite, totalChoisi } from './logique.ts';
 
 const sp = (s: string): string => s.replace(/[\u00a0\u202f]/g, ' ');
 const t = (p: Partial<Telechargement> = {}): Telechargement => ({
   id: 'a', proprietaireId: 1, proprietairePrenom: 'Lou', nom: 'Film', infoHash: 'x', etat: 'telechargement', progression: 0.5,
   octetsRecus: 500_000_000, octetsTotal: 1_000_000_000, debit: 4_100_000, debitEnvoi: 0, pairs: 12, resteSecondes: 120,
-  fichiers: [], filmIds: [], erreur: null, creeLe: '', termineLe: null, ...p,
+  fichiers: [], filmIds: [], erreur: null, prive: false, enPartage: false, ratio: null, messageTracker: null, moteur: 'transmission', creeLe: '', termineLe: null, ...p,
 });
 
 test('validation du lien magnet', () => {
@@ -79,4 +79,47 @@ test('fins détectées et messages d’ajout', () => {
   assert.match(messageAjout(409), /déjà en cours/);
   assert.match(messageAjout(429), /minute/);
   assert.equal(messageAjout(400, 'Lien illisible.'), 'Lien illisible.');
+});
+
+test('ratio en français', () => {
+  assert.equal(formaterRatio(1.236), '1,24');
+  assert.equal(formaterRatio(0), '0,00');
+  assert.equal(formaterRatio(12), '12,00');
+  assert.equal(formaterRatio(null), '—');
+  assert.equal(formaterRatio(undefined), '—');
+  assert.equal(formaterRatio(Number.NaN), '—');
+});
+
+test('en partage : texte, tri et champs absents', () => {
+  assert.equal(detailPartage({ ratio: 1.24 }), 'En partage · ratio 1,24');
+  assert.equal(detailPartage({ ratio: null }), 'En partage · ratio —');
+  assert.equal(sp(detailPartage({ ratio: 0.5, debitEnvoi: 120_000 })), 'En partage · ratio 0,50 · 120 Ko/s envoyés');
+  assert.equal(libelleEtat(t({ etat: 'termine', enPartage: true })), 'En partage');
+  assert.equal(libelleEtat(t({ etat: 'termine' })), 'Dans ta galerie');
+  const ancien = { ...t({ etat: 'termine' }) } as Partial<Telechargement>;
+  delete ancien.enPartage; delete ancien.prive; delete ancien.messageTracker;
+  assert.equal(estEnPartage(ancien as Telechargement), false);
+  assert.equal(estPrive(ancien as Telechargement), false);
+  assert.equal(messageTrackerAffiche(ancien as Telechargement), null);
+  assert.equal(estEnPartage(t({ etat: 'telechargement', enPartage: true })), false);
+  const r = repartir([t({ id: 'f', etat: 'termine' }), t({ id: 'p', etat: 'termine', enPartage: true }), t({ id: 'c' })]);
+  assert.deepEqual(r.enCours.map((x) => x.id), ['c', 'f']);
+  assert.deepEqual(r.enPartage.map((x) => x.id), ['p']);
+  assert.equal(resumePanneau(2, 1), '2 téléchargements en cours');
+  assert.equal(resumePanneau(0, 3), '3 en partage');
+  assert.equal(resumePanneau(0, 0), 'Téléchargements');
+  assert.equal(doitRafraichir([t({ etat: 'termine', enPartage: true })], true), true);
+});
+
+test('réponse du tracker et attente des pairs', () => {
+  assert.equal(messageTrackerAffiche(t({ messageTracker: '  Le tracker a refusé : client inconnu  ' })), 'Le tracker a refusé : client inconnu');
+  assert.equal(messageTrackerAffiche(t({ messageTracker: '' })), null);
+  assert.equal(libelleEtat(t({ etat: 'metadonnees' })), 'Récupération des informations…');
+  assert.equal(libelleEtat(t({ etat: 'metadonnees' }), false, true), 'En attente des pairs…');
+  assert.equal(libelleEtat(t({ etat: 'metadonnees', messageTracker: 'refusé' })), 'En attente des pairs…');
+  const meta = t({ etat: 'metadonnees', pairs: 0, debit: 0 });
+  assert.equal(metadonneesLongues(meta, 0, 3000), false);
+  assert.equal(metadonneesLongues(meta, 0, 9000), true);
+  assert.equal(metadonneesLongues(t({ etat: 'metadonnees', pairs: 2 }), 0, 99999), false);
+  assert.equal(suivreInactivite(new Map(), [meta], 100).get('a'), 100);
 });
