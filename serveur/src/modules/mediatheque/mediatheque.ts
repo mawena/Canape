@@ -1,4 +1,5 @@
 // Cœur du module : dépôt des films, droits, traitement (analyse, fiche, images), TMDB, sous-titres.
+import { statSync } from 'node:fs';
 import { copyFile, mkdir, readdir, rename, rm, stat, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { Analyse, Film, SousTitreExterne } from '@canape/partage';
@@ -140,6 +141,9 @@ export class Mediatheque implements ServiceMediatheque {
     const l = this.db.prepare("SELECT id FROM films WHERE etat = 'analyse'").all() as Array<{ id: string }>;
     for (const { id } of l) this.planifier(id);
   }
+
+  /** Posé par le module de téléversement : supprime les envois abandonnés. */
+  nettoyerTeleversements: () => Promise<number> = async () => 0;
 
   async attendreTraitements(): Promise<void> { await this.file; }
 
@@ -298,20 +302,17 @@ export class Mediatheque implements ServiceMediatheque {
   }
 
   private versionImages(l: LigneFilm): number {
-    // Dérivé de la ligne : change quand l'affiche TMDB est appliquée ou que les images sont produites.
-    return Math.abs(hash(`${l.affiche ?? ''}|${l.fond ?? ''}|${l.tmdb_id ?? ''}|${l.couleur ?? ''}|${this.versions.get(l.id) ?? 0}`));
+    // Date de dernière écriture des images : change quand elles sont réécrites (TMDB, nouvelle extraction).
+    let v = 0;
+    for (const rel of [l.affiche, l.fond]) {
+      if (!rel) continue;
+      try { v = Math.max(v, Math.floor(statSync(path.join(this.config.films, rel)).mtimeMs / 1000)); } catch { /* image absente */ }
+    }
+    return v;
   }
-  /** Compteur incrémenté à chaque réécriture des images (pour le cache du navigateur). */
-  versions = new Map<string, number>();
 
   /** Fichiers du dossier d'un film (diagnostic et tests). */
   async fichiersDuFilm(id: string): Promise<string[]> {
     return readdir(path.join(this.config.films, id)).catch(() => []);
   }
-}
-
-function hash(s: string): number {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
-  return h;
 }
