@@ -1,27 +1,35 @@
 # Réglages de Canapé : /etc/canape/canape.conf (format CLÉ=valeur, # pour un commentaire).
-# Le fichier contient des secrets : propriétaire root, groupe canape, droits 640.
-# Après une modification : sudo systemctl restart canape
+# Propriétaire root, groupe canape, droits 640. Après une modification : sudo systemctl restart canape
+# Toutes les variables : docs/CONCEPTION.md (section Configuration). Les comptes ont remplacé le mot de passe commun
+# et le secret de la 0.1 : CANAPE_MOT_DE_PASSE et CANAPE_SECRET n'existent plus.
 
 # Adresse et port d'écoute. En production Node reste en local, nginx est devant.
 CANAPE_HOTE=127.0.0.1
 CANAPE_PORT=8080
 
-# Dossier des films (sous-dossiers permis ; sous-titres .srt/.vtt à côté).
-CANAPE_FILMS=/srv/canape/films
-
-# Mot de passe commun du salon (à remplir ; vide = accès libre, à ne jamais faire en ligne).
-CANAPE_MOT_DE_PASSE=
-
-# Secret qui signe les cookies de session (à remplir : sinon les sessions tombent à chaque redémarrage).
-# Par exemple : openssl rand -hex 32
-CANAPE_SECRET=
+# Adresse publique : liens d'invitation et contrôle d'Origin des requêtes qui modifient.
+CANAPE_URL_PUBLIQUE=https://canape.exemple.fr
 
 # 1 = faire confiance à X-Forwarded-Proto / X-Forwarded-For de nginx (cookie Secure, adresse du visiteur).
 CANAPE_DERRIERE_PROXY=1
 
-# HTTPS servi directement par Node : inutile derrière nginx.
-#CANAPE_TLS_CERT=
-#CANAPE_TLS_CLE=
+# Dossiers (sous /srv/canape : le seul endroit où le service peut écrire).
+CANAPE_DONNEES=/srv/canape/donnees
+CANAPE_FILMS=/srv/canape/films
+CANAPE_CACHE=/srv/canape/cache
+CANAPE_TELEVERSEMENTS=/srv/canape/televersements
+
+# Limites (valeurs par défaut) :
+#CANAPE_TELEVERSEMENT_MAX=100G
+#CANAPE_QUOTA_DEFAUT=100G
+#CANAPE_CACHE_MAX=20G
+# Conversions vidéo : fils ffmpeg (défaut : la moitié des cœurs) et priorité nice (les autres sites passent avant).
+#CANAPE_TRANSCODAGE_FILS=2
+#CANAPE_TRANSCODAGE_PRIORITE=10
+#CANAPE_PREPARATION_AUTO=1
+
+# Affiches et résumés des films (clé gratuite sur themoviedb.org).
+#CANAPE_TMDB_CLE=
 
 # Serveurs STUN/TURN donnés aux navigateurs (JSON). Défaut : un STUN public de Google.
 #CANAPE_ICE=[{"urls":"stun:stun.l.google.com:19302"}]
@@ -30,3 +38,7 @@ CANAPE_DERRIERE_PROXY=1
 # (static-auth-secret de coturn). Canapé en tire des identifiants temporaires pour chaque navigateur.
 #CANAPE_TURN_URLS=turn:canape.exemple.fr:3478
 #CANAPE_TURN_SECRET=
+
+# HTTPS servi directement par Node : inutile derrière nginx.
+#CANAPE_TLS_CERT=
+#CANAPE_TLS_CLE=

@@ -1,0 +1,256 @@
+#!/usr/bin/env bash
+# Installe un paquet de Canapé (dist/canape-<version>.tar.gz) sur le serveur, de façon atomique, en root :
+#   sudo /opt/canape/deploiement/mettre-a-jour <paquet.tar.gz> <sha256 attendu>
+#
+# 1. vérifie le SHA-256 du paquet, puis l'extrait dans /opt/canape/versions/<version>-<commit>/ ;
+# 2. arrête le service et sauvegarde la base (canape.sqlite, -wal, -shm) dans <données>/sauvegardes/ ;
+# 3. bascule le lien /opt/canape/actuelle, démarre le service ;
+# 4. vérifie pendant 30 s que /api/etat répond avec la bonne version.
+# Si une étape échoue après l'arrêt du service : arrêt, base restaurée à l'identique, ancien lien remis, service
+# redémarré sur l'ancienne version, code de sortie non nul. Garde 3 versions et 5 sauvegardes.
+# Ne touche jamais nginx (c'est le rôle de installer-serveur.sh, lancé à la main), ni les scripts de
+# /opt/canape/deploiement (ils appartiennent à root : un paquet ne peut pas les remplacer).
+#
+# Codes de sortie : 0 réussi (ou version déjà en service) ; 1 échec de la mise en service, retour arrière fait ;
+# 2 mauvais usage ; 3 SHA-256 faux ; 4 paquet invalide ; 70 retour arrière lui-même en échec ; 75 une autre mise à jour tourne.
+set -euo pipefail
+
+# Variables réservées aux essais (deploiement/essais/essai-mise-a-jour.sh) : chemins et commandes remplaçables par des
+# faux, pour essayer sans root. En usage normal, elles ne sont pas définies.
+APP="${CANAPE_ESSAI_APP:-/opt/canape}"
+SRV="${CANAPE_ESSAI_SRV:-/srv/canape}"
+CONF="${CANAPE_ESSAI_CONF:-/etc/canape/canape.conf}"
+SYSTEMCTL="${CANAPE_ESSAI_SYSTEMCTL:-systemctl}"
+CURL="${CANAPE_ESSAI_CURL:-curl}"
+JOURNALCTL="${CANAPE_ESSAI_JOURNALCTL:-journalctl}"
+SANS_ROOT="${CANAPE_ESSAI_SANS_ROOT:-0}"
+ATTENTE="${CANAPE_ESSAI_ATTENTE:-30}"
+GARDER_VERSIONS=3
+GARDER_SAUVEGARDES=5
+
+dire()  { printf '%s\n' "$*"; }
+avert() { printf '%s\n' "$*" >&2; }
+echec() { local code="$1"; shift; avert "Erreur : $*"; exit "$code"; }
+
+if [ "${1:-}" = "-h" ] || [ "${1:-}" = "--aide" ]; then
+  dire "Utilisation : $(basename "$0") <paquet.tar.gz> <sha256>   (en root ; voir l'en-tête du script)"
+  exit 0
+fi
+if [ "$#" -ne 2 ]; then avert "Utilisation : $(basename "$0") <paquet.tar.gz> <sha256>"; exit 2; fi
+PAQUET="$1"; SHA_ATTENDU="$2"
+[[ "$SHA_ATTENDU" =~ ^[0-9a-fA-F]{64}$ ]] || echec 2 "« $SHA_ATTENDU » n'est pas un SHA-256 (64 caractères hexadécimaux)."
+SHA_ATTENDU="${SHA_ATTENDU,,}"
+[ -f "$PAQUET" ] || echec 2 "paquet introuvable : $PAQUET"
+if [ "$SANS_ROOT" != 1 ] && [ "$(id -u)" != 0 ]; then echec 2 "à lancer en root (sudo $0 …)."; fi
+[ -d "$APP" ] || echec 2 "$APP n'existe pas : Canapé n'est pas installé (deploiement/installer-serveur.sh)."
+
+# Verrou : une seule mise à jour à la fois.
+exec 9>"$APP/.mettre-a-jour.verrou"
+flock -n 9 || echec 75 "une autre mise à jour est déjà en cours (verrou $APP/.mettre-a-jour.verrou)."
+
+conf_valeur() {
+  sed -n "s/^$1=\\(.*\\)\$/\\1/p" "$CONF" 2>/dev/null | tail -1 | sed -e 's/^"\(.*\)"$/\1/' -e "s/^'\(.*\)'\$/\1/" || true
+}
+PORT="$(conf_valeur CANAPE_PORT)"; PORT="${PORT:-8080}"
+DONNEES="$(conf_valeur CANAPE_DONNEES)"; DONNEES="${DONNEES:-$SRV/donnees}"
+SAUVEGARDES="$DONNEES/sauvegardes"
+VERSIONS="$APP/versions"
+LIEN="$APP/actuelle"
+BASES=(canape.sqlite canape.sqlite-wal canape.sqlite-shm)
+
+TMP=""
+ANCIEN=""            # cible du lien avant la bascule
+SAUVEGARDE=""        # dossier de la sauvegarde de cette mise à jour
+BASE_AVANT=0         # 1 = une base existait avant
+ARRETE=0             # le service a été arrêté par ce script
+BASCULE=0            # le lien a été changé
+NOUVEAU=""           # dossier de la nouvelle version
+NOUVEAU_NEUF=0       # ce dossier a été créé par ce script
+FINI=0
+
+etat_version() { # version annoncée par /api/etat, vide si le service ne répond pas
+  "$CURL" -fsS --max-time 3 "http://127.0.0.1:$PORT/api/etat" 2>/dev/null \
+    | sed -n 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1 || true
+}
+
+# ------------------------------------------------------------------------------------------------------------
+# Retour arrière
+# ------------------------------------------------------------------------------------------------------------
+restaurer_base() {
+  local f
+  for f in "${BASES[@]}"; do rm -f "${DONNEES:?}/${f:?}"; done
+  if [ "$BASE_AVANT" = 1 ]; then
+    for f in "${BASES[@]}"; do
+      [ ! -e "${SAUVEGARDE:?}/$f" ] || cp -p "$SAUVEGARDE/$f" "$DONNEES/$f"
+    done
+  fi
+}
+
+retour_arriere() {
+  set +e
+  avert ""
+  avert "== Retour arrière =="
+  local mal=0 i v=""
+  "$SYSTEMCTL" stop canape >/dev/null 2>&1 9>&-
+  if [ -n "$SAUVEGARDE" ]; then
+    if restaurer_base; then avert "Base de données restaurée depuis $SAUVEGARDE."
+    else avert "ÉCHEC de la restauration de la base depuis $SAUVEGARDE."; mal=1; fi
+  fi
+  if [ "$BASCULE" = 1 ]; then
+    if [ -n "$ANCIEN" ]; then
+      if ln -s "$ANCIEN" "$LIEN.retour" && mv -T "$LIEN.retour" "$LIEN"; then avert "Lien $LIEN remis sur $ANCIEN."
+      else avert "ÉCHEC : lien $LIEN non remis."; mal=1; fi
+    else
+      rm -f "${LIEN:?}"; avert "Aucune version précédente : lien $LIEN retiré, service laissé arrêté."
+    fi
+  fi
+  if [ "$NOUVEAU_NEUF" = 1 ] && [ -n "$NOUVEAU" ]; then rm -rf "${NOUVEAU:?}"; fi
+  if [ -n "$ANCIEN" ]; then
+    "$SYSTEMCTL" start canape >/dev/null 2>&1 9>&-
+    for i in 1 2 3 4 5 6 7 8 9 10; do v="$(etat_version)"; [ -z "$v" ] || break; sleep 1; done
+    if [ -n "$v" ]; then avert "Service redémarré sur l'ancienne version ($v)."
+    else avert "Le service ne répond pas encore après le retour arrière : systemctl status canape ; journalctl -u canape -n 50"; mal=1; fi
+  fi
+  [ "$mal" = 0 ]
+}
+
+sortie() {
+  local code=$?
+  trap - EXIT
+  set +e
+  if [ "$FINI" = 0 ] && [ "$ARRETE" = 1 ] && [ "$code" -ne 0 ]; then
+    retour_arriere || code=70
+  fi
+  [ -z "$TMP" ] || rm -rf "${TMP:?}"
+  exit "$code"
+}
+trap sortie EXIT
+trap 'exit 143' INT TERM
+
+# ------------------------------------------------------------------------------------------------------------
+# 1. Paquet : copie dans un dossier à nous (le fichier d'origine appartient à un autre utilisateur), SHA-256
+# ------------------------------------------------------------------------------------------------------------
+install -d -m 0755 "$VERSIONS"
+TMP="$(mktemp -d "$VERSIONS/.neuf.XXXXXX")"
+cp -- "$PAQUET" "$TMP/paquet.tar.gz"
+SHA="$(sha256sum "$TMP/paquet.tar.gz" | cut -d' ' -f1)"
+if [ "$SHA" != "$SHA_ATTENDU" ]; then
+  echec 3 "le SHA-256 du paquet ($SHA) ne correspond pas à celui attendu ($SHA_ATTENDU). Rien n'a été modifié."
+fi
+dire "SHA-256 vérifié : $SHA"
+
+# Aucune entrée dangereuse (chemin absolu, « .. », lien vers l'extérieur) avant d'extraire en root.
+tar -tzf "$TMP/paquet.tar.gz" > "$TMP/liste" 2>/dev/null || echec 4 "le paquet n'est pas une archive tar.gz lisible."
+if grep -Eq '(^/|(^|/)\.\.(/|$))' "$TMP/liste"; then echec 4 "le paquet contient des chemins absolus ou « .. » : refusé."; fi
+mkdir "$TMP/contenu"
+tar -xzf "$TMP/paquet.tar.gz" -C "$TMP/contenu" --no-same-owner --no-same-permissions
+MAUVAIS="$(find "$TMP/contenu" -type l -printf '%p\t%l\n' | while IFS=$'\t' read -r l c; do
+  case "$c" in /*) r="$(readlink -m -- "$c")" ;; *) r="$(readlink -m -- "$(dirname -- "$l")/$c")" ;; esac
+  case "$r" in "$TMP/contenu"/*|"$TMP/contenu") ;; *) echo "$l -> $c" ;; esac
+done)"
+[ -z "$MAUVAIS" ] || echec 4 "le paquet contient un lien qui sort de son dossier : $MAUVAIS"
+[ -f "$TMP/contenu/VERSION" ] || echec 4 "le paquet n'a pas de fichier VERSION."
+[ -f "$TMP/contenu/serveur/src/index.ts" ] || echec 4 "le paquet n'a pas serveur/src/index.ts."
+VERSION=""; COMMIT=""
+read -r VERSION COMMIT _ < "$TMP/contenu/VERSION" || true
+[[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([-+.][0-9A-Za-z.-]+)?$ ]] || echec 4 "VERSION illisible : « $VERSION »."
+[[ "$COMMIT" =~ ^[0-9A-Za-z]{1,40}$ ]] || echec 4 "commit illisible dans VERSION : « $COMMIT »."
+NOM="$VERSION-$COMMIT"
+NOUVEAU="$VERSIONS/$NOM"
+dire "Paquet : Canapé $VERSION (commit $COMMIT)."
+
+ANCIEN="$(readlink "$LIEN" 2>/dev/null || true)"
+if [ "$ANCIEN" = "$NOUVEAU" ] && [ -n "$(etat_version)" ]; then
+  dire "Canapé $NOM est déjà en service : rien à faire."
+  FINI=1
+  exit 0
+fi
+
+# ------------------------------------------------------------------------------------------------------------
+# 2. Mise en place du dossier de la version (avant d'arrêter quoi que ce soit)
+# ------------------------------------------------------------------------------------------------------------
+if [ "$ANCIEN" = "$NOUVEAU" ]; then
+  # même version, mais le service ne répond pas : on garde le dossier en place et on le redémarre
+  dire "La version $NOM est déjà en place mais le service ne répond pas : redémarrage."
+else
+  [ ! -e "$NOUVEAU" ] || rm -rf "${NOUVEAU:?}"
+  [ "$SANS_ROOT" = 1 ] || chown -R root:root "$TMP/contenu"
+  chmod -R go-w "$TMP/contenu"
+  chmod 0755 "$TMP/contenu"
+  mv "$TMP/contenu" "$NOUVEAU"
+  NOUVEAU_NEUF=1
+fi
+touch "$NOUVEAU"
+install -d -m 0750 "$DONNEES" "$SAUVEGARDES" "$SRV/cache" "$SRV/televersements"
+[ "$SANS_ROOT" = 1 ] || chown canape:canape "$DONNEES" "$SAUVEGARDES" "$SRV/cache" "$SRV/televersements"
+
+# ------------------------------------------------------------------------------------------------------------
+# 3. Arrêt, sauvegarde, bascule, démarrage : à partir d'ici un échec déclenche le retour arrière
+# ------------------------------------------------------------------------------------------------------------
+dire "Arrêt du service canape."
+ARRETE=1
+"$SYSTEMCTL" stop canape 9>&- || avert "(le service n'était peut-être pas démarré)"
+
+SAUVEGARDE="$SAUVEGARDES/$(date +%Y%m%d-%H%M%S)-avant-$NOM"
+install -d -m 0750 "$SAUVEGARDE"
+for f in "${BASES[@]}"; do
+  if [ -e "$DONNEES/$f" ]; then
+    cp -p "$DONNEES/$f" "$SAUVEGARDE/$f"
+    [ "$f" != canape.sqlite ] || BASE_AVANT=1
+  fi
+done
+if [ "$BASE_AVANT" = 1 ]; then dire "Base sauvegardée dans $SAUVEGARDE."
+else dire "Pas encore de base de données : rien à sauvegarder."; fi
+[ "$SANS_ROOT" = 1 ] || chown -R canape:canape "$SAUVEGARDE"
+
+ln -s "$NOUVEAU" "$LIEN.neuf"
+mv -T "$LIEN.neuf" "$LIEN"
+BASCULE=1
+dire "Lien $LIEN -> $NOUVEAU."
+
+dire "Démarrage du service."
+"$SYSTEMCTL" start canape 9>&-
+
+# ------------------------------------------------------------------------------------------------------------
+# 4. Vérification
+# ------------------------------------------------------------------------------------------------------------
+dire "Vérification de http://127.0.0.1:$PORT/api/etat (jusqu'à ${ATTENTE} s, version attendue $VERSION)."
+OK=0; VU=""
+fin=$((SECONDS + ATTENTE))
+while :; do
+  VU="$(etat_version)"
+  case "$VU" in "$VERSION"|"$VERSION"[-+]*) OK=1; break ;; esac
+  [ "$SECONDS" -lt "$fin" ] || break
+  sleep 1
+done
+if [ "$OK" = 0 ]; then
+  if [ -z "$VU" ]; then avert "Le service ne répond pas sur 127.0.0.1:$PORT après ${ATTENTE} s."
+  else avert "Le service répond avec la version « $VU » au lieu de « $VERSION »."; fi
+  avert "Derniers messages du journal :"
+  "$JOURNALCTL" -u canape -n 25 --no-pager >&2 2>/dev/null || true
+  echec 1 "la mise à jour vers $NOM a échoué."
+fi
+FINI=1
+dire "Canapé $VU répond : mise à jour réussie ($NOM)."
+
+# ------------------------------------------------------------------------------------------------------------
+# 5. Ménage : 3 versions et 5 sauvegardes (la version en service et la précédente restent toujours)
+# ------------------------------------------------------------------------------------------------------------
+set +e
+n=0
+while IFS= read -r v; do
+  [ -n "$v" ] || continue
+  n=$((n + 1))
+  [ "$n" -le "$GARDER_VERSIONS" ] && continue
+  [ "$VERSIONS/$v" = "$NOUVEAU" ] && continue
+  [ "$VERSIONS/$v" = "$ANCIEN" ] && continue
+  rm -rf "${VERSIONS:?}/${v:?}"; dire "Ancienne version supprimée : $v"
+done < <(cd "$VERSIONS" && ls -1t -d -- */ 2>/dev/null | sed 's|/$||')
+n=0
+while IFS= read -r s; do
+  [ -n "$s" ] || continue
+  n=$((n + 1))
+  [ "$n" -le "$GARDER_SAUVEGARDES" ] && continue
+  rm -rf "${SAUVEGARDES:?}/${s:?}"; dire "Ancienne sauvegarde supprimée : $s"
+done < <(cd "$SAUVEGARDES" && ls -1r -d -- */ 2>/dev/null | sed 's|/$||')
+exit 0
