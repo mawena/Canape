@@ -65,7 +65,11 @@ describe('moteur Transmission (faux RPC)', () => {
     // Ajouté en pause (pour choisir avant le premier octet), puis choix : vidéo + sous-titres.
     const x = await jusquAuChoix(tel.id);
     assert.deepEqual(x.fichiers.filter((f) => f.choisi).map((f) => f.chemin), ['Mon.Film.2020/Mon.Film.2020.mkv', 'Mon.Film.2020/Mon.Film.2020.fr.srt']);
-    await attendre(() => t!.faux.torrent(tr.infoHash).paused === false, 10_000, 50, 'torrent jamais démarré');
+    // Le choix part en tâche de fond après les métadonnées : on attend qu'il soit appliqué, torrent démarré.
+    await attendre(() => {
+      const f = t!.faux.torrent(tr.infoHash);
+      return !f.paused && f.wanted.join() === 'true,true,false,false';
+    }, 10_000, 50, 'choix jamais appliqué ou torrent jamais démarré');
     assert.deepEqual(t.faux.torrent(tr.infoHash).wanted, [true, true, false, false]);
     assert.equal(t.faux.appels.find((a) => a.methode === 'torrent-add')!.args['paused'], true);
     // Les réglages de session : file, débit d'envoi (1M par défaut), port inchangé.
