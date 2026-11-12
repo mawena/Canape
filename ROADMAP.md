@@ -122,4 +122,4 @@ Ajouter un film par un lien magnet ou un fichier `.torrent` et suivre son télé
 - [x] Écrans repris un par un : accueil, galerie et fiche, téléchargements, séances, salle, compte, administration, connexion et invitation
 - [x] Facilité d'usage : premiers pas guidés, textes d'aide, messages d'erreur clairs, retours visuels, cibles tactiles
 - [x] Captures avant / après (ordinateur et téléphone), DESIGN.md à jour, essais Playwright verts
-- [ ] Release du nouveau design (version mineure : rien d'incompatible)
+- [x] Release du nouveau design (version mineure : rien d'incompatible) : 1.2.0
