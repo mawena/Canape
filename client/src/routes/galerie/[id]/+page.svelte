@@ -8,6 +8,8 @@
   } from '$lib/mediatheque/api.ts';
   import { formaterDuree, formaterTaille, libelleCanaux, nomLangue } from '$lib/mediatheque/formats.ts';
   import { Bouton, Champ, Chargement, EtatVide, Icone, Modale, toast } from '$lib/ui/index.ts';
+  import ChercherCompte from '$lib/comptes/ChercherCompte.svelte';
+  import { session } from '$lib/comptes/session.svelte.ts';
   import Lecteur from '$lib/lecture/Lecteur.svelte';
   import Preparation from '$lib/lecture/Preparation.svelte';
 
@@ -98,6 +100,11 @@
     } catch (e) {
       toast.erreur(e instanceof ErreurApi ? e.message : 'Impossible de changer le partage.');
     }
+  }
+
+  function ajouterTrouve(u: UtilisateurPublic): void {
+    if (!comptes.some((c) => c.id === u.id)) comptes = [...comptes, u];
+    if (!choisis.includes(u.id)) choisis = [...choisis, u.id];
   }
 
   function basculer(idCompte: number): void {
@@ -261,18 +268,26 @@
             <summary>Partage</summary>
             <fieldset>
               <legend class="vh">Qui peut voir ce film</legend>
-              {#each [['prive', 'Personne d’autre'], ['partage', 'Certaines personnes'], ['tous', 'Tout le monde']] as [v, l]}
+              {#each [['prive', 'Personne d’autre'], ['partage', 'Certaines personnes'], ['tous', 'Tous les inscrits']] as [v, l]}
                 <label class="radio"><input type="radio" name="visibilite" value={v} bind:group={visibilite} /> {l}</label>
               {/each}
             </fieldset>
+            {#if visibilite === 'tous'}
+              <p class="discret" data-test="avertissement-tous">
+                {session.inscriptionOuverte
+                  ? 'Les inscriptions sont ouvertes : « Tous les inscrits » inclut aussi des personnes que tu ne connais pas.'
+                  : 'Tous les comptes de ce Canapé pourront voir ce film.'}
+              </p>
+            {/if}
             {#if visibilite === 'partage'}
               <ul class="liste comptes">
                 {#each autres as c (c.id)}
                   <li><label class="radio"><input type="checkbox" checked={choisis.includes(c.id)} onchange={() => basculer(c.id)} /> {c.prenom}</label></li>
                 {:else}
-                  <li class="discret">Il n’y a pas d’autre compte pour l’instant.</li>
+                  <li class="discret">Personne pour l’instant. Ajoute quelqu’un par son identifiant.</li>
                 {/each}
               </ul>
+              <ChercherCompte surTrouve={ajouterTrouve} exclus={autres.map((c) => c.id)} />
             {/if}
             <p><Bouton variante="secondaire" onclick={enregistrerPartage}>Enregistrer le partage</Bouton></p>
           </details>

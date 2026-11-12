@@ -28,7 +28,7 @@ export function analyserTaille(texte: string): number | null {
 /** Adresse de retour après connexion : uniquement un chemin interne (pas d'adresse externe ni de `//`). */
 export function retourSur(retour: string | null | undefined): string {
   if (!retour || !retour.startsWith('/') || retour.startsWith('//') || retour.startsWith('/\\') || /[\r\n]/.test(retour)) return '/';
-  if (retour.startsWith('/connexion') || retour.startsWith('/invitation')) return '/';
+  if (retour.startsWith('/connexion') || retour.startsWith('/invitation') || retour.startsWith('/inscription')) return '/';
   return retour;
 }
 
