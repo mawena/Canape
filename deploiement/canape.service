@@ -7,18 +7,25 @@ Wants=network-online.target
 Type=simple
 User=canape
 Group=canape
-WorkingDirectory=/opt/canape
+# Le code vit dans /opt/canape/versions/<version>-<commit>/ ; « actuelle » est un lien changé de façon atomique
+# par deploiement/mettre-a-jour. Node (copié dans /opt/canape/node) exécute le TypeScript directement.
+WorkingDirectory=/opt/canape/actuelle
 EnvironmentFile=/etc/canape/canape.conf
-ExecStart=/usr/bin/node /opt/canape/bin/canape
+ExecStart=/opt/canape/node/bin/node /opt/canape/actuelle/serveur/src/index.ts serve
 Restart=on-failure
 RestartSec=3
 UMask=0027
 
-# Durcissement : le service n'écrit nulle part (le cache ffprobe est gardé en mémoire).
-# Les films sont lus dans /srv/canape/films, hors de /home : ProtectHome=true ne les gêne pas.
+# Les autres sites du serveur passent avant : les conversions vidéo (ffmpeg, lancé par le service) ne prennent que
+# la moitié du poids habituel pour le processeur et le disque.
+CPUWeight=50
+IOWeight=50
+
+# Durcissement : seul /srv/canape (base, films, cache, envois en cours) est inscriptible.
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=true
+ReadWritePaths=/srv/canape
 PrivateTmp=true
 PrivateDevices=true
 ProtectKernelTunables=true
@@ -37,7 +44,7 @@ RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
 SystemCallFilter=@system-service @pkey
 SystemCallErrorNumber=EPERM
 SystemCallArchitectures=native
-# Node n'écoute qu'en local sur le port 8080 (nginx est devant) : aucune capacité nécessaire.
+# Node n'écoute qu'en local (nginx est devant) : aucune capacité nécessaire.
 CapabilityBoundingSet=
 AmbientCapabilities=
 
