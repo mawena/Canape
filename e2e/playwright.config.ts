@@ -35,6 +35,8 @@ const WEBKIT = process.env['CANAPE_E2E_WEBKIT'] !== '0';
 export default defineConfig({
   testDir: '.',
   testMatch: '**/*.spec.ts',
+  // Le projet « téléphone » ne rejoue que ses propres parcours (et les captures) ; les autres ne les rejouent pas.
+  testIgnore: ['**/telephone.spec.ts'],
   globalSetup: './global-setup.ts',
   timeout: 90_000,
   expect: { timeout: 10_000 },
@@ -70,7 +72,8 @@ export default defineConfig({
       : []),
     {
       name: 'telephone',
-      testMatch: '**/telephone.spec.ts',
+      testIgnore: [],
+      testMatch: ['**/telephone.spec.ts', '**/captures.spec.ts'],
       use: { ...devices['Pixel 7'], permissions: ['camera', 'microphone'], launchOptions: { args: chromiumArgs } },
     },
   ],

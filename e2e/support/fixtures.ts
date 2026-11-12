@@ -78,10 +78,10 @@ export async function connecter(contexte: BrowserContext, s: ServeurCanape, comp
 }
 
 /** Téléverse un fichier par tus (un seul morceau) pour le compte du contexte ; rend l'identifiant du film. */
-export async function televerser(s: ServeurCanape, requete: APIRequestContext, nom: string): Promise<number> {
+export async function televerser(s: ServeurCanape, requete: APIRequestContext, nom: string, nomEnvoye = nom): Promise<number> {
   const chemin = cheminMedia(nom);
   const octets = readFileSync(chemin);
-  const b64 = Buffer.from(nom).toString('base64');
+  const b64 = Buffer.from(nomEnvoye).toString('base64');
   const creation = await requete.post(`${s.url}/api/televersement`, {
     headers: {
       ...entetes(s), 'Tus-Resumable': '1.0.0', 'Upload-Length': String(octets.length), 'Upload-Metadata': `filename ${b64}`,
@@ -94,15 +94,16 @@ export async function televerser(s: ServeurCanape, requete: APIRequestContext, n
     data: octets,
   });
   expect(envoi.status(), await envoi.text()).toBeLessThan(300);
-  return await attendreFilmPret(s, requete, nom);
+  return await attendreFilmPret(s, requete);
 }
 
-export async function attendreFilmPret(s: ServeurCanape, requete: APIRequestContext, _nom: string): Promise<number> {
+/** Attend que le film le plus récent de l'utilisateur soit prêt ; rend son identifiant. */
+export async function attendreFilmPret(s: ServeurCanape, requete: APIRequestContext): Promise<number> {
   let id = 0;
   await expect.poll(async () => {
     const r = await requete.get(`${s.url}/api/films?vue=miens`);
     const films = (await r.json()) as Array<{ id: number; etat: string }>;
-    const f = films[films.length - 1];
+    const f = films.reduce<{ id: number; etat: string } | undefined>((m, x) => (!m || x.id > m.id ? x : m), undefined);
     if (f?.etat === 'erreur') throw new Error('Le film est passé en erreur.');
     id = f?.id ?? 0;
     return f?.etat;
