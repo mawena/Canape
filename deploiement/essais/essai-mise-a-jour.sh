@@ -51,6 +51,9 @@ verifier "pas de base avant : rien à sauvegarder, dossier de sauvegarde vide de
 verifier "aucun dossier temporaire ne reste dans versions/" bash -c "! find '$APP/versions' -maxdepth 1 -name '.neuf.*' | grep -q ."
 # on ajoute un -wal pour que la sauvegarde ait à gérer les deux fichiers
 echo "wal-de-1.0.0" > "$SRV/donnees/canape.sqlite-wal"
+# un téléchargement laissé fermé au groupe par la 1.4.0 (dossier 2750, fichier 640), et le dossier rabaissé en 0750
+mkdir -p "$SRV/telechargements/abc/Film" && echo x > "$SRV/telechargements/abc/Film/film.mkv"
+chmod 0750 "$SRV/telechargements" && chmod 2750 "$SRV/telechargements/abc" && chmod 0750 "$SRV/telechargements/abc/Film" && chmod 0640 "$SRV/telechargements/abc/Film/film.mkv"
 
 titre b "mise à jour 1.0.0 -> 1.0.1 : sauvegarde, bascule, vérification"
 AVANT="$(base)"
@@ -61,6 +64,8 @@ SAUV="$(ls -d "$SRV/donnees/sauvegardes"/*avant-1.0.1-bbbbbbb 2>/dev/null | head
 verifier "sauvegarde créée, nommée d'après la nouvelle version" test -n "$SAUV"
 verifier "la sauvegarde contient canape.sqlite et le -wal, identiques à l'état d'avant" bash -c "[ \"\$(md5sum '$SAUV/canape.sqlite' '$SAUV/canape.sqlite-wal' | cut -d' ' -f1 | tr '\n' ' ')\" = '$AVANT' ]"
 verifier "l'ancienne version 1.0.0 est gardée" test -d "$APP/versions/1.0.0-aaaaaaa"
+verifier "dossier des téléchargements remis en 2770 (Transmission y écrit)" test "$(stat -c %a "$SRV/telechargements")" = 2770
+verifier "anciens dossiers et fichiers de téléchargement ouverts au groupe (2770, 660)" bash -c "[ \"\$(stat -c %a '$SRV/telechargements/abc' '$SRV/telechargements/abc/Film' '$SRV/telechargements/abc/Film/film.mkv' | tr '\n' ' ')\" = '2770 2770 660 ' ]"
 verifier "le service a été arrêté puis redémarré (systemctl stop puis start)" bash -c "grep -n '^stop canape' '$T/systemctl.log' | tail -1 | cut -d: -f1 | xargs -I{} sh -c 'tail -n +{} \"$T/systemctl.log\" | grep -q \"^start canape\"'"
 maj "$PAQUETS/p101.tar.gz" "$S101"
 verifier "même version relancée : « déjà en service », code 0" bash -c "[ $CODE = 0 ] && grep -q 'déjà en service' '$T/sortie'"

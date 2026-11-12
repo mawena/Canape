@@ -12,6 +12,9 @@ const envoyer = (m: DeEnfant): void => { try { envoyerAuParent(m); } catch { /* 
 
 const options = JSON.parse(process.argv[2] ?? '{}') as OptionsEnfant;
 try { setPriority(0, options.priorite); } catch { /* priorité non modifiable : tant pis */ }
+// Fichiers et dossiers ouverts au groupe canape (660 / 770) : si Transmission reprend ce téléchargement, il doit
+// pouvoir écrire dans ce que WebTorrent a commencé (le service, lui, tourne avec UMask=0027).
+process.umask(0o007);
 
 // Plus de parent : plus de raison de vivre (jamais de processus orphelin).
 process.on('disconnect', () => process.exit(0));
