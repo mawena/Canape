@@ -34,11 +34,8 @@ src/                    modules du serveur (CommonJS, Node >= 18, aucune étape 
 public/                 interface web statique (HTML, CSS, JS natif, sans framework ni construction)
 tests/                  tests node:test (`npm test`)
 package.json            seule dépendance de production : ws
-debian/                 paquet Debian (dont debian/canape.service, unité systemd)
-scripts/                build-deb.sh, publier-apt.sh
-data/apt/               clé publique et source deb822 du dépôt APT
-site/                   page d'accueil GitHub Pages et installer.sh
-Makefile                cibles deb, apt, test, clean
+deploiement/            mise en ligne sur un serveur à soi : unité systemd, réglages d'exemple,
+                        configuration nginx, script de déploiement depuis le poste
 README.md, LICENSE, CHANGELOG.md, ROADMAP.md
 ```
 
@@ -47,7 +44,7 @@ README.md, LICENSE, CHANGELOG.md, ROADMAP.md
 Le serveur se règle par des variables d'environnement. `bin/canape --config <fichier>` (ou la variable
 `CANAPE_CONFIG`) lit en plus un fichier `CLÉ=valeur` (lignes `#` ignorées, valeurs éventuellement entre
 guillemets) ; les variables déjà présentes dans l'environnement l'emportent sur le fichier.
-Le paquet installe `/etc/canape/canape.conf` dans ce format, lu par systemd (`EnvironmentFile=`).
+Sur le serveur, `/etc/canape/canape.conf` est dans ce format, lu par systemd (`EnvironmentFile=`).
 
 | Variable | Défaut | Rôle |
 |---|---|---|
@@ -62,19 +59,28 @@ Le paquet installe `/etc/canape/canape.conf` dans ce format, lu par systemd (`En
 | `CANAPE_TURN_URLS` | vide | URL TURN séparées par des virgules (ex. `turn:exemple.fr:3478`) |
 | `CANAPE_TURN_SECRET` | vide | secret partagé de coturn (`static-auth-secret`) : identifiants TURN temporaires |
 
-Caméra et micro exigent une page sûre : HTTPS, ou `http://localhost`. En production, HTTPS par un proxy
-(Caddy, nginx, Apache) avec `CANAPE_DERRIERE_PROXY=1`, ou directement avec `CANAPE_TLS_CERT` / `CANAPE_TLS_CLE`.
+Caméra et micro exigent une page sûre : HTTPS, ou `http://localhost`.
+
+## Production
+
+Canapé est une application web, pas un paquet Ubuntu. Elle tourne sur un serveur à soi (VPS) :
+
+- Node.js écoute seulement en local (`CANAPE_HOTE=127.0.0.1`, port 8080), comme service systemd durci,
+  sous un utilisateur dédié `canape` ;
+- nginx est devant : HTTPS avec un certificat Let's Encrypt (certbot), passage du WebSocket `/ws`, envoi des
+  films sans mise en mémoire tampon ; `CANAPE_DERRIERE_PROXY=1` ;
+- le code va dans `/opt/canape`, les films dans `/srv/canape/films`, les réglages dans `/etc/canape/canape.conf`.
 
 ## Interface HTTP
 
 | Méthode et chemin | Accès | Rôle |
 |---|---|---|
 | `GET /` et fichiers de `public/` | libre | l'application (elle affiche la connexion si besoin) |
-| `GET /api/etat` | libre | `{ "version", "connecte", "motDePasseRequis" }` : sert aussi de test de santé |
+| `GET /api/etat` | libre | `{ "version", "connecte", "motDePasseRequis", "prenom" }` : sert aussi de test de santé |
 | `POST /api/connexion` | libre | `{ "motDePasse", "prenom" }` → 204 et cookie de session ; 401 ; 429 si trop d'essais |
 | `POST /api/deconnexion` | session | efface le cookie |
 | `GET /api/films` | session | liste des films, avec leurs sous-titres et leur compatibilité navigateur |
-| `GET /api/config` | session | serveurs ICE (STUN/TURN, avec identifiants TURN temporaires) |
+| `GET /api/config` | session | `{ "iceServers", "participantsMax" }` (STUN/TURN, identifiants TURN temporaires) |
 | `GET /films/<chemin>` | session | le fichier du film, requêtes `Range` acceptées |
 | `GET /sous-titres/<chemin>` | session | sous-titres en WebVTT (`.srt` converti à la volée) |
 | `GET /ws` (WebSocket) | session | synchronisation de la lecture et signalisation WebRTC |
@@ -85,7 +91,8 @@ Caméra et micro exigent une page sûre : HTTPS, ou `http://localhost`. En produ
 - Sous-titres : fichier `.srt` ou `.vtt` à côté du film, même nom de base, avec un code de langue facultatif
   (`Film.mp4`, `Film.srt`, `Film.fr.srt`, `Film.en.vtt`).
 - Compatibilité : si `ffprobe` est présent, le serveur lit les codecs (résultat mis en cache) et marque un film
-  « lisible partout » (vidéo H.264, VP8, VP9 ou AV1 ; son AAC, MP3, Opus ou Vorbis), sinon « à convertir ».
+  « lisible partout » (vidéo H.264, VP8, VP9 ou AV1 ; son AAC, MP3, Opus ou Vorbis), sinon « à convertir » ;
+  sans ffprobe, la compatibilité est inconnue (`null`).
 - `canape-convertir <film>` produit un MP4 H.264 + AAC avec `+faststart` à côté de l'original, et extrait les
   sous-titres texte intégrés en `.vtt`.
 
