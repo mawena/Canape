@@ -1,0 +1,45 @@
+[Unit]
+Description=Canapé, regarder un film à deux, chacun chez soi
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=canape
+Group=canape
+WorkingDirectory=/opt/canape
+EnvironmentFile=/etc/canape/canape.conf
+ExecStart=/usr/bin/node /opt/canape/bin/canape
+Restart=on-failure
+RestartSec=3
+UMask=0027
+
+# Durcissement : le service n'écrit nulle part (le cache ffprobe est gardé en mémoire).
+# Les films sont lus dans /srv/canape/films, hors de /home : ProtectHome=true ne les gêne pas.
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+# @pkey : V8 (le moteur de Node) protège sa mémoire par pkey_alloc/pkey_mprotect ; sans lui Node meurt au démarrage.
+# Un appel refusé renvoie EPERM au lieu de tuer le service.
+SystemCallFilter=@system-service @pkey
+SystemCallErrorNumber=EPERM
+SystemCallArchitectures=native
+# Node n'écoute qu'en local sur le port 8080 (nginx est devant) : aucune capacité nécessaire.
+CapabilityBoundingSet=
+AmbientCapabilities=
+
+[Install]
+WantedBy=multi-user.target

@@ -7,44 +7,49 @@ passent en même temps. Conception : [docs/CONCEPTION.md](docs/CONCEPTION.md).
 ## Phase 1 — Fondations
 
 - [x] Dépôt git, git flow (`main`, `develop`)
-- [ ] Dépôt distant en SSH
+- [x] Dépôt distant en SSH (`git@github.com:mawena/Canape.git`, public)
 - [x] Conception et contrat commun (`docs/CONCEPTION.md`), feuille de route, `.gitignore`
 
 ## Phase 2 — Serveur
 
-- [ ] Configuration (variables d'environnement, fichier `--config`), démarrage HTTP ou HTTPS
-- [ ] Connexion par mot de passe commun, cookie de session signé, limite d'essais
-- [ ] Liste des films, sous-titres, compatibilité navigateur (ffprobe)
-- [ ] Envoi des films avec requêtes `Range`, sans sortie du dossier des films
-- [ ] Sous-titres `.srt` convertis en WebVTT
-- [ ] Salon : état de lecture partagé, attente mutuelle, signalisation WebRTC par WebSocket
-- [ ] Identifiants TURN temporaires (coturn)
-- [ ] `canape-convertir` : film converti pour le navigateur (ffmpeg)
+- [x] Configuration (variables d'environnement, fichier `--config`), démarrage HTTP ou HTTPS
+- [x] Connexion par mot de passe commun, cookie de session signé, limite d'essais
+- [x] Liste des films, sous-titres, compatibilité navigateur (ffprobe)
+- [x] Envoi des films avec requêtes `Range`, sans sortie du dossier des films
+- [x] Sous-titres `.srt` convertis en WebVTT
+- [x] Salon : état de lecture partagé, attente mutuelle, signalisation WebRTC par WebSocket
+- [x] Identifiants TURN temporaires (coturn)
+- [x] `canape-convertir` : film converti pour le navigateur (ffmpeg)
 
 ## Phase 3 — Interface
 
-- [ ] Écran de connexion (prénom, mot de passe)
-- [ ] Choix du film
-- [ ] Lecteur synchronisé : lecture, pause, déplacement, rattrapage de l'écart, sous-titres
-- [ ] Caméras et micros (WebRTC) en vignettes sur le film, couper micro et caméra
-- [ ] Volumes séparés film et voix, film baissé quand l'autre parle, conseil du casque
-- [ ] Plein écran avec les caméras, affichage sur téléphone
+- [x] Écran de connexion (prénom, mot de passe)
+- [x] Choix du film
+- [x] Lecteur synchronisé : lecture, pause, déplacement, rattrapage de l'écart, sous-titres
+- [x] Caméras et micros (WebRTC) en vignettes sur le film, couper micro et caméra
+- [x] Volumes séparés film et voix, film baissé quand l'autre parle, conseil du casque
+- [x] Plein écran avec les caméras, affichage sur téléphone
 
 ## Phase 4 — Tests
 
-- [ ] Tests unitaires et d'intégration du serveur (`npm test`)
-- [ ] Essai réel dans le navigateur, à deux onglets
+- [x] Tests unitaires et d'intégration du serveur (`npm test`)
+- [x] Essai réel dans un navigateur, à deux participants (caméras simulées), avec corrections (`npm run essai-navigateur`)
+- [x] `canape-convertir` essayé sur un vrai fichier
+- [x] Tests et essai navigateur sous Node 26 (version du VPS) comme sous Node 18
 
-## Phase 5 — Paquet Debian et dépôt APT
+## Phase 5 — Déploiement sur le serveur (nginx)
 
-- [ ] Paquet `.deb` : service systemd, utilisateur `canape`, `/etc/canape/canape.conf`, `/var/lib/canape/films`
-- [ ] Clé de signature du dépôt APT, source deb822 et clé installées par le paquet
-- [ ] `scripts/publier-apt.sh`, page d'accueil du site et `installer.sh`
-- [ ] README (site, installation par apt, utilisation, configuration, HTTPS, TURN)
+Canapé est une application web déployée sur un serveur à soi, derrière nginx : pas de paquet Ubuntu.
+
+- [x] Retrait du paquet Debian, du dépôt APT, du site et de leurs scripts
+- [x] Unité systemd durcie et fichier de réglages d'exemple (`deploiement/`)
+- [x] Configuration nginx : HTTPS (Let's Encrypt), WebSocket, envoi des films
+- [x] Script de déploiement depuis le poste (`deploiement/deployer.sh`)
+- [x] README : déploiement, nginx, HTTPS, TURN, configuration, utilisation, développement
+- [ ] Mise en ligne sur le VPS, à l'adresse https://canape.mawena.cloud (déploiement fait par l'utilisateur)
 
 ## Phase 6 — Release
 
-- [ ] Version, CHANGELOG, tag, push de `main`, `develop` et des tags
-- [ ] Release GitHub avec le `.deb` et `SHA256SUMS`
-- [ ] Publication dans le dépôt APT, vérifiée par `apt-get update` sans root
-- [ ] « About » GitHub : site web et description
+- [x] Version 0.1.0, CHANGELOG, tag, push de `main`, `develop` et des tags
+- [ ] Release GitHub
+- [x] « About » GitHub : description sans dépôt APT, sans site GitHub Pages

@@ -3,10 +3,3 @@ dist/
 build/
 films/
 *.log
-debian/canape/
-debian/.debhelper/
-debian/files
-debian/*.substvars
-debian/*.debhelper
-debian/*.debhelper.log
-debian/debhelper-build-stamp
