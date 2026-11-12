@@ -1,7 +1,7 @@
 // Routes REST des séances : droits, création, liens, messages, reprise, historique, ICE.
 import assert from 'node:assert/strict';
 import { after, before, describe, test } from 'node:test';
-import { creerUtilisateur, get, patch, post, supprimer, type UtilisateurTest } from '../aides.ts';
+import { creerUtilisateur, faireConnaitre, get, patch, post, supprimer, type UtilisateurTest } from '../aides.ts';
 import { creerEnv, insererFilm, inserer, type Env } from './aides-seances.ts';
 
 describe('séances : REST', () => {
@@ -15,6 +15,8 @@ describe('séances : REST', () => {
     etranger = await creerUtilisateur(env, { prenom: 'Eli' });
     autre = await creerUtilisateur(env, { prenom: 'Omar' });
     admin = await creerUtilisateur(env, { role: 'admin', prenom: 'Admin' });
+    await faireConnaitre(env.app, hote, invite);
+    await faireConnaitre(env.app, hote, autre);
     film = insererFilm(env, hote, { visibilite: 'tous' });
     filmPrive = insererFilm(env, etranger, { visibilite: 'prive' });
   });

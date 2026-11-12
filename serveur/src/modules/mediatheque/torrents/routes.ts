@@ -19,7 +19,7 @@ export function installerRoutesTorrents(app: FastifyInstance, torrents: Torrents
     { ...pre, config: { rateLimit: { max: 10, timeWindow: '1 minute' } } },
     async (req, reply): Promise<Telechargement> => {
       if (!torrents.actif) throw interdit('Les torrents sont désactivés sur ce serveur.');
-      if (!torrents.peutAjouter(req.utilisateur)) throw interdit("Tu n'as pas le droit d'ajouter des films.");
+      torrents.exigerDroit(req.utilisateur);
       let source: SourceAjout;
       if (req.isMultipart()) {
         const fichier = await req.file();
