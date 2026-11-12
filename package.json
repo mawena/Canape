@@ -26,7 +26,7 @@
     "paquet": "bash scripts/paquet.sh"
   },
   "devDependencies": {
-    "@playwright/test": "^1.65.0",
+    "@playwright/test": "1.64.1",
     "@types/node": "^26.6.6",
     "svelte-check": "^4.7.8",
     "typescript": "^6.0.3"
