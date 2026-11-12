@@ -96,5 +96,5 @@ main, séances, chat et réactions, reprise, PWA, mise en production automatique
 
 ## Phase 12 — Release 1.0.0
 
-- [ ] Version, CHANGELOG, tag, release GitHub
+- [x] Version, CHANGELOG, tag, release GitHub
 - [ ] Premier déploiement automatique sur https://canape.mawena.cloud, vérifié
