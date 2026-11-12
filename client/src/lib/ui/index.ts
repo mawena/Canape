@@ -18,6 +18,7 @@ export { default as LigneListe } from './LigneListe.svelte';
 export { default as Logo } from './Logo.svelte';
 export { default as Lueur } from './Lueur.svelte';
 export { default as Menu } from './Menu.svelte';
+export { default as MiniAffiche } from './MiniAffiche.svelte';
 export { default as Modale } from './Modale.svelte';
 export { default as Onglets } from './Onglets.svelte';
 export { default as PileAvatars } from './PileAvatars.svelte';

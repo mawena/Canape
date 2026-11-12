@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  couleurValide, formaterChrono, formaterDans, formaterDateSeance, formaterDuree, formaterTaille, listerNoms, salutation, teinteTitre,
+  couleurDuTitre, couleurValide, formaterChrono, formaterDans, formaterDateSeance, formaterDuree, formaterTaille, listerNoms, salutation, teinteTitre,
 } from './format.ts';
 
 describe('format', () => {
@@ -41,6 +41,9 @@ describe('format', () => {
   it('valide les couleurs', () => {
     assert.equal(couleurValide('#f4a85b'), '#f4a85b');
     assert.equal(couleurValide('rouge'), null);
+  });
+  it('donne une couleur de lueur valide', () => {
+    assert.match(couleurDuTitre('Les Heures bleues'), /^#[0-9a-f]{6}$/);
   });
   it('liste les noms', () => {
     assert.equal(listerNoms(['Awa', 'Léa']), 'Awa et Léa');

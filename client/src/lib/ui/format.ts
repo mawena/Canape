@@ -109,3 +109,18 @@ export function listerNoms(noms: string[], max = 3): string {
   const reste = noms.length - (max - 1);
   return `${noms.slice(0, max - 1).join(', ')} et ${reste} autre${reste > 1 ? 's' : ''}`;
 }
+
+/** Couleur `#rrggbb` de « lueur » tirée de la teinte du titre (films sans affiche) : hsl(teinte, 55 %, 58 %). */
+export function couleurDuTitre(titre: string): string {
+  const h = teinteTitre(titre) / 360;
+  const s = 0.55;
+  const l = 0.58;
+  const q = l + s - l * s;
+  const p = 2 * l - q;
+  const canal = (t0: number): number => {
+    const t = (t0 + 1) % 1;
+    const v = t < 1 / 6 ? p + (q - p) * 6 * t : t < 1 / 2 ? q : t < 2 / 3 ? p + (q - p) * (2 / 3 - t) * 6 : p;
+    return Math.round(v * 255);
+  };
+  return `#${[canal(h + 1 / 3), canal(h), canal(h - 1 / 3)].map((x) => x.toString(16).padStart(2, '0')).join('')}`;
+}

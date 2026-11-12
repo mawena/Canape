@@ -75,7 +75,7 @@
   {#if ouvert}
     <div bind:this={pop} class="pop {alignement}" class:haut role="menu" aria-label={libelle} tabindex="-1" onkeydown={touchePop}>
       {#each elements as el, i (i)}
-        {#if el.separateurAvant}<hr role="separator" />{/if}
+        {#if el.separateurAvant}<hr />{/if}
         {#if el.href}
           <a role="menuitem" href={el.href} tabindex="-1" class:danger={el.danger} onclick={() => choisir(el)}>
             {#if el.icone}<Icone nom={el.icone} />{/if}{el.libelle}
