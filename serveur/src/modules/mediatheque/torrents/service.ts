@@ -574,7 +574,7 @@ export class Torrents {
         throw new ErreurHttp(507, 'quota_depasse', 'Ton espace est plein : ce choix dépasse ton quota.');
       }
       this.db.prepare('UPDATE telechargements SET fichiers = ?, octets_total = ? WHERE id = ?').run(JSON.stringify(fichiers), total, id);
-      if (this.envoyes.has(id)) this.moteurDe(l).envoyer({ t: 'choisir', id, fichiers: choix });
+      if (this.envoyes.has(id) || (l.etat === 'pause' && l.moteur === 'transmission')) this.moteurDe(l).envoyer({ t: 'choisir', id, fichiers: choix });
     }
 
     if (corps.pause === true && l.etat !== 'pause') {
