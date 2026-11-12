@@ -2,8 +2,9 @@ import { test, expect, televerser, FILM_WEBM, type Monde } from './support/fixtu
 import { creerSeance, entrerDansLaSalle } from './support/salle.ts';
 
 /** Deux personnes (admin et viewer) dans la même salle, chacune dans son contexte de navigateur. */
-async function deuxDansLaSalle(monde: Monde, ouvrir: Parameters<Parameters<typeof test>[2]>[0]['ouvrir']) {
+async function deuxDansLaSalle(monde: Monde, ouvrir: Parameters<Parameters<typeof test>[2]>[0]['ouvrir'], avant?: (filmId: string) => Promise<void>) {
   const filmId = await televerser(monde.serveur, monde.requeteAdmin, FILM_WEBM);
+  await avant?.(filmId);
   const id = await creerSeance(monde.serveur, monde.requeteAdmin, filmId, [monde.viewer.id]);
   const a = await ouvrir(monde.admin);
   const b = await ouvrir(monde.viewer);
@@ -80,16 +81,16 @@ test.describe('Salle à deux', () => {
   });
 });
 
-// Ces essais attendent la lecture universelle (GET /api/films/:id/lecture) : à activer après sa fusion.
+// Lecture synchronisée (mode direct, WebM VP9/Opus).
 test.describe('Salle à deux : lecture synchronisée', () => {
-  test.fixme('lecture lancée par l\'un : l\'autre lit aussi', async ({ ouvrir, monde }) => {
+  test('lecture lancée par l\'un : l\'autre lit aussi', async ({ ouvrir, monde }) => {
     const { a, b } = await deuxDansLaSalle(monde, ouvrir);
     await a.getByTestId('lecture').click();
     await expect(b.getByTestId('salle')).toHaveAttribute('data-lecture', 'true');
     await expect.poll(() => b.getByTestId('film').evaluate((v: HTMLVideoElement) => v.currentTime)).toBeGreaterThan(1);
   });
 
-  test.fixme('pause : les deux en pause à moins de 0,5 s d\'écart', async ({ ouvrir, monde }) => {
+  test('pause : les deux en pause à moins de 0,5 s d\'écart', async ({ ouvrir, monde }) => {
     const { a, b } = await deuxDansLaSalle(monde, ouvrir);
     await a.getByTestId('lecture').click();
     await expect.poll(() => b.getByTestId('film').evaluate((v: HTMLVideoElement) => v.currentTime)).toBeGreaterThan(2);
@@ -99,29 +100,44 @@ test.describe('Salle à deux : lecture synchronisée', () => {
     expect(Math.abs((ta ?? 0) - (tb ?? 0))).toBeLessThan(0.5);
   });
 
-  test.fixme('saut dans la barre de temps : l\'autre suit', async ({ ouvrir, monde }) => {
+  test('saut dans la barre de temps : l\'autre suit', async ({ ouvrir, monde }) => {
     const { a, b } = await deuxDansLaSalle(monde, ouvrir);
     await a.getByTestId('avancer').click();
     await expect.poll(() => b.getByTestId('film').evaluate((v: HTMLVideoElement) => v.currentTime)).toBeGreaterThan(5);
   });
 
-  test.fixme('compte à rebours lancé par l\'un, visible chez l\'autre', async ({ ouvrir, monde }) => {
+  test('compte à rebours lancé par l\'un, visible chez l\'autre', async ({ ouvrir, monde }) => {
     const { a, b } = await deuxDansLaSalle(monde, ouvrir);
     await a.getByTestId('lancer-ensemble').click();
     await expect(b.getByTestId('compte-a-rebours')).toBeVisible();
     await expect(b.getByTestId('salle')).toHaveAttribute('data-lecture', 'true', { timeout: 15_000 });
   });
 
-  test.fixme('attente mutuelle : l\'un charge, l\'autre attend', async ({ ouvrir, monde }) => {
+  test('attente mutuelle : l\'un charge, l\'autre attend', async ({ ouvrir, monde }) => {
     const { a, b } = await deuxDansLaSalle(monde, ouvrir);
     await a.getByTestId('lecture').click();
-    await expect(b.getByTestId('attente').or(b.getByTestId('salle'))).toBeVisible();
+    await expect(b.getByTestId('salle')).toHaveAttribute('data-lecture', 'true');
+    // Chez Camille, le film « charge » plus d'une seconde (readyState simulé : un vrai film de 25 s est déjà tout en mémoire) : Alix voit qu'on l'attend.
+    await b.getByTestId('film').evaluate((v: HTMLVideoElement) => { Object.defineProperty(v, 'readyState', { configurable: true, get: () => 1 }); v.dispatchEvent(new Event('waiting')); });
+    await expect(a.getByTestId('attente')).toBeVisible({ timeout: 10_000 });
+    await expect(a.getByTestId('attente')).toContainText(monde.viewer.prenom);
+    await expect(b.getByTestId('attente')).toContainText('Ton film charge');
+    // Alix ne veut plus attendre : le voile disparaît chez elle, et l'annonce le dit.
+    await a.getByTestId('ne-plus-attendre').click();
+    await expect(a.getByTestId('attente')).toHaveCount(0, { timeout: 10_000 });
   });
 
-  test.fixme('changement de sous-titres annoncé chez l\'autre', async ({ ouvrir, monde }) => {
-    const { a, b } = await deuxDansLaSalle(monde, ouvrir);
+  test('changement de sous-titres annoncé chez l\'autre', async ({ ouvrir, monde }) => {
+    const srt = '1\n00:00:01,000 --> 00:00:03,000\nBonsoir\n\n2\n00:00:04,000 --> 00:00:06,000\nBonne séance\n';
+    const { a, b } = await deuxDansLaSalle(monde, ouvrir, async (filmId) => {
+      const r = await monde.requeteAdmin.post(`${monde.serveur.url}/api/films/${filmId}/sous-titres`, {
+        headers: { Origin: monde.serveur.url },
+        multipart: { fichier: { name: 'Mire.fr.srt', mimeType: 'application/x-subrip', buffer: Buffer.from(srt) }, langue: 'fr' },
+      });
+      expect(r.status(), await r.text()).toBeLessThan(300);
+    });
     await a.getByTestId('langue-st').click();
-    await a.getByTestId('st-aucun').click();
-    await expect(b.getByTestId('annonce')).toBeVisible();
+    await a.locator('[data-test^="st-"]:not([data-test="st-aucun"])').first().check();
+    await expect(b.getByTestId('annonce').filter({ hasText: /sous-titres/ })).toBeVisible();
   });
 });
