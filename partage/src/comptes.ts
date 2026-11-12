@@ -44,6 +44,8 @@ export interface InvitationPublique {
   role: Role | null;
   prenomSuggere: string | null;
   valide: boolean;
+  /** Prénom de la personne qui invite (ou du compte à réinitialiser) ; `null` si inconnu. Ajout au contrat. */
+  invitePar?: string | null;
 }
 
 /** `POST /api/invitations/:jeton` (type compte : les trois champs ; réinitialisation : `motDePasse` seul). */
@@ -51,6 +53,8 @@ export interface CorpsAcceptationInvitation {
   prenom?: string;
   identifiant?: string;
   motDePasse: string;
+  /** Couleur d'avatar parmi `COULEURS_AVATAR` (type compte ; tirée au hasard si absente). Ajout au contrat. */
+  couleur?: string;
 }
 
 /** `PATCH /api/compte` */
@@ -86,6 +90,22 @@ export interface CorpsCreerInvitation {
 /** Réponse de création d'invitation ou de réinitialisation. */
 export interface LienInvitation {
   lien: string;
+  /** Identifiant de l'invitation et date d'expiration (ajouts au contrat). */
+  id?: number;
+  expireLe?: string;
+}
+
+/** `GET /api/compte` : le compte et l'espace qu'il occupe (ajout au contrat). */
+export interface Compte extends Utilisateur {
+  octetsUtilises: number;
+}
+
+/** `GET|PATCH /api/admin/reglages`. */
+export interface Reglages {
+  /** Convertir à l'avance, quand le serveur est calme, les films qui ne se lisent pas directement. */
+  preparationAuto: boolean;
+  /** Quota (octets) donné à un nouveau compte viewer. */
+  quotaDefautOctets: number;
 }
 
 /** Ligne de `GET /api/admin/invitations`. */
@@ -105,6 +125,8 @@ export interface Stockage {
   disque: { total: number; libre: number };
   films: number;
   cache: number;
+  /** Taille maximale du cache (`CANAPE_CACHE_MAX`). */
+  cacheMax: number;
   parUtilisateur: Array<{ utilisateurId: number; prenom: string; octets: number; quotaOctets: number | null }>;
 }
 
