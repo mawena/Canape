@@ -1,0 +1,32 @@
+# Réglages de Canapé : /etc/canape/canape.conf (format CLÉ=valeur, # pour un commentaire).
+# Le fichier contient des secrets : propriétaire root, groupe canape, droits 640.
+# Après une modification : sudo systemctl restart canape
+
+# Adresse et port d'écoute. En production Node reste en local, nginx est devant.
+CANAPE_HOTE=127.0.0.1
+CANAPE_PORT=8080
+
+# Dossier des films (sous-dossiers permis ; sous-titres .srt/.vtt à côté).
+CANAPE_FILMS=/srv/canape/films
+
+# Mot de passe commun du salon (à remplir ; vide = accès libre, à ne jamais faire en ligne).
+CANAPE_MOT_DE_PASSE=
+
+# Secret qui signe les cookies de session (à remplir : sinon les sessions tombent à chaque redémarrage).
+# Par exemple : openssl rand -hex 32
+CANAPE_SECRET=
+
+# 1 = faire confiance à X-Forwarded-Proto / X-Forwarded-For de nginx (cookie Secure, adresse du visiteur).
+CANAPE_DERRIERE_PROXY=1
+
+# HTTPS servi directement par Node : inutile derrière nginx.
+#CANAPE_TLS_CERT=
+#CANAPE_TLS_CLE=
+
+# Serveurs STUN/TURN donnés aux navigateurs (JSON). Défaut : un STUN public de Google.
+#CANAPE_ICE=[{"urls":"stun:stun.l.google.com:19302"}]
+
+# Relais TURN (coturn) pour les réseaux stricts : URL séparées par des virgules, et le secret partagé
+# (static-auth-secret de coturn). Canapé en tire des identifiants temporaires pour chaque navigateur.
+#CANAPE_TURN_URLS=turn:canape.exemple.fr:3478
+#CANAPE_TURN_SECRET=

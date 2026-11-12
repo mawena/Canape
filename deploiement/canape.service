@@ -1,6 +1,5 @@
 [Unit]
-Description=Canapé, regarder un film à deux chacun chez soi
-Documentation=https://mawena.github.io/Canape/
+Description=Canapé, regarder un film à deux, chacun chez soi
 After=network-online.target
 Wants=network-online.target
 
@@ -8,19 +7,18 @@ Wants=network-online.target
 Type=simple
 User=canape
 Group=canape
-# secrets.conf (créé à l'installation) d'abord, canape.conf ensuite : ce dernier l'emporte.
-EnvironmentFile=-/etc/canape/secrets.conf
-EnvironmentFile=-/etc/canape/canape.conf
-ExecStart=/usr/bin/canape
+WorkingDirectory=/opt/canape
+EnvironmentFile=/etc/canape/canape.conf
+ExecStart=/usr/bin/node /opt/canape/bin/canape
 Restart=on-failure
 RestartSec=3
 UMask=0027
 
-# Durcissement : le service ne peut écrire que dans /var/lib/canape ; les films (n'importe où en lecture) restent lisibles.
+# Durcissement : le service n'écrit nulle part (le cache ffprobe est gardé en mémoire).
+# Les films sont lus dans /srv/canape/films, hors de /home : ProtectHome=true ne les gêne pas.
 NoNewPrivileges=true
 ProtectSystem=strict
-ReadWritePaths=/var/lib/canape
-ProtectHome=read-only
+ProtectHome=true
 PrivateTmp=true
 PrivateDevices=true
 ProtectKernelTunables=true
@@ -39,9 +37,9 @@ RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
 SystemCallFilter=@system-service @pkey
 SystemCallErrorNumber=EPERM
 SystemCallArchitectures=native
-# Un port inférieur à 1024 (80, 443) reste possible sans être root.
-AmbientCapabilities=CAP_NET_BIND_SERVICE
-CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+# Node n'écoute qu'en local sur le port 8080 (nginx est devant) : aucune capacité nécessaire.
+CapabilityBoundingSet=
+AmbientCapabilities=
 
 [Install]
 WantedBy=multi-user.target
