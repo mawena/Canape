@@ -2,6 +2,31 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) ; versions selon [SemVer](https://semver.org/lang/fr/).
 
+## [1.2.0] — 2026-11-12
+
+Nouveau design : plus lumineux, plus professionnel, plus facile à prendre en main.
+
+### Changé
+
+- **Thème clair par défaut, à dominante bleue** : fond clair légèrement bleuté, cartes blanches, bleu franc pour toutes
+  les actions, dégradé bleu → violet pour ce qui compte (séance du soir, connexion, bouton principal), ombres douces ;
+  contrastes calculés, au niveau AA partout.
+- **Thème sombre bleu nuit en option** : « Clair / Sombre / Comme mon appareil » dans le menu du compte et dans
+  « Mon compte » (clair par défaut). La salle reste sombre dans les deux thèmes, pour regarder le film.
+- **Typographie** : Figtree pour toute l'interface ; Instrument Serif seulement pour les grands titres et les noms de
+  films.
+- **Composants refaits** : boutons, champs, cartes d'affiche, onglets en segments, modales, menus, panneaux, états
+  vides et chargements ; verre dépoli sur ce qui flotte au-dessus du film ; navigation plus nette.
+- **Écrans repris un par un** : accueil, connexion et invitation, galerie et fiche d'un film, téléchargements,
+  séances et nouvelle séance (trois étapes), sas et salle, historique, compte, administration ; cibles tactiles d'au
+  moins 44 px.
+- Icônes, manifeste et écrans de démarrage de l'application installable aux nouvelles couleurs.
+
+### Ajouté
+
+- **Premiers pas guidés** sur l'accueil d'un compte neuf : ajouter un film, inviter quelqu'un, lancer une séance ;
+  les étapes se cochent d'elles-mêmes et le guide se referme.
+
 ## [1.1.0] — 2026-11-12
 
 Ajouter un film à sa galerie par torrent (lien magnet ou fichier `.torrent`) et suivre son téléchargement.
@@ -106,6 +131,7 @@ d'écran saccadé de Google Meet, avec le son du film et la voix en même temps.
 - **Tests** : 29 tests Node (unitaires et intégration), essai de bout en bout dans Chrome à deux participants
   (`npm run essai-navigateur`), essai nginx du déploiement (70 vérifications) ; passés sous Node 18 et Node 26.
 
+[1.2.0]: https://github.com/mawena/Canape/releases/tag/v1.2.0
 [1.1.0]: https://github.com/mawena/Canape/releases/tag/v1.1.0
 [1.0.0]: https://github.com/mawena/Canape/releases/tag/v1.0.0
 [0.1.0]: https://github.com/mawena/Canape/releases/tag/v0.1.0
