@@ -5,7 +5,7 @@
   function creerDetecteur(contexte, flux) {
     const source = contexte.createMediaStreamSource(new MediaStream(flux.getAudioTracks()));
     const analyseur = contexte.createAnalyser();
-    analyseur.fftSize = 1024;
+    analyseur.fftSize = 2048; // ~43 ms à 48 kHz : couvre l'intervalle entre deux mesures (40 ms), sinon un son bref passe entre les mesures
     source.connect(analyseur); // volontairement pas relié à la sortie : le son sort par l'élément <audio>
     const donnees = new Uint8Array(analyseur.fftSize);
     return {

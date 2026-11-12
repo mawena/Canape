@@ -27,12 +27,15 @@
       p.tVideo.sender.replaceTrack(this.video).catch(() => {});
     }
 
-    ajouter(id) {
+    // attendreOffre : le nouvel arrivant laisse l'offre initiale à ceux qui sont déjà là (ils la font en recevant
+    // « arrivee »). Si les deux font une offre au même instant, la résolution du conflit (retour en arrière) laisse
+    // parfois Chrome avec un transport ICE qui ne démarre jamais (connectionState « new » pour toujours).
+    ajouter(id, { attendreOffre = false } = {}) {
       if (this.pairs.has(id)) return this.pairs.get(id);
       const pc = new RTCPeerConnection({ iceServers: this.o.ice });
       const p = {
         id, pc, polite: this.o.moi > id, faisOffre: false, ignoreOffre: false,
-        flux: new MediaStream(), file: Promise.resolve(), minuterie: null,
+        flux: new MediaStream(), file: Promise.resolve(), minuterie: null, attendreOffre,
         tAudio: pc.addTransceiver('audio', { direction: 'sendrecv' }),
         tVideo: pc.addTransceiver('video', { direction: 'sendrecv' }),
       };
@@ -45,6 +48,7 @@
       };
       pc.onicecandidate = ({ candidate }) => { if (candidate) this.o.envoyer(id, { candidate }); };
       pc.onnegotiationneeded = async () => {
+        if (p.attendreOffre && !pc.remoteDescription) return;
         try {
           p.faisOffre = true;
           await pc.setLocalDescription();
@@ -75,6 +79,7 @@
         p.ignoreOffre = !p.polite && collision;
         if (p.ignoreOffre) return;
         await pc.setRemoteDescription(description);
+        p.attendreOffre = false;
         if (description.type === 'offer') {
           await pc.setLocalDescription();
           this.o.envoyer(p.id, { description: pc.localDescription });
