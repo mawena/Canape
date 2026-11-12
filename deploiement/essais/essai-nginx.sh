@@ -158,6 +158,9 @@ verifier "pas de « listen [::] » (nginx n'écoute pas déjà en IPv6 ailleurs)
 verifier "certbot certonly --nginx -d $DOM avec --deploy-hook" grep -q "^certonly --nginx -d $DOM --deploy-hook systemctl reload nginx" "$T/certbot.log"
 verifier "nginx rechargé, jamais redémarré" bash -c "[ $(rechargements) -ge 1 ] && ! grep -q 'restart nginx' '$T/systemctl.log'"
 verifier "l'avertissement préexistant est signalé comme préexistant, aucun nouveau" bash -c "grep -q 'Avertissements déjà présents' '$T/sortie' && grep -q 'aucun nouvel avertissement' '$T/sortie'"
+verifier "1.0 : /api/televersement (64m, sans tampon), /media/ (sans tampon) et /ws/ (Upgrade, 6 h) sont dans le fichier posé" bash -c "f='$ETC/sites-available/$DOM.conf'; grep -q 'location /api/televersement' \$f && grep -q 'client_max_body_size 64m' \$f && grep -q 'location /media/' \$f && grep -q 'location /ws/' \$f && grep -q 'proxy_read_timeout 6h' \$f && [ \$(grep -c 'proxy_request_buffering off' \$f) = 2 ]"
+verifier "1.0 : chaque emplacement mène au port de Node ($PN) : 4 proxy_pass" bash -c "[ \$(grep -c 'proxy_pass http://127.0.0.1:$PN;' '$ETC/sites-available/$DOM.conf') = 4 ]"
+verifier "1.0 : les emplacements de Canapé répondent (502 : Node factice absent, mais c'est bien leur bloc)" bash -c "[ \$(curl -sk -o /dev/null -w '%{http_code}' -H 'Host: $DOM' https://127.0.0.1:$HS/media/x) = 502 ] && [ \$(curl -sk -o /dev/null -w '%{http_code}' -X POST -H 'Host: $DOM' --data-binary @$RACINE/README.md https://127.0.0.1:$HS/api/televersement) = 502 ]"
 cp "$ETC/sites-available/$DOM.conf" "$T/apres-a.conf"; AVANT_CERT_LOG="$(wc -l < "$T/certbot.log")"
 
 # ============================================================================================================

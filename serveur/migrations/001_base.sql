@@ -1,0 +1,1 @@
+CREATE TABLE reglages (cle TEXT PRIMARY KEY, valeur TEXT NOT NULL);   -- JSON

@@ -1,25 +1,33 @@
 #!/usr/bin/env bash
-# Installe (ou met à jour, ou désinstalle) Canapé SUR le serveur, en root, depuis un clone du dépôt :
-#   git clone https://github.com/mawena/Canape.git ~/Canape && cd ~/Canape
-#   sudo ./deploiement/installer-serveur.sh --domaine canape.exemple.fr [--port N] [--node /chemin/node] [--essai]
-#   sudo ./deploiement/installer-serveur.sh --desinstaller --domaine canape.exemple.fr
-# Idempotent : on le relance à chaque mise à jour (git pull, puis la même commande).
+# Installe (ou met à niveau, ou désinstalle) Canapé 1.0 SUR le serveur, en root, à partir d'un PAQUET
+# (canape-<version>.tar.gz, construit par scripts/paquet.sh et publié avec chaque release GitHub) :
+#   sudo ./installer-serveur.sh --domaine canape.exemple.fr [--paquet canape-1.0.0.tar.gz] [--port N] [--node /chemin/node]
+#   sudo ./installer-serveur.sh --desinstaller --domaine canape.exemple.fr
+# Sans --paquet, le paquet de la DERNIÈRE release GitHub est téléchargé (son SHA256SUMS est vérifié) : rien n'est
+# construit sur le serveur, ce qui épargne le processeur des autres sites. Fonctionne aussi pour la première
+# installation et pour la mise à niveau depuis la 0.1 (mêmes dossiers, réglages migrés, base créée au démarrage).
+# Idempotent : on peut le relancer. Après l'installation, les mises à jour courantes se font par
+# deploiement/mettre-a-jour (à la main ou par le déploiement automatique), sans toucher à nginx.
 #
 # Prudence : le serveur peut héberger d'autres sites. Rien n'est modifié dans nginx avant que « nginx -t » passe sur
 # la configuration actuelle ; si la nouvelle configuration est refusée, l'état d'avant est remis exactement et nginx
 # n'est jamais rechargé dans un état invalide. nginx n'est jamais redémarré (seulement « reload »), Node.js n'est
-# jamais installé ni remplacé.
+# jamais installé ni remplacé (une copie de celui qu'on indique va dans /opt/canape/node).
 set -euo pipefail
 
 SOURCE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-APP=/opt/canape
-FILMS=/srv/canape/films
-UNITE=/etc/systemd/system/canape.service
-LIEN_CONVERTIR=/usr/local/bin/canape-convertir
+DEPOT="${CANAPE_DEPOT:-mawena/Canape}"
 MARQUEUR='# Géré par Canapé (deploiement/installer-serveur.sh)'
+MARQUEUR_CLI='# Géré par Canapé (deploiement/installer-serveur.sh)'
 
-# Variables réservées aux essais (deploiement/essais/essai-nginx.sh) : chemins et commandes remplaçables par des faux,
-# pour essayer la partie nginx sans root. En usage normal, elles ne sont pas définies.
+# Variables réservées aux essais (deploiement/essais/*.sh) : chemins et commandes remplaçables par des faux, pour
+# essayer sans root. En usage normal, elles ne sont pas définies.
+APP="${CANAPE_ESSAI_APP:-/opt/canape}"
+SRV="${CANAPE_ESSAI_SRV:-/srv/canape}"
+FILMS="$SRV/films"
+UNITE="${CANAPE_ESSAI_UNITE:-/etc/systemd/system/canape.service}"
+CLI="${CANAPE_ESSAI_CLI:-/usr/local/bin/canape}"
+LIEN_CONVERTIR="${CANAPE_ESSAI_LIEN_CONVERTIR:-/usr/local/bin/canape-convertir}"
 CONF="${CANAPE_ESSAI_CONF:-/etc/canape/canape.conf}"
 NGX="${CANAPE_ESSAI_NGINX_DIR:-/etc/nginx}"
 LE="${CANAPE_ESSAI_LETSENCRYPT:-/etc/letsencrypt}"
@@ -27,20 +35,31 @@ NGINX="${CANAPE_ESSAI_NGINX:-nginx}"
 SYSTEMCTL="${CANAPE_ESSAI_SYSTEMCTL:-systemctl}"
 CERTBOT="${CANAPE_ESSAI_CERTBOT:-certbot}"
 SS="${CANAPE_ESSAI_SS:-ss}"
-GABARIT="${CANAPE_ESSAI_GABARIT:-$SOURCE/deploiement/nginx/canape.conf}"
-NGINX_SEULEMENT="${CANAPE_ESSAI_NGINX_SEULEMENT:-0}"   # 1 = ne fait que la partie port + nginx (essais)
+CURL="${CANAPE_ESSAI_CURL:-curl}"
+URL_RELEASE="${CANAPE_ESSAI_URL_RELEASE:-https://github.com/$DEPOT/releases/latest/download}"
+GABARIT="${CANAPE_ESSAI_GABARIT:-}"                      # vide : celui du paquet
+NGINX_SEULEMENT="${CANAPE_ESSAI_NGINX_SEULEMENT:-0}"     # 1 = ne fait que la partie port + nginx (essais)
+SANS_ROOT="${CANAPE_ESSAI_SANS_ROOT:-0}"                 # 1 = ni utilisateur système ni chown (essais)
+NODE_MIN="${CANAPE_ESSAI_NODE_MIN:-26}"
 
 DOMAINE=""
 PORT_DEMANDE=""
 NODE_OPT=""
+PAQUET_OPT=""
 ESSAI=0
 DESINSTALLER=0
 PORT=8080
 NODE_BIN=""
-NPM_BIN=""
-MOT_DE_PASSE_NOUVEAU=""
 CERT_OBTENU=0
 HTTP_SEUL=0
+TMP_INSTALL=""          # dossier temporaire (paquet téléchargé, extraction partielle)
+SRC="$SOURCE"           # arbre qui fournit deploiement/ (le paquet extrait, sinon le clone)
+PAQUET=""               # fichier du paquet
+SHA_PAQUET=""
+VERSION_PAQUET=""
+LEGACY=0                # 1 = installation 0.1 détectée
+NODE_COPIE_DEPUIS=""
+INVITATION=""
 
 # État pour le retour arrière nginx
 SAUVE=""
@@ -53,20 +72,20 @@ NGINX_MODIFIE=0
 NGINX_RECHARGE=0
 PROBLEMES=0
 AVERTISSEMENTS_AVANT=""
-NODE_COPIE_DEPUIS=""
 
 aide() {
   cat <<AIDE
-Utilisation : sudo $(basename "$0") [--domaine <nom>] [--port <N>] [--node <chemin>] [--essai]
+Utilisation : sudo $(basename "$0") [--domaine <nom>] [--paquet <fichier>] [--port <N>] [--node <chemin>] [--essai]
               sudo $(basename "$0") --desinstaller [--domaine <nom>] [--essai]
 
-À lancer sur le serveur, en root (sudo), depuis un clone du dépôt. Le code est copié dans $APP : le clone
-n'est jamais le code qui tourne.
+À lancer sur le serveur, en root (sudo). Installe la version contenue dans un paquet, dans $APP/versions/.
 
   --domaine <nom>   installe aussi le site nginx de ce nom, avec un certificat Let's Encrypt (certbot)
-  --port <N>        port local de Node (8080 par défaut, ou celui déjà inscrit dans $CONF)
-  --node <chemin>   Node.js 18+ à utiliser, si « node » est introuvable pour root (nvm, par exemple)
-  --desinstaller    retire le service, le site nginx et $APP ; garde $CONF et les films
+  --paquet <fichier>  paquet canape-<version>.tar.gz à installer ; sans cette option, celui de la dernière release
+                    GitHub ($DEPOT) est téléchargé, avec vérification de son SHA256SUMS
+  --port <N>        port local de Node (8080 par défaut, ou celui déjà inscrit dans $CONF, ou un port libre)
+  --node <chemin>   Node.js $NODE_MIN ou plus à utiliser (nvm, par exemple) : il est copié dans $APP/node
+  --desinstaller    retire le service, le site nginx et $APP ; garde $CONF, les données et les films
   --essai           affiche ce qui serait fait, sans rien modifier (root inutile)
   -h, --aide        affiche ce message
 AIDE
@@ -89,6 +108,12 @@ agir() {
   if [ "$ESSAI" = 1 ]; then printf '  [essai] %s\n' "$*"; else "$@"; fi
 }
 en_essai() { [ "$ESSAI" = 1 ]; }
+en_root() { [ "$SANS_ROOT" != 1 ]; }
+# install -d avec propriétaire seulement quand on est vraiment root.
+dossier() { # mode proprio groupe chemin...
+  local mode="$1" p="$2" g="$3"; shift 3
+  if en_root; then agir install -d -m "$mode" -o "$p" -g "$g" "$@"; else agir install -d -m "$mode" "$@"; fi
+}
 
 # ---------------------------------------------------------------------------------------------------------
 # Arguments
@@ -104,6 +129,8 @@ while [ $# -gt 0 ]; do
     --port=*) PORT_DEMANDE="${1#--port=}" ;;
     --node) [ $# -ge 2 ] || echec "--node demande le chemin de node."; NODE_OPT="$2"; shift ;;
     --node=*) NODE_OPT="${1#--node=}" ;;
+    --paquet) [ $# -ge 2 ] || echec "--paquet demande le fichier du paquet."; PAQUET_OPT="$2"; shift ;;
+    --paquet=*) PAQUET_OPT="${1#--paquet=}" ;;
     *) echo "Option inconnue : $1" >&2; aide >&2; exit 2 ;;
   esac
   shift
@@ -116,7 +143,8 @@ if [ -n "$PORT_DEMANDE" ]; then
   [[ "$PORT_DEMANDE" =~ ^[0-9]+$ ]] && [ "$PORT_DEMANDE" -ge 1024 ] && [ "$PORT_DEMANDE" -le 65535 ] \
     || echec "« $PORT_DEMANDE » n'est pas un port valide (1024 à 65535)."
 fi
-if [ "$ESSAI" = 0 ] && [ "$NGINX_SEULEMENT" = 0 ] && [ "$(id -u)" != 0 ]; then
+if [ -n "$PAQUET_OPT" ] && [ ! -f "$PAQUET_OPT" ]; then echec "paquet introuvable : $PAQUET_OPT"; fi
+if [ "$ESSAI" = 0 ] && [ "$NGINX_SEULEMENT" = 0 ] && [ "$SANS_ROOT" != 1 ] && [ "$(id -u)" != 0 ]; then
   echec "à lancer en root : sudo $0 $*"
 fi
 DOMAINE_RE="${DOMAINE//./\\.}"
@@ -168,6 +196,7 @@ sortie() {
   set +e
   if [ "$NGINX_MODIFIE" = 1 ] && [ "$code" -ne 0 ]; then restaurer_nginx; fi
   if [ -n "$SAUVE" ]; then rm -rf "$SAUVE"; fi
+  if [ -n "$TMP_INSTALL" ]; then rm -rf "${TMP_INSTALL:?}"; fi
   exit "$code"
 }
 trap sortie EXIT
@@ -375,163 +404,324 @@ installer_nginx() {
 }
 
 # ---------------------------------------------------------------------------------------------------------
-# L'application
+# ---------------------------------------------------------------------------------------------------------
+# Node.js
 # ---------------------------------------------------------------------------------------------------------
 version_node() { "$1" -p 'process.versions.node.split(".")[0]' 2>/dev/null || echo 0; }
 
 verifier_noeud() {
-  etape "Node.js"
+  etape "Node.js $NODE_MIN ou plus"
   local src="" majeure o
+  NODE_BIN="$APP/node/bin/node"
   if [ -n "$NODE_OPT" ]; then
     # Node indiqué par l'utilisateur (nvm…) : il est COPIÉ dans $APP/node, car le service ne peut pas lire un home.
     [ -x "$NODE_OPT" ] || { probleme "$NODE_OPT n'est pas exécutable." || true; return 0; }
     src="$(readlink -f "$NODE_OPT")"
-    majeure="$(version_node "$src")"
-    if [ "$majeure" -lt 18 ]; then probleme "Node.js $("$src" -v) ($src) est trop ancien : Canapé demande la version 18 ou plus." || true; return 0; fi
-    [ -d "$(dirname "$src")/../lib/node_modules/npm" ] || { probleme "npm est introuvable à côté de $src (attendu : $(dirname "$src")/../lib/node_modules/npm)." || true; return 0; }
-    NODE_COPIE_DEPUIS="$src"
-    NODE_BIN="$APP/node/bin/node"
-    echo "Node.js $("$src" -v) ($src) : bon ; il sera copié dans $APP/node (le service ne lit pas les dossiers personnels)."
-  elif [ -x "$APP/node/bin/node" ]; then
-    NODE_BIN="$APP/node/bin/node"
-    if [ "$(version_node "$NODE_BIN")" -lt 18 ]; then probleme "la copie $NODE_BIN est trop ancienne : relancez avec --node." || true; return 0; fi
-    echo "Node.js $("$NODE_BIN" -v) : copie déjà présente dans $APP/node, réutilisée."
+  elif [ -x "$APP/node/bin/node" ] && [ "$(version_node "$APP/node/bin/node")" -ge "$NODE_MIN" ]; then
+    echo "Node.js $("$APP/node/bin/node" -v) : copie déjà présente dans $APP/node, réutilisée."
   else
     src="$(command -v node 2>/dev/null || true)"
     case "$src" in /home/*|/root/*) src="" ;; esac
-    if [ -z "$src" ] || [ "$(version_node "$src")" -lt 18 ]; then
+    if [ -n "$src" ] && [ "$(version_node "$src")" -lt "$NODE_MIN" ]; then src=""; fi
+    if [ -z "$src" ]; then
       local home_u cand
       home_u="$(getent passwd "${SUDO_USER:-}" 2>/dev/null | cut -d: -f6 || true)"
-      echo "Aucun Node.js 18+ utilisable par root et par le service. Le script n'installe jamais Node.js lui-même (d'autres applications du serveur peuvent en dépendre)." >&2
-      echo "Si Node.js est installé pour votre utilisateur (nvm…), indiquez-le : il sera copié dans $APP/node :" >&2
+      if [ -x "$APP/node/bin/node" ]; then
+        echo "La copie $APP/node/bin/node est en version $("$APP/node/bin/node" -v) : Canapé 1.0 demande Node.js $NODE_MIN ou plus (TypeScript exécuté directement)." >&2
+      else
+        echo "Aucun Node.js $NODE_MIN+ utilisable par root et par le service." >&2
+      fi
+      echo "Le script n'installe jamais Node.js lui-même (d'autres applications du serveur peuvent en dépendre)." >&2
+      echo "Installez Node.js $NODE_MIN pour votre utilisateur (nvm install $NODE_MIN), puis indiquez-le : il sera copié dans $APP/node :" >&2
       echo "  sudo $0${DOMAINE:+ --domaine $DOMAINE}${PORT_DEMANDE:+ --port $PORT_DEMANDE} --node \"\$(command -v node)\"" >&2
       echo "(le \$(…) est évalué par votre shell, avant sudo.)" >&2
-      for cand in "$home_u"/.nvm/versions/node/*/bin/node; do [ -x "$cand" ] && echo "  Trouvé : $cand" >&2; done
-      probleme "Node.js introuvable pour root." || true
+      for cand in "$home_u"/.nvm/versions/node/*/bin/node; do [ -x "$cand" ] && echo "  Trouvé : $cand ($("$cand" -v))" >&2; done
+      probleme "Node.js $NODE_MIN+ introuvable pour root." || true
       return 0
     fi
-    NODE_BIN="$(readlink -f "$src")"
-    echo "Node.js $("$NODE_BIN" -v) ($NODE_BIN) : bon."
   fi
-  if [ -x "$(dirname "$NODE_BIN")/npm" ]; then NPM_BIN="$(dirname "$NODE_BIN")/npm"
-  elif [ -n "$NODE_COPIE_DEPUIS" ]; then NPM_BIN="$APP/node/bin/npm"
-  else NPM_BIN="$(command -v npm 2>/dev/null || true)"; fi
-  [ -n "$NPM_BIN" ] || { probleme "npm manque : sudo apt install npm" || true; return 0; }
-  for o in rsync curl; do
-    command -v "$o" >/dev/null 2>&1 || probleme "$o manque sur le serveur : sudo apt install $o" || true
+  if [ -n "$src" ]; then
+    majeure="$(version_node "$src")"
+    if [ "$majeure" -lt "$NODE_MIN" ]; then probleme "Node.js $("$src" -v) ($src) est trop ancien : Canapé 1.0 demande la version $NODE_MIN ou plus." || true; return 0; fi
+    NODE_COPIE_DEPUIS="$src"
+    echo "Node.js $("$src" -v) ($src) : bon ; il sera copié dans $APP/node (le service ne lit pas les dossiers personnels)."
+  fi
+  for o in tar curl sha256sum flock; do
+    command -v "$o" >/dev/null 2>&1 || probleme "$o manque sur le serveur : sudo apt install $([ "$o" = sha256sum ] && echo coreutils || ([ "$o" = flock ] && echo util-linux || echo "$o"))" || true
   done
 }
 
-copier_noeud() { # copie node + npm dans $APP/node (rien d'autre : pas les paquets globaux)
-  local src="$NODE_COPIE_DEPUIS" racine tmp="$APP/node.neuf"
+copier_noeud() { # copie le seul binaire node dans $APP/node (npm n'est pas nécessaire : le paquet contient ses node_modules)
+  local src="$NODE_COPIE_DEPUIS" tmp="$APP/node.neuf"
   [ -n "$src" ] || return 0
-  racine="$(cd "$(dirname "$src")/.." && pwd)"
-  if en_essai; then echo "  [essai] copie de $src et de npm dans $APP/node (vérifie la version 18+ de la copie)"; return 0; fi
-  rm -rf "$tmp"
-  mkdir -p "$tmp/bin" "$tmp/lib/node_modules"
+  if en_essai; then echo "  [essai] copie de $src dans $APP/node/bin/node (vérifie la version $NODE_MIN+ de la copie)"; return 0; fi
+  rm -rf "${tmp:?}"
+  mkdir -p "$tmp/bin"
   cp "$src" "$tmp/bin/node"
-  cp -a "$racine/lib/node_modules/npm" "$tmp/lib/node_modules/"
-  ln -s ../lib/node_modules/npm/bin/npm-cli.js "$tmp/bin/npm"
-  [ ! -e "$racine/lib/node_modules/npm/bin/npx-cli.js" ] || ln -s ../lib/node_modules/npm/bin/npx-cli.js "$tmp/bin/npx"
-  chown -R root:root "$tmp"; chmod 0755 "$tmp/bin/node"
-  if [ "$(version_node "$tmp/bin/node")" -lt 18 ]; then rm -rf "$tmp"; echo "Erreur : la copie de Node.js ne démarre pas en version 18+." >&2; exit 1; fi
-  rm -rf "$APP/node"
+  en_root && chown -R root:root "$tmp"
+  chmod 0755 "$tmp/bin/node"
+  if [ "$(version_node "$tmp/bin/node")" -lt "$NODE_MIN" ]; then rm -rf "${tmp:?}"; echo "Erreur : la copie de Node.js ne démarre pas en version $NODE_MIN+." >&2; exit 1; fi
+  rm -rf "${APP:?}/node"
   mv "$tmp" "$APP/node"
   echo "Node.js $("$APP/node/bin/node" -v) copié dans $APP/node."
 }
 
-installer_application() {
-  local f
-  for f in bin/canape src/serveur.js public/index.html package.json package-lock.json deploiement/canape.service deploiement/canape.conf.exemple deploiement/nginx/canape.conf; do
-    [ -e "$SOURCE/$f" ] || echec "fichier introuvable dans le dépôt : $f (le script doit être lancé depuis un clone complet de Canapé)."
+# ---------------------------------------------------------------------------------------------------------
+# Le paquet
+# ---------------------------------------------------------------------------------------------------------
+prefixe_tar() { # « ./ » si les entrées du paquet commencent ainsi (liste lue en entier : pas de SIGPIPE sous pipefail)
+  local liste; liste="$(tar -tzf "$1" 2>/dev/null || true)"
+  if grep -q '^\./' <<<"$liste"; then echo './'; fi
+}
+
+obtenir_paquet() {
+  etape "Paquet de Canapé"
+  TMP_INSTALL="$(mktemp -d)"
+  if [ -n "$PAQUET_OPT" ]; then
+    PAQUET="$PAQUET_OPT"
+    echo "Paquet indiqué : $PAQUET"
+  elif en_essai; then
+    echo "  [essai] sans --paquet : téléchargement de $URL_RELEASE/SHA256SUMS puis du paquet qui y est nommé (vérifié par SHA-256)."
+    return 0
+  else
+    echo "Pas de --paquet : téléchargement du paquet de la dernière release GitHub ($DEPOT). Rien n'est construit sur ce serveur."
+    local sommes nom attendu
+    "$CURL" -fsSL --max-time 60 -o "$TMP_INSTALL/SHA256SUMS" "$URL_RELEASE/SHA256SUMS" \
+      || echec "impossible de télécharger $URL_RELEASE/SHA256SUMS (dépôt privé ? pas encore de release ?). Téléchargez le paquet ailleurs et passez-le avec --paquet <fichier>."
+    sommes="$(grep -E '^[0-9a-f]{64} [ *]canape-[0-9][^ /]*\.tar\.gz$' "$TMP_INSTALL/SHA256SUMS" | head -1 || true)"
+    [ -n "$sommes" ] || echec "SHA256SUMS ne nomme aucun paquet canape-<version>.tar.gz."
+    attendu="${sommes%% *}"; nom="${sommes##* }"; nom="${nom#\*}"
+    echo "Dernière release : $nom"
+    "$CURL" -fSL --max-time 900 -o "$TMP_INSTALL/$nom" "$URL_RELEASE/$nom" || echec "téléchargement de $nom impossible."
+    [ "$(sha256sum "$TMP_INSTALL/$nom" | cut -d' ' -f1)" = "$attendu" ] || echec "le SHA-256 de $nom ne correspond pas à SHA256SUMS : paquet refusé."
+    PAQUET="$TMP_INSTALL/$nom"
+    echo "SHA-256 vérifié d'après SHA256SUMS."
+  fi
+  SHA_PAQUET="$(sha256sum "$PAQUET" | cut -d' ' -f1)"
+  # On n'extrait que VERSION et deploiement/ : les scripts, le service et le gabarit nginx viennent du paquet installé.
+  local p; p="$(prefixe_tar "$PAQUET")"
+  local liste; liste="$(tar -tzf "$PAQUET" 2>/dev/null)" || echec "$PAQUET n'est pas une archive tar.gz lisible."
+  if grep -Eq '(^/|(^|/)\.\.(/|$))' <<<"$liste"; then echec "le paquet contient des chemins absolus ou « .. » : refusé."; fi
+  mkdir "$TMP_INSTALL/paquet"
+  tar -xzf "$PAQUET" -C "$TMP_INSTALL/paquet" --no-same-owner --no-same-permissions -- "${p}VERSION" "${p}deploiement" 2>/dev/null \
+    || echec "le paquet n'a pas VERSION et deploiement/ (est-ce bien un paquet construit par scripts/paquet.sh ?)."
+  SRC="$TMP_INSTALL/paquet"
+  read -r VERSION_PAQUET _ < "$SRC/VERSION" || true
+  [ -x "$SRC/deploiement/mettre-a-jour" ] || echec "le paquet n'a pas deploiement/mettre-a-jour exécutable."
+  echo "Paquet : Canapé $(cat "$SRC/VERSION") — SHA-256 $SHA_PAQUET"
+}
+
+# ---------------------------------------------------------------------------------------------------------
+# Réglages
+# ---------------------------------------------------------------------------------------------------------
+conf_definir() { # ajoute CLÉ=valeur si aucune ligne active ne définit déjà la clé
+  grep -q "^$1=" "$CONF" 2>/dev/null || printf '%s=%s\n' "$1" "$2" >> "$CONF"
+}
+
+reglages() {
+  etape "Réglages $CONF"
+  local port_conf
+  if [ -e "$CONF" ]; then
+    port_conf="$(sed -n 's/^CANAPE_PORT=\([0-9]*\).*/\1/p' "$CONF" | tail -1)"
+    if grep -qE '^(CANAPE_MOT_DE_PASSE|CANAPE_SECRET)=' "$CONF"; then
+      if en_essai; then
+        echo "  [essai] $CONF (réglages 0.1) : copie $CONF.pre-1.0, CANAPE_MOT_DE_PASSE et CANAPE_SECRET commentés (les comptes les remplacent),"
+        echo "  [essai]   CANAPE_URL_PUBLIQUE, CANAPE_DONNEES, CANAPE_CACHE, CANAPE_TELEVERSEMENTS ajoutés ; port gardé (${port_conf:-8080})"
+        return 0
+      fi
+      [ -e "$CONF.pre-1.0" ] || cp -p "$CONF" "$CONF.pre-1.0"
+      sed -i -E 's/^(CANAPE_MOT_DE_PASSE=|CANAPE_SECRET=)/#(retiré en 1.0) \1/' "$CONF"
+      echo "CANAPE_MOT_DE_PASSE et CANAPE_SECRET retirés (commentés) : les comptes les remplacent. Ancienne version gardée : $CONF.pre-1.0"
+    else
+      echo "$CONF existe déjà : conservé."
+    fi
+    if en_essai; then
+      [ "$port_conf" = "$PORT" ] || echo "  [essai] CANAPE_PORT=$PORT écrit dans $CONF (était : ${port_conf:-absent})"
+      return 0
+    fi
+    if [ "$port_conf" != "$PORT" ]; then
+      if grep -q '^CANAPE_PORT=' "$CONF"; then sed -i "s|^CANAPE_PORT=.*|CANAPE_PORT=$PORT|" "$CONF"; else printf 'CANAPE_PORT=%s\n' "$PORT" >> "$CONF"; fi
+      echo "CANAPE_PORT=$PORT écrit dans $CONF (était : ${port_conf:-absent})."
+      [ -n "$DOMAINE" ] || echo "Le port a changé : relancez avec --domaine pour que le fichier nginx suive." >&2
+    fi
+  elif en_essai; then
+    echo "  [essai] $CONF créé d'après canape.conf.exemple (droits 640, groupe canape), CANAPE_PORT=$PORT, CANAPE_URL_PUBLIQUE=https://${DOMAINE:-<domaine>}"
+    return 0
+  else
+    dossier 0750 root canape "$(dirname "$CONF")"
+    if en_root; then install -m 0640 -o root -g canape "$SRC/deploiement/canape.conf.exemple" "$CONF"; else install -m 0640 "$SRC/deploiement/canape.conf.exemple" "$CONF"; fi
+    sed -i -e "s|^CANAPE_PORT=.*|CANAPE_PORT=$PORT|" -e "s|=/srv/canape/|=$SRV/|" "$CONF"
+    echo "$CONF créé (droits 640, groupe canape)."
+    # le gabarit porte une URL d'exemple : remplacée plus bas, ou signalée
+    sed -i '/^CANAPE_URL_PUBLIQUE=https:\/\/canape\.exemple\.fr$/d' "$CONF"
+  fi
+  if grep -q '^CANAPE_URL_PUBLIQUE=' "$CONF"; then
+    echo "CANAPE_URL_PUBLIQUE déjà définie : $(sed -n 's/^CANAPE_URL_PUBLIQUE=//p' "$CONF" | tail -1)"
+  elif [ -n "$DOMAINE" ]; then
+    printf 'CANAPE_URL_PUBLIQUE=https://%s\n' "$DOMAINE" >> "$CONF"
+    echo "CANAPE_URL_PUBLIQUE=https://$DOMAINE ajouté."
+  else
+    printf 'CANAPE_URL_PUBLIQUE=http://localhost:%s\n' "$PORT" >> "$CONF"
+    echo "Pas de --domaine : CANAPE_URL_PUBLIQUE=http://localhost:$PORT (liens d'invitation et contrôle d'Origin faux en ligne) :" >&2
+    echo "  relancez avec --domaine, ou corrigez CANAPE_URL_PUBLIQUE dans $CONF puis : sudo systemctl restart canape" >&2
+  fi
+  conf_definir CANAPE_HOTE 127.0.0.1
+  conf_definir CANAPE_DERRIERE_PROXY 1
+  conf_definir CANAPE_DONNEES "$SRV/donnees"
+  conf_definir CANAPE_FILMS "$FILMS"
+  conf_definir CANAPE_CACHE "$SRV/cache"
+  conf_definir CANAPE_TELEVERSEMENTS "$SRV/televersements"
+}
+
+# ---------------------------------------------------------------------------------------------------------
+# L'application
+# ---------------------------------------------------------------------------------------------------------
+ecrire_commande() { # /usr/local/bin/canape : la ligne de commande de Canapé, au nom de l'utilisateur du service
+  local contenu
+  if en_root; then
+    contenu="#!/bin/sh
+$MARQUEUR_CLI
+# Ligne de commande de Canapé (admin inviter, films importer…), lancée au nom de l'utilisateur du service.
+[ \"\$(id -u)\" = 0 ] || exec sudo \"\$0\" \"\$@\"
+exec runuser -u canape -- env CANAPE_CONFIG=$CONF $APP/actuelle/bin/canape \"\$@\""
+  else
+    contenu="#!/bin/sh
+$MARQUEUR_CLI
+exec env CANAPE_CONFIG=$CONF $APP/actuelle/bin/canape \"\$@\""
+  fi
+  if en_essai; then echo "  [essai] $CLI écrit (au nom de canape, avec CANAPE_CONFIG=$CONF)"; return 0; fi
+  if [ -e "$CLI" ] && ! grep -qF "$MARQUEUR_CLI" "$CLI"; then
+    echo "$CLI existe déjà et n'a pas été créé par Canapé : laissé en place (utilisez $APP/actuelle/bin/canape)." >&2
+    return 0
+  fi
+  printf '%s\n' "$contenu" > "$CLI.neuf"; chmod 0755 "$CLI.neuf"; mv -f "$CLI.neuf" "$CLI"
+}
+
+sauvegarder_installation_01() {
+  # Installation 0.1 (code à plat dans $APP, pas de lien « actuelle ») : on garde de quoi la relancer si la mise en service échoue.
+  if [ -f "$APP/bin/canape" ] && [ -f "$APP/src/serveur.js" ] && [ ! -L "$APP/actuelle" ]; then
+    LEGACY=1
+    echo "Installation 0.1 détectée dans $APP : mise à niveau vers la 1.0 (films et port conservés)."
+    en_essai && return 0
+    [ -e "$UNITE.pre-1.0" ] || { [ ! -e "$UNITE" ] || cp -p "$UNITE" "$UNITE.pre-1.0"; }
+  fi
+}
+
+retour_arriere_01() {
+  set +e
+  echo "La mise à niveau a échoué : retour à la version 0.1 (réglages et service d'avant remis)." >&2
+  [ ! -e "$CONF.pre-1.0" ] || cp -p "$CONF.pre-1.0" "$CONF"
+  [ ! -e "$UNITE.pre-1.0" ] || cp -p "$UNITE.pre-1.0" "$UNITE"
+  "$SYSTEMCTL" daemon-reload
+  "$SYSTEMCTL" restart canape
+  echo "Service 0.1 redémarré (systemctl status canape pour vérifier)." >&2
+}
+
+nettoyer_ancien_01() { # retire le code 0.1 à plat une fois la 1.0 en service
+  [ "$LEGACY" = 1 ] || return 0
+  local x
+  for x in bin src public tests outils docs node_modules package.json package-lock.json README.md CHANGELOG.md LICENSE ROADMAP.md .gitignore; do
+    [ ! -e "$APP/$x" ] || rm -rf "${APP:?}/$x"
   done
-  [ "$SOURCE" != "$APP" ] || echec "lancez ce script depuis un clone du dépôt (par exemple ~/Canape), pas depuis $APP : il est remplacé à chaque installation."
+  [ ! -L "$LIEN_CONVERTIR" ] || rm -f "$LIEN_CONVERTIR"
+  echo "Code de la 0.1 retiré de $APP (films, port et réglages conservés ; sauvegardes des réglages : $CONF.pre-1.0, $UNITE.pre-1.0)."
+}
+
+installer_application() {
+  local x
+  [ -x "$SRC/deploiement/mettre-a-jour" ] || [ -n "$PAQUET" ] || en_essai || echec "aucun paquet à installer."
 
   etape "Utilisateur et dossiers"
-  if ! id canape >/dev/null 2>&1; then
-    agir useradd --system --user-group --home-dir /nonexistent --no-create-home --shell /usr/sbin/nologin canape
-    en_essai || echo "Utilisateur système « canape » créé."
-  else
-    echo "Utilisateur « canape » déjà présent."
+  if en_root; then
+    if ! id canape >/dev/null 2>&1; then
+      agir useradd --system --user-group --home-dir /nonexistent --no-create-home --shell /usr/sbin/nologin canape
+      en_essai || echo "Utilisateur système « canape » créé."
+    else
+      echo "Utilisateur « canape » déjà présent."
+    fi
   fi
-  agir install -d -m 0755 -o root -g root "$APP"
-  if [ -d "$FILMS" ] && ! en_essai; then
-    echo "$FILMS existe : les films ne sont pas touchés."
-  fi
-  agir install -d -m 2775 -o root -g canape /srv/canape "$FILMS"
-  agir install -d -m 0750 -o root -g canape /etc/canape
-  if [ -n "${SUDO_USER:-}" ] && [ "$SUDO_USER" != root ]; then
+  dossier 0755 root root "$APP" "$APP/versions"
+  if [ -d "$FILMS" ] && ! en_essai; then echo "$FILMS existe : les films ne sont pas touchés."; fi
+  dossier 2775 root canape "$SRV" "$FILMS"
+  dossier 0750 canape canape "$SRV/donnees" "$SRV/cache" "$SRV/televersements"
+  dossier 0750 root canape "$(dirname "$CONF")"
+  if en_root && [ -n "${SUDO_USER:-}" ] && [ "$SUDO_USER" != root ]; then
     if ! id -nG "$SUDO_USER" 2>/dev/null | tr ' ' '\n' | grep -qx canape; then
       agir usermod -aG canape "$SUDO_USER"
       en_essai || echo "« $SUDO_USER » ajouté au groupe canape : il pourra copier des films dans $FILMS (après une reconnexion)."
     fi
   fi
 
-  etape "Code dans $APP"
-  agir rsync -a --delete --exclude /node --exclude /node.neuf --exclude node_modules --exclude .git "$SOURCE/" "$APP/"
+  etape "Node.js dans $APP/node"
   copier_noeud
+
+  etape "Scripts de déploiement dans $APP/deploiement (root, non modifiables par les autres)"
   if en_essai; then
-    echo "  [essai] chown -R root:root $APP ; (cd $APP && npm ci --omit=dev) avec $NPM_BIN ; lien $LIEN_CONVERTIR"
+    echo "  [essai] $SRC/deploiement copié dans $APP/deploiement (sans essais/), propriétaire root, droits 755/644"
   else
-    chown -R root:root "$APP"
-    ( cd "$APP" && env PATH="$(dirname "$NODE_BIN"):$PATH" "$NPM_BIN" ci --omit=dev --no-audit --no-fund --loglevel=error )
-    ln -sf "$APP/bin/canape-convertir" "$LIEN_CONVERTIR"
-    chmod 0755 "$APP/bin/canape" "$APP/bin/canape-convertir"
+    rm -rf "${APP:?}/deploiement.neuf"
+    cp -a "$SRC/deploiement" "$APP/deploiement.neuf"
+    rm -rf "$APP/deploiement.neuf/essais"
+    en_root && chown -R root:root "$APP/deploiement.neuf"
+    chmod -R u=rwX,go=rX "$APP/deploiement.neuf"
+    for x in mettre-a-jour recevoir installer-serveur.sh preparer-deploiement-auto.sh; do
+      [ ! -e "$APP/deploiement.neuf/$x" ] || chmod 0755 "$APP/deploiement.neuf/$x"
+    done
+    rm -rf "${APP:?}/deploiement"
+    mv "$APP/deploiement.neuf" "$APP/deploiement"
+    echo "Scripts installés."
   fi
 
-  etape "Réglages $CONF"
-  if [ -e "$CONF" ]; then
-    echo "$CONF existe déjà : conservé (ni mot de passe ni secret regénérés)."
-    local port_conf
-    port_conf="$(sed -n 's/^CANAPE_PORT=\([0-9]*\).*/\1/p' "$CONF" | tail -1)"
-    if [ "$port_conf" != "$PORT" ]; then
-      if en_essai; then echo "  [essai] CANAPE_PORT=$PORT écrit dans $CONF (était : ${port_conf:-absent})"
-      else
-        if grep -q '^CANAPE_PORT=' "$CONF"; then sed -i "s|^CANAPE_PORT=.*|CANAPE_PORT=$PORT|" "$CONF"; else printf 'CANAPE_PORT=%s\n' "$PORT" >> "$CONF"; fi
-        echo "CANAPE_PORT=$PORT écrit dans $CONF (était : ${port_conf:-absent})."
-        [ -n "$DOMAINE" ] || echo "Le port a changé : relancez avec --domaine pour que le fichier nginx suive." >&2
-      fi
-    fi
-  elif en_essai; then
-    echo "  [essai] $CONF créé (droits 640, groupe canape), mot de passe et secret générés, CANAPE_PORT=$PORT"
-  else
-    MOT_DE_PASSE_NOUVEAU="$(LC_ALL=C tr -dc 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789' </dev/urandom | head -c 16 || true)"
-    local secret
-    secret="$(LC_ALL=C tr -dc 'a-f0-9' </dev/urandom | head -c 64 || true)"
-    install -m 0640 -o root -g canape "$APP/deploiement/canape.conf.exemple" "$CONF"
-    sed -i "s|^CANAPE_MOT_DE_PASSE=.*|CANAPE_MOT_DE_PASSE=$MOT_DE_PASSE_NOUVEAU|; s|^CANAPE_SECRET=.*|CANAPE_SECRET=$secret|; s|^CANAPE_PORT=.*|CANAPE_PORT=$PORT|" "$CONF"
-    echo "$CONF créé (droits 640, groupe canape)."
-  fi
+  sauvegarder_installation_01
+  reglages
 
-  etape "Service systemd"
+  etape "Service systemd et commande « canape »"
   if en_essai; then
-    echo "  [essai] $UNITE écrit (ExecStart=$NODE_BIN $APP/bin/canape), daemon-reload, enable, restart canape."
+    echo "  [essai] $UNITE écrit (ExecStart=$APP/node/bin/node $APP/actuelle/serveur/src/index.ts serve, CPUWeight=50, IOWeight=50), daemon-reload, enable."
   else
-    sed "s|^ExecStart=.*|ExecStart=$NODE_BIN $APP/bin/canape|" "$APP/deploiement/canape.service" > "$UNITE"
+    sed -e "s|/opt/canape|$APP|g" -e "s|/srv/canape|$SRV|g" -e "s|/etc/canape/canape.conf|$CONF|g" "$SRC/deploiement/canape.service" > "$UNITE"
     chmod 0644 "$UNITE"
     "$SYSTEMCTL" daemon-reload
-    "$SYSTEMCTL" enable canape >/dev/null 2>&1
-    "$SYSTEMCTL" restart canape
-    en_essai || echo "Service canape redémarré."
+    "$SYSTEMCTL" enable canape >/dev/null 2>&1 || true
+    echo "Service canape écrit et activé."
   fi
+  ecrire_commande
+
+  etape "Mise en service de la version du paquet (deploiement/mettre-a-jour)"
+  if en_essai; then
+    echo "  [essai] $APP/deploiement/mettre-a-jour <paquet> $(printf '%.12s' "${SHA_PAQUET:-<sha256>}")… : SHA-256, extraction dans $APP/versions/<version>-<commit>/,"
+    echo "  [essai]   arrêt du service, sauvegarde de la base, bascule du lien $APP/actuelle, démarrage, vérification de /api/etat (30 s), retour arrière si échec."
+    return 0
+  fi
+  if ! "$APP/deploiement/mettre-a-jour" "$PAQUET" "$SHA_PAQUET"; then
+    echo >&2
+    echo "La mise en service de la nouvelle version a échoué (détails ci-dessus ; journal : journalctl -u canape -n 50)." >&2
+    [ "$LEGACY" = 0 ] || retour_arriere_01
+    exit 1
+  fi
+  nettoyer_ancien_01
 }
+
+lire_etat() { "$CURL" -fsS --max-time 5 "http://127.0.0.1:$PORT/api/etat" 2>/dev/null || true; }
 
 verifier_service() {
   etape "Vérification"
-  en_essai && { echo "  [essai] curl http://127.0.0.1:$PORT/api/etat (10 essais)"; return 0; }
-  local reponse="" ok=0 i
-  for i in 1 2 3 4 5 6 7 8 9 10; do
-    if reponse="$(curl -fsS "http://127.0.0.1:$PORT/api/etat" 2>/dev/null)"; then ok=1; break; fi
-    sleep 1
-  done
-  if [ "$ok" = 1 ]; then
-    echo "/api/etat répond : $reponse"
-  else
-    echo "Le service ne répond pas sur 127.0.0.1:$PORT. Derniers messages :" >&2
-    journalctl -u canape -n 20 --no-pager >&2 || true
-    exit 1
+  en_essai && { echo "  [essai] curl http://127.0.0.1:$PORT/api/etat ; premier démarrage sans compte : canape admin inviter --role admin"; return 0; }
+  local reponse; reponse="$(lire_etat)"
+  [ -n "$reponse" ] || echec "le service ne répond pas sur 127.0.0.1:$PORT (journalctl -u canape -n 50)."
+  echo "/api/etat répond : $reponse"
+  command -v ffprobe >/dev/null 2>&1 || echo "Conseil : sudo apt install ffmpeg (conversion et lecture des films : indispensable à Canapé 1.0)." >&2
+  # Premier démarrage : aucun compte, on crée l'invitation de l'administrateur.
+  if grep -Eq '"installationRequise"[[:space:]]*:[[:space:]]*true' <<<"$reponse"; then
+    if INVITATION="$("$CLI" admin inviter --role admin 2>&1)"; then
+      :
+    else
+      echo "L'invitation de l'administrateur n'a pas pu être créée automatiquement :" >&2
+      printf '%s\n' "$INVITATION" >&2
+      INVITATION=""
+      echo "Créez-la vous-même : sudo canape admin inviter --role admin" >&2
+    fi
   fi
-  command -v ffprobe >/dev/null 2>&1 || echo "Conseil : sudo apt install ffmpeg (compatibilité des films et canape-convertir)."
 }
 
 # ---------------------------------------------------------------------------------------------------------
@@ -581,14 +771,16 @@ desinstaller() {
     echo "Pas de --domaine : le site nginx n'est pas touché (relancez avec --domaine pour le retirer)."
   fi
   if [ "$NGINX_SEULEMENT" = 0 ]; then
-    if [ -L "$LIEN_CONVERTIR" ] && [ "$(readlink "$LIEN_CONVERTIR")" = "$APP/bin/canape-convertir" ]; then agir rm -f "$LIEN_CONVERTIR"; fi
-    agir rm -rf "$APP"
+    if [ -L "$LIEN_CONVERTIR" ]; then agir rm -f "$LIEN_CONVERTIR"; fi
+    if [ -e "$CLI" ] && grep -qF "$MARQUEUR_CLI" "$CLI"; then agir rm -f "$CLI"; fi
+    agir rm -rf "${APP:?}"
     en_essai || echo "$APP retiré."
   fi
   echo
   echo "Gardé volontairement :"
-  echo "  - $(dirname "$CONF") (mot de passe et secret) : sudo rm -r $(dirname "$CONF")"
-  echo "  - les films dans $FILMS (et l'utilisateur « canape ») : sudo rm -r /srv/canape ; sudo userdel canape"
+  echo "  - $(dirname "$CONF") (réglages) : sudo rm -r $(dirname "$CONF")"
+  echo "  - $SRV (base de données, sauvegardes, films, cache) et l'utilisateur « canape » : sudo rm -r $SRV ; sudo userdel canape"
+  echo "  - le déploiement automatique, s'il a été préparé : sudo $APP/deploiement/preparer-deploiement-auto.sh --retirer (à lancer AVANT cette désinstallation)"
   if [ -n "$DOMAINE" ]; then echo "  - le certificat Let's Encrypt : sudo certbot delete --cert-name $DOMAINE"; fi
 }
 
@@ -602,13 +794,20 @@ if [ "$DESINSTALLER" = 1 ]; then
   exit 0
 fi
 
-if [ "$NGINX_SEULEMENT" = 0 ]; then verifier_noeud; fi
+if [ "$NGINX_SEULEMENT" = 0 ]; then verifier_noeud; obtenir_paquet; fi
+[ -n "$GABARIT" ] || GABARIT="$SRC/deploiement/nginx/canape.conf"
 etape "Vérifications avant de toucher à quoi que ce soit"
 verifier_port
-if [ -n "$DOMAINE" ]; then preverifier_nginx; fi
+if [ -n "$DOMAINE" ]; then
+  [ -f "$GABARIT" ] || probleme "gabarit nginx introuvable : $GABARIT" || true
+  preverifier_nginx
+fi
 if [ "$ESSAI" = 1 ] && [ "$PROBLEMES" = 1 ]; then echo; echo "Essai terminé : des problèmes ci-dessus bloqueraient l'installation."; fi
 
-if [ "$NGINX_SEULEMENT" = 0 ]; then installer_application; fi
+if [ "$NGINX_SEULEMENT" = 0 ]; then
+  if [ "$PROBLEMES" = 1 ] && en_essai; then echo "  [essai] application non installée tant que les problèmes ci-dessus ne sont pas réglés."
+  else installer_application; fi
+fi
 if [ -n "$DOMAINE" ]; then
   [ "$ESSAI" = 1 ] && [ "$PROBLEMES" = 1 ] && { echo "  [essai] nginx non touché tant que les problèmes ci-dessus ne sont pas réglés."; exit 0; }
   installer_nginx
@@ -618,16 +817,28 @@ else
 fi
 if [ "$NGINX_SEULEMENT" = 0 ]; then verifier_service; fi
 
-if [ -n "$MOT_DE_PASSE_NOUVEAU" ]; then
+if [ -n "$INVITATION" ]; then
   printf '\n************************************************************\n'
-  printf ' Mot de passe du salon (affiché cette seule fois) : %s\n' "$MOT_DE_PASSE_NOUVEAU"
-  printf ' Il est aussi dans %s (CANAPE_MOT_DE_PASSE).\n' "$CONF"
-  printf '************************************************************\n'
+  printf ' Premier démarrage : créez le compte administrateur avec ce lien\n'
+  printf ' (valable quelques jours ; en recréer un : sudo canape admin inviter --role admin) :\n\n'
+  printf '%s\n' "$INVITATION" | sed 's/^/   /'
+  printf '\n************************************************************\n'
+fi
+if [ "$NGINX_SEULEMENT" = 0 ] && [ "$ESSAI" = 0 ] && [ -d "$FILMS" ] && [ -n "$(find "$FILMS" -maxdepth 1 -type f 2>/dev/null | head -1)" ]; then
+  echo
+  echo "Films de la 0.1 trouvés à plat dans $FILMS (ils n'ont pas été déplacés). Après la création du compte administrateur,"
+  echo "reprenez-les dans la médiathèque (le dossier d'origine n'est pas modifié ; --aide pour les options) :"
+  echo "  sudo canape films importer $FILMS --proprietaire <identifiant de l'administrateur>"
 fi
 if [ "$ESSAI" = 0 ] && [ -n "$DOMAINE" ]; then
   echo
   schema=https; [ "$HTTP_SEUL" = 1 ] && schema=http
   echo "Vérifiez : sudo nginx -t ; systemctl status canape ; curl -I $schema://$DOMAINE"
+fi
+if [ "$NGINX_SEULEMENT" = 0 ] && [ "$ESSAI" = 0 ] && ! id canape-deploiement >/dev/null 2>&1; then
+  echo
+  echo "Déploiement automatique (un push sur main met le serveur à jour) : voir docs/DEPLOIEMENT.md, puis"
+  echo "  sudo $APP/deploiement/preparer-deploiement-auto.sh <clé-publique-de-déploiement.pub>"
 fi
 echo
 echo "Terminé."

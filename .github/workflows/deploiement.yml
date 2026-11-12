@@ -1,0 +1,135 @@
+name: Déploiement
+
+# Push sur main : CI, construction du paquet, envoi au serveur par SSH (mise à jour atomique avec retour arrière).
+# Tag v* : CI, paquet, puis release GitHub avec le paquet et SHA256SUMS en pièces jointes.
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  verifier:
+    name: CI
+    uses: ./.github/workflows/ci.yml
+    permissions:
+      contents: read
+
+  paquet:
+    name: Paquet
+    needs: verifier
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.infos.outputs.version }}
+      fichier: ${{ steps.infos.outputs.fichier }}
+      sha256: ${{ steps.infos.outputs.sha256 }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+          cache: npm
+      # scripts/paquet.sh fait lui-même npm ci et npm run build.
+      - name: Construire le paquet
+        run: scripts/paquet.sh
+      - name: Informations du paquet
+        id: infos
+        run: |
+          fichier="$(ls dist/canape-*.tar.gz)"
+          echo "fichier=$(basename "$fichier")" >> "$GITHUB_OUTPUT"
+          echo "sha256=$(sha256sum "$fichier" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+          echo "version=$(node -p 'require("./package.json").version')" >> "$GITHUB_OUTPUT"
+          cat dist/SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: paquet
+          path: |
+            dist/canape-*.tar.gz
+            dist/SHA256SUMS
+          if-no-files-found: error
+          retention-days: 30
+
+  deployer:
+    name: Mise en production
+    needs: paquet
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment: production
+    permissions:
+      contents: read
+    # Un déploiement à la fois, jamais interrompu en cours de route : les suivants attendent leur tour.
+    concurrency:
+      group: production
+      cancel-in-progress: false
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: paquet
+          path: dist
+      - name: Envoyer le paquet au serveur
+        env:
+          VPS_HOTE: ${{ secrets.VPS_HOTE }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
+          VPS_UTILISATEUR: ${{ secrets.VPS_UTILISATEUR }}
+          VPS_CLE_SSH: ${{ secrets.VPS_CLE_SSH }}
+          VPS_EMPREINTE_HOTE: ${{ secrets.VPS_EMPREINTE_HOTE }}
+          FICHIER: ${{ needs.paquet.outputs.fichier }}
+          SHA256: ${{ needs.paquet.outputs.sha256 }}
+        run: |
+          set -euo pipefail
+          for v in VPS_HOTE VPS_UTILISATEUR VPS_CLE_SSH VPS_EMPREINTE_HOTE; do
+            [ -n "${!v}" ] || { echo "::error::Le secret $v n'est pas défini (voir docs/DEPLOIEMENT.md)."; exit 1; }
+          done
+          port="${VPS_PORT:-22}"
+          install -d -m 700 ~/.ssh
+          # Clé privée et clé d'hôte : jamais affichées. La clé d'hôte vient du secret : StrictHostKeyChecking=yes,
+          # donc un serveur qui n'a pas cette clé est refusé (pas de « confiance au premier contact »).
+          printf '%s\n' "$VPS_CLE_SSH" > ~/.ssh/deploiement
+          chmod 600 ~/.ssh/deploiement
+          printf '[%s]:%s %s\n' "$VPS_HOTE" "$port" "$VPS_EMPREINTE_HOTE" > ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+          # Le serveur n'accepte que la commande « deployer <sha256> » avec le paquet sur l'entrée standard.
+          ssh -i ~/.ssh/deploiement -p "$port" \
+            -o IdentitiesOnly=yes -o BatchMode=yes \
+            -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
+            -o ConnectTimeout=20 -o ServerAliveInterval=15 -o ServerAliveCountMax=8 \
+            "$VPS_UTILISATEUR@$VPS_HOTE" "deployer $SHA256" < "dist/$FICHIER"
+      - name: Nettoyer les clés
+        if: always()
+        run: rm -f ~/.ssh/deploiement ~/.ssh/known_hosts
+
+  release:
+    name: Release GitHub
+    needs: paquet
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: paquet
+          path: dist
+      - name: Release « Canapé <version> — <résumé> »
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          VERSION_PAQUET: ${{ needs.paquet.outputs.version }}
+        run: |
+          set -euo pipefail
+          version="${TAG#v}"
+          [ "$version" = "$VERSION_PAQUET" ] || { echo "::error::Le tag $TAG ne correspond pas à la version du paquet ($VERSION_PAQUET)."; exit 1; }
+          .github/scripts/notes-release.sh "$version" CHANGELOG.md > notes.md
+          resume="$(.github/scripts/notes-release.sh --resume "$version" CHANGELOG.md)"
+          gh release create "$TAG" dist/canape-*.tar.gz dist/SHA256SUMS \
+            --title "Canapé $version — $resume" \
+            --notes-file notes.md \
+            --verify-tag

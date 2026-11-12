@@ -1,0 +1,178 @@
+/*
+ * Jetons de design de Canapé 1.0 : « un salon la nuit, une lampe allumée » (docs/DESIGN.md §3).
+ * Un seul thème, sombre. Aucune ressource externe : les polices sont hébergées dans /polices/.
+ * À importer une seule fois (dans +layout.svelte).
+ */
+
+/* ---------- Polices (sous-ensembles latin, latin-ext en secours) ---------- */
+@font-face {
+  font-family: "Instrument Serif"; font-style: normal; font-weight: 400; font-display: swap;
+  src: url(/polices/instrument-serif-latin-400-normal.woff2) format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Instrument Serif"; font-style: italic; font-weight: 400; font-display: swap;
+  src: url(/polices/instrument-serif-latin-400-italic.woff2) format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Instrument Serif"; font-style: normal; font-weight: 400; font-display: swap;
+  src: url(/polices/instrument-serif-latin-ext-400-normal.woff2) format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Instrument Serif"; font-style: italic; font-weight: 400; font-display: swap;
+  src: url(/polices/instrument-serif-latin-ext-400-italic.woff2) format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Hanken Grotesk"; font-style: normal; font-weight: 100 900; font-display: swap;
+  src: url(/polices/hanken-grotesk-latin-wght-normal.woff2) format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Hanken Grotesk"; font-style: normal; font-weight: 100 900; font-display: swap;
+  src: url(/polices/hanken-grotesk-latin-ext-wght-normal.woff2) format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+:root {
+  /* Surfaces : « nuit prune » */
+  --fond: #14111a;
+  --s1: #1c1824;
+  --s2: #262031;
+  --s3: #312a3d;
+  --bord: #3d3549;          /* séparateurs décoratifs seulement */
+  --bord-champ: #857a95;    /* contours des champs et boutons : 3,4:1 minimum sur toutes les surfaces */
+
+  /* Texte */
+  --texte: #f4eee7;
+  --doux: #b9afc4;
+  --discret: #9a90a7;
+
+  /* La lampe : seule couleur d'action */
+  --lampe: #f4a85b;
+  --lampe-vive: #ffbf7d;
+  --lampe-sur: #1d1208;
+  --lampe-fond: rgba(244, 168, 91, 0.14);
+
+  /* États */
+  --ok: #6fd9b1;
+  --alerte: #ffd166;
+  --mal: #ff7f70;
+  --mal-sur: #2a0d0a;
+  --rose: #e892b0;          /* réservé à l'autre personne */
+  --ok-fond: rgba(111, 217, 177, 0.14);
+  --alerte-fond: rgba(255, 209, 102, 0.14);
+  --mal-fond: rgba(255, 127, 112, 0.14);
+  --rose-fond: rgba(232, 146, 176, 0.14);
+
+  /* Couleurs de présence (ordre d'arrivée : lampe, rose, …) ; texte #16101c dessus */
+  --presence-1: #f4a85b; --presence-2: #e892b0; --presence-3: #8fc7f0;
+  --presence-4: #b4a2f0; --presence-5: #9ad9a0; --presence-6: #f0d27a;
+  --sur-presence: #16101c;
+
+  /* Voile des modales, dégradés sur l'image du film */
+  --voile: rgba(8, 6, 12, 0.7);
+
+  /* Rayons */
+  --r-s: 8px; --r-m: 14px; --r-l: 22px; --r-affiche: 10px; --r-pill: 999px;
+
+  /* Élévations */
+  --ombre-2: 0 10px 24px rgba(0, 0, 0, 0.4);
+  --ombre-3: 0 12px 32px rgba(0, 0, 0, 0.5);
+  --ombre-4: 0 30px 80px rgba(0, 0, 0, 0.6);
+
+  /* Flous */
+  --flou-verre: blur(18px);
+  --fond-verre: rgba(28, 24, 36, 0.82);
+
+  /* Espacements (base 4 px) */
+  --e-1: 4px; --e-2: 8px; --e-3: 12px; --e-4: 16px; --e-5: 20px; --e-6: 24px;
+  --e-7: 32px; --e-8: 40px; --e-9: 56px; --e-10: 72px; --e-11: 96px;
+
+  /* Mouvement */
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --d-1: 120ms; --d-2: 220ms; --d-3: 420ms;
+
+  /* Polices */
+  --titre: "Instrument Serif", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  --texte-police: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  /* Mise en page */
+  --gouttiere: 16px;
+  --barre-haute: 72px;
+  --barre-onglets: 64px;
+
+  /* ---- Alias de compatibilité avec le kit de la 0.1 (pages des autres modules déjà écrites) ---- */
+  --fond-2: var(--s1); --fond-3: var(--s2);
+  --bordure: var(--bord); --or: var(--lampe); --or-doux: var(--lampe);
+  --creme: var(--texte); --velours: var(--mal-fond); --velours-vif: var(--mal);
+  --rayon-s: var(--r-s); --rayon: var(--r-m); --rayon-l: var(--r-l);
+  --ombre: var(--ombre-3);
+  --espace-1: 4px; --espace-2: 8px; --espace-3: 12px; --espace-4: 16px; --espace-5: 24px; --espace-6: 40px;
+  --duree: var(--d-1);
+
+  color-scheme: dark;
+}
+
+@media (min-width: 641px) { :root { --gouttiere: 24px; } }
+@media (min-width: 1025px) { :root { --gouttiere: 40px; } }
+
+/* Mouvement réduit : tout ce qui bouge est ramené à ~0 (DESIGN.md §3.6). */
+@media (prefers-reduced-motion: reduce) {
+  :root { --d-1: 0.01ms; --d-2: 0.01ms; --d-3: 0.01ms; }
+  html { scroll-behavior: auto !important; }
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}
+:root[data-mouvement="reduit"] {
+  --d-1: 0.01ms; --d-2: 0.01ms; --d-3: 0.01ms;
+}
+:root[data-mouvement="reduit"] *, :root[data-mouvement="reduit"] *::before, :root[data-mouvement="reduit"] *::after {
+  animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important;
+}
+
+/* ---------- Styles de base ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; scroll-padding-bottom: 96px; }
+html, body { height: 100%; margin: 0; }
+body {
+  background-color: var(--fond);
+  background-image:
+    radial-gradient(900px 500px at 85% -5%, rgba(244, 168, 91, 0.09), transparent 70%),
+    radial-gradient(800px 500px at -5% 20%, rgba(232, 146, 176, 0.06), transparent 70%);
+  background-attachment: fixed;
+  color: var(--texte);
+  font: 400 16px/1.5 var(--texte-police);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+h1, h2, h3, h4, p { margin: 0; }
+h1, h2 { font-family: var(--titre); font-weight: 400; }
+h3, h4 { font-family: var(--texte-police); font-weight: 600; }
+[hidden] { display: none !important; }
+button, input, textarea, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+a { color: var(--lampe); }
+img, svg { max-width: 100%; }
+::selection { background: rgba(244, 168, 91, 0.35); color: var(--texte); }
+:focus-visible { outline: 3px solid var(--lampe-vive); outline-offset: 3px; border-radius: var(--r-s); }
+.vh {
+  position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);
+  clip-path: inset(50%); white-space: nowrap; margin: -1px; padding: 0; border: 0;
+}
+.tn { font-variant-numeric: tabular-nums; }
+
+/* Barres de défilement discrètes */
+* { scrollbar-width: thin; scrollbar-color: var(--s3) transparent; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--s3); border-radius: 999px; border: 2px solid var(--fond); }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* Échelle typographique (classes utilitaires) */
+.t-affiche { font: 400 clamp(2.75rem, 7vw, 4.5rem) / 0.97 var(--titre); letter-spacing: -0.01em; }
+.t-titre1 { font: 400 clamp(2.25rem, 5vw, 3.5rem) / 1.02 var(--titre); letter-spacing: -0.01em; }
+.t-titre2 { font: 400 clamp(1.75rem, 3.5vw, 2.25rem) / 1.12 var(--titre); }
+.t-titre3 { font: 600 1.375rem / 1.27 var(--texte-police); }
+.t-petit { font-size: 0.875rem; line-height: 1.43; }
+.t-legende { font: 500 0.75rem / 1.33 var(--texte-police); }
