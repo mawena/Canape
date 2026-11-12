@@ -3,6 +3,7 @@
 import { fork, type ChildProcess } from 'node:child_process';
 import { EventEmitter } from 'node:events';
 import { fileURLToPath } from 'node:url';
+import type { MoteurTorrent } from '@canape/partage';
 import type { Config } from '../../../config.ts';
 import type { Journal } from '../mediatheque.ts';
 import type { DeEnfant, OptionsEnfant, VersEnfant } from './protocole.ts';
@@ -26,7 +27,21 @@ export interface EvenementsMoteur {
   mort: [string];
 }
 
-export class Moteur extends EventEmitter<EvenementsMoteur> {
+/** Ce que le service attend d'un moteur de torrents (WebTorrent en processus enfant, ou Transmission). */
+export interface MoteurTorrents extends EventEmitter<EvenementsMoteur> {
+  readonly nom: MoteurTorrent;
+  /** Le moteur répond. */
+  readonly actif: boolean;
+  demarrer(): void;
+  envoyer(m: VersEnfant): boolean;
+  retirer(id: string, effacer: boolean): Promise<void>;
+  /** Arrête le téléchargement en gardant les données et le torrent (reprise : `envoyer({ t: 'ajouter' … })`). */
+  pause(id: string): Promise<void>;
+  arreter(): Promise<void>;
+}
+
+export class Moteur extends EventEmitter<EvenementsMoteur> implements MoteurTorrents {
+  readonly nom = 'webtorrent' as const;
   private enfant: ChildProcess | null = null;
   private arrete = false;
   private echecs = 0;
@@ -123,6 +138,9 @@ export class Moteur extends EventEmitter<EvenementsMoteur> {
       setTimeout(() => this.finAttente(id), 15_000).unref();
     });
   }
+
+  /** WebTorrent ne garde pas un torrent en pause : il le retire (les morceaux reçus restent sur le disque). */
+  pause(id: string): Promise<void> { return this.retirer(id, false); }
 
   /** Arrête l'enfant (aucun processus orphelin) et ne le relance plus. */
   async arreter(): Promise<void> {

@@ -41,12 +41,14 @@ GABARIT="${CANAPE_ESSAI_GABARIT:-}"                      # vide : celui du paque
 NGINX_SEULEMENT="${CANAPE_ESSAI_NGINX_SEULEMENT:-0}"     # 1 = ne fait que la partie port + nginx (essais)
 SANS_ROOT="${CANAPE_ESSAI_SANS_ROOT:-0}"                 # 1 = ni utilisateur système ni chown (essais)
 NODE_MIN="${CANAPE_ESSAI_NODE_MIN:-26}"
+SANS_TRANSMISSION="${CANAPE_ESSAI_SANS_TRANSMISSION:-0}"  # 1 = n'installe pas Transmission (essais)
 
 DOMAINE=""
 PORT_DEMANDE=""
 NODE_OPT=""
 PAQUET_OPT=""
 ESSAI=0
+REMPLACER_TRANSMISSION=0
 DESINSTALLER=0
 PORT=8080
 NODE_BIN=""
@@ -75,7 +77,7 @@ AVERTISSEMENTS_AVANT=""
 
 aide() {
   cat <<AIDE
-Utilisation : sudo $(basename "$0") [--domaine <nom>] [--paquet <fichier>] [--port <N>] [--node <chemin>] [--essai]
+Utilisation : sudo $(basename "$0") [--domaine <nom>] [--paquet <fichier>] [--port <N>] [--node <chemin>] [--sans-transmission] [--essai]
               sudo $(basename "$0") --desinstaller [--domaine <nom>] [--essai]
 
 À lancer sur le serveur, en root (sudo). Installe la version contenue dans un paquet, dans $APP/versions/.
@@ -85,6 +87,8 @@ Utilisation : sudo $(basename "$0") [--domaine <nom>] [--paquet <fichier>] [--po
                     GitHub ($DEPOT) est téléchargé, avec vérification de son SHA256SUMS
   --port <N>        port local de Node (8080 par défaut, ou celui déjà inscrit dans $CONF, ou un port libre)
   --node <chemin>   Node.js $NODE_MIN ou plus à utiliser (nvm, par exemple) : il est copié dans $APP/node
+  --sans-transmission  n'installe pas Transmission (deploiement/installer-transmission.sh, à lancer seul quand on veut)
+  --remplacer-transmission  accepte de remplacer les réglages d'un Transmission déjà installé et réglé par quelqu'un d'autre
   --desinstaller    retire le service, le site nginx et $APP ; garde $CONF, les données et les films
   --essai           affiche ce qui serait fait, sans rien modifier (root inutile)
   -h, --aide        affiche ce message
@@ -123,6 +127,8 @@ while [ $# -gt 0 ]; do
     -h|--aide|--help) aide; exit 0 ;;
     --essai) ESSAI=1 ;;
     --desinstaller) DESINSTALLER=1 ;;
+    --sans-transmission) SANS_TRANSMISSION=1 ;;
+    --remplacer-transmission) REMPLACER_TRANSMISSION=1 ;;
     --domaine) [ $# -ge 2 ] || echec "--domaine demande un nom de domaine."; DOMAINE="$2"; shift ;;
     --domaine=*) DOMAINE="${1#--domaine=}" ;;
     --port) [ $# -ge 2 ] || echec "--port demande un numéro."; PORT_DEMANDE="$2"; shift ;;
@@ -644,7 +650,9 @@ installer_application() {
   dossier 0755 root root "$APP" "$APP/versions"
   if [ -d "$FILMS" ] && ! en_essai; then echo "$FILMS existe : les films ne sont pas touchés."; fi
   dossier 2775 root canape "$SRV" "$FILMS"
-  dossier 0750 canape canape "$SRV/donnees" "$SRV/cache" "$SRV/televersements" "$SRV/telechargements"
+  dossier 0750 canape canape "$SRV/donnees" "$SRV/cache" "$SRV/televersements"
+  # 2770 : Transmission (groupe canape) y écrit les torrents, Canapé y fait ses liens physiques
+  dossier 2770 canape canape "$SRV/telechargements"
   dossier 0750 root canape "$(dirname "$CONF")"
   if en_root && [ -n "${SUDO_USER:-}" ] && [ "$SUDO_USER" != root ]; then
     if ! id -nG "$SUDO_USER" 2>/dev/null | tr ' ' '\n' | grep -qx canape; then
@@ -701,6 +709,24 @@ installer_application() {
     exit 1
   fi
   nettoyer_ancien_01
+  installer_transmission
+}
+
+# Transmission (torrents, y compris privés) : étape lançable seule, voir deploiement/installer-transmission.sh.
+installer_transmission() {
+  [ "$SANS_TRANSMISSION" = 0 ] || return 0
+  etape "Transmission (torrents)"
+  local x=()
+  [ "$REMPLACER_TRANSMISSION" = 0 ] || x+=(--remplacer)
+  if en_essai; then
+    echo "  [essai] $SRC/deploiement/installer-transmission.sh ${x[*]:-} : apt-get install transmission-daemon, réglages, groupe canape, redémarrages, vérification du RPC"
+    return 0
+  fi
+  # Un échec ici (Transmission déjà réglé par quelqu'un d'autre, par exemple) ne défait pas l'installation de Canapé.
+  if ! "$SRC/deploiement/installer-transmission.sh" "${x[@]}"; then
+    echo "Transmission n'est pas prêt (voir ci-dessus) : Canapé tourne, avec WebTorrent en secours. Relancez à la main :" >&2
+    echo "  sudo $APP/actuelle/deploiement/installer-transmission.sh" >&2
+  fi
 }
 
 lire_etat() { "$CURL" -fsS --max-time 5 "http://127.0.0.1:$PORT/api/etat" 2>/dev/null || true; }

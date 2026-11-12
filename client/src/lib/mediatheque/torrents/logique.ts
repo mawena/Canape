@@ -15,8 +15,54 @@ export const estFini = (t: Pick<Telechargement, 'etat'>): boolean => FINIS.inclu
 export const fichiersModifiables = (t: Pick<Telechargement, 'etat'>): boolean => t.etat === 'telechargement' || t.etat === 'pause' || t.etat === 'metadonnees';
 
 /** Faut-il continuer à interroger le serveur ? Oui s'il y a un téléchargement actif et que l'onglet est visible. */
-export function doitRafraichir(liste: Array<Pick<Telechargement, 'etat'>>, ongletVisible: boolean): boolean {
-  return ongletVisible && liste.some(estActif);
+export function doitRafraichir(liste: Array<Pick<Telechargement, 'etat'> & Partial<Pick<Telechargement, 'enPartage'>>>, ongletVisible: boolean): boolean {
+  return ongletVisible && liste.some((t) => estActif(t) || t.enPartage === true);
+}
+
+// Les champs de la phase 16 (`prive`, `enPartage`, `ratio`, `messageTracker`, `moteur`) peuvent manquer (serveur plus ancien) :
+// `undefined` vaut `false` / `null`.
+type ChampsPartage = Partial<Pick<Telechargement, 'prive' | 'enPartage' | 'ratio' | 'messageTracker' | 'debitEnvoi'>>;
+export const estPrive = (t: ChampsPartage): boolean => t.prive === true;
+/** Fini mais encore partagé : la ligne garde sa place dans la section « En partage ». */
+export const estEnPartage = (t: Pick<Telechargement, 'etat'> & ChampsPartage): boolean => t.etat === 'termine' && t.enPartage === true;
+/** Réponse du tracker à montrer, ou `null`. */
+export function messageTrackerAffiche(t: ChampsPartage): string | null {
+  const m = t.messageTracker?.trim();
+  return m ? m : null;
+}
+
+/** Aide de la pastille « Privé ». */
+export const AIDE_PRIVE = 'Torrent privé : seuls ses trackers donnent des pairs. Il reste partagé après la fin, comme le demande ton tracker.';
+/** Confirmation avant d'arrêter le partage. */
+export const TEXTE_ARRET_PARTAGE = 'Le film reste dans ta galerie.';
+
+/** « 1,24 » (virgule française, deux décimales) ; « — » si le ratio est inconnu. */
+export function formaterRatio(ratio: number | null | undefined): string {
+  if (ratio === null || ratio === undefined || !Number.isFinite(ratio) || ratio < 0) return '—';
+  return ratio.toFixed(2).replace('.', ',');
+}
+
+/** « En partage · ratio 1,24 · 120 Ko/s envoyés » (débit d'envoi seulement s'il est connu). */
+export function detailPartage(t: ChampsPartage): string {
+  const parts = ['En partage', `ratio ${formaterRatio(t.ratio)}`];
+  if (t.debitEnvoi && t.debitEnvoi > 0) parts.push(`${formaterDebit(t.debitEnvoi)} envoyés`);
+  return parts.join(' · ');
+}
+
+/** Sépare la liste : ce qui est en cours ou fini (non partagé) d'un côté, ce qui est encore partagé de l'autre. L'ordre est gardé. */
+export function repartir<T extends Pick<Telechargement, 'etat'> & ChampsPartage>(liste: T[]): { enCours: T[]; enPartage: T[] } {
+  const enPartage = liste.filter(estEnPartage);
+  const enCours = liste.filter((t) => !estEnPartage(t));
+  // Les lignes à suivre (actives, en pause) d'abord, les finies ensuite.
+  enCours.sort((a, b) => Number(estFini(a)) - Number(estFini(b)));
+  return { enCours, enPartage };
+}
+
+/** Titre de l'en-tête du panneau (visible sur téléphone). */
+export function resumePanneau(nbEnCours: number, nbEnPartage: number): string {
+  if (nbEnCours > 0) return `${nbEnCours} téléchargement${nbEnCours > 1 ? 's' : ''} en cours`;
+  if (nbEnPartage > 0) return `${nbEnPartage} en partage`;
+  return 'Téléchargements';
 }
 
 /**
@@ -32,9 +78,15 @@ export function enAttentePlace(t: Pick<Telechargement, 'etat' | 'pairs' | 'debit
 export function suivreInactivite(anciens: Map<string, number>, liste: Telechargement[], maintenant: number): Map<string, number> {
   const neuf = new Map<string, number>();
   for (const t of liste) {
-    if (t.etat === 'telechargement' && t.pairs === 0 && t.debit === 0) neuf.set(t.id, anciens.get(t.id) ?? maintenant);
+    if ((t.etat === 'telechargement' || t.etat === 'metadonnees') && t.pairs === 0 && t.debit === 0) neuf.set(t.id, anciens.get(t.id) ?? maintenant);
   }
   return neuf;
+}
+
+/** Les informations du torrent tardent : on le dit autrement qu'au début. Même mémoire que « en attente d'une place ». */
+export function metadonneesLongues(t: Pick<Telechargement, 'etat' | 'pairs'>, sansPairDepuis: number | null, maintenant: number): boolean {
+  if (t.etat !== 'metadonnees' || t.pairs > 0) return false;
+  return sansPairDepuis !== null && maintenant - sansPairDepuis >= DELAI_ATTENTE_PLACE;
 }
 
 export function nomAffiche(t: Pick<Telechargement, 'nom'>): string {
@@ -42,13 +94,13 @@ export function nomAffiche(t: Pick<Telechargement, 'nom'>): string {
 }
 
 /** État en clair. */
-export function libelleEtat(t: Pick<Telechargement, 'etat' | 'erreur'>, attentePlace = false): string {
+export function libelleEtat(t: Pick<Telechargement, 'etat' | 'erreur'> & ChampsPartage, attentePlace = false, metaLongue = false): string {
   switch (t.etat) {
-    case 'metadonnees': return 'Récupération des informations…';
+    case 'metadonnees': return metaLongue || messageTrackerAffiche(t) ? 'En attente des pairs…' : 'Récupération des informations…';
     case 'telechargement': return attentePlace ? 'En attente d’une place' : 'Téléchargement';
     case 'pause': return 'En pause';
     case 'import': return 'Ajout à ta galerie…';
-    case 'termine': return 'Dans ta galerie';
+    case 'termine': return t.enPartage === true ? 'En partage' : 'Dans ta galerie';
     case 'erreur': return t.erreur?.trim() || 'Le téléchargement a échoué.';
     case 'annule': return 'Annulé';
   }

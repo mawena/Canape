@@ -326,6 +326,38 @@ compteARebours: number|null, serveur }` : mêmes règles qu'en 0.1 (position à 
 rattrapage par saut au-delà de 1 s et par vitesse 0,95/1,05 entre 0,3 et 1 s, attente mutuelle, aucun écho
 d'événement). Changer de piste audio ou de film remet tout le monde en pause à la même position.
 
+## Moteur Transmission (phase 16)
+
+Les trackers privés (ex. C411) n'acceptent que des logiciels connus ; WebTorrent n'en fait pas partie, Transmission
+si. Canapé **pilote donc Transmission** (`transmission-daemon`, sur le même serveur, RPC en local) pour **tous** les
+torrents ; WebTorrent (processus enfant) ne sert plus qu'en secours, quand Transmission n'est pas joignable
+(développement, essais). Canapé ne se fait jamais passer pour un autre logiciel.
+
+- **Réglages** : `CANAPE_TORRENT_MOTEUR` = `auto` (défaut : Transmission s'il répond, sinon WebTorrent) | `transmission`
+  | `webtorrent` ; `CANAPE_TRANSMISSION_URL` (défaut `http://127.0.0.1:9091/transmission/rpc`),
+  `CANAPE_TRANSMISSION_UTILISATEUR`, `CANAPE_TRANSMISSION_MOT_DE_PASSE` ; `CANAPE_TORRENT_PARTAGE` (publics, défaut
+  `0` : arrêt à la fin) ; `CANAPE_TORRENT_PARTAGE_PRIVES` (défaut `toujours` : partagés jusqu'à ce que l'utilisateur
+  les retire ; ou un ratio). Les autres `CANAPE_TORRENT_*` restent (débits, simultanés, port : appliqués à
+  Transmission par RPC `session-set`).
+- **Dialogue** : RPC JSON de Transmission (`X-Transmission-Session-Id` renouvelé sur 409, authentification de base) :
+  `torrent-add` (`metainfo` en base64 pour un `.torrent`, `filename` pour un magnet, `download-dir`
+  `CANAPE_TELECHARGEMENTS/<id>`, `paused` selon la file), `torrent-get` toutes les secondes (état, progression,
+  débits, pairs, `eta`, fichiers, `isPrivate`, `uploadRatio`, `error`/`errorString`, `trackerStats.lastAnnounceResult`),
+  `torrent-set` (`files-wanted`/`files-unwanted`, `seedRatioLimit`/`seedRatioMode`), `torrent-start`/`torrent-stop`,
+  `torrent-remove` (`delete-local-data`). La correspondance id Canapé ↔ `hashString` est en base (`info_hash`).
+- **Fin** : `import` → le film est un **lien physique** (`link`) du fichier téléchargé vers
+  `CANAPE_FILMS/<id>/original.<ext>` (même système de fichiers : aucune place en plus), copie en repli ; sous-titres
+  comme avant ; puis `termine` avec `enPartage` tant que Transmission partage. Privé : partage selon
+  `CANAPE_TORRENT_PARTAGE_PRIVES` ; public : selon `CANAPE_TORRENT_PARTAGE`. `DELETE` d'une ligne `termine` en partage :
+  `torrent-remove` avec effacement (le film reste grâce au lien), ligne retirée.
+- **Messages** : `messageTracker` donne la dernière réponse d'un tracker qui refuse ou échoue (« Le tracker a refusé :
+  … ») ; le délai de 15 min sans informations reste, avec ce message dans l'erreur.
+- **Serveur** : l'installateur installe `transmission-daemon` (apt), le configure (`settings.json` : RPC sur
+  127.0.0.1 seulement, identifiant et mot de passe générés et écrits dans `canape.conf`, `umask` 2,
+  `download-dir` `/srv/canape/telechargements`, port des pairs, sans limite de ratio globale) et met l'utilisateur
+  `debian-transmission` dans le groupe `canape` (dossiers `2770` groupe `canape`), sans toucher à nginx ; `mettre-a-jour`
+  ne touche pas à Transmission.
+
 ## Inscription libre (phase 15)
 
 N'importe qui peut venir sur le site, **créer son compte** et ajouter des films, sans invitation. Module **comptes**
@@ -367,6 +399,26 @@ N'importe qui peut venir sur le site, **créer son compte** et ajouter des films
 champs, 409/403/429 traduits) et `/regles`, composant `ChercherCompte` (partage d'un film, invitation à une séance),
 réglages et origine des comptes dans l'administration ; essais `e2e/inscription.spec.ts` (Chromium et Firefox) et captures
 à la demande (`CANAPE_CAPTURES_INSCRIPTION=<dossier>`, clair/sombre, ordinateur/téléphone).
+
+*Réalisé (phase 16, serveur)* : `serveur/src/modules/mediatheque/torrents/` : `moteur-transmission.ts` (même vocabulaire de
+messages que le moteur WebTorrent : le service garde une seule logique), `transmission-rpc.ts`, `securite.ts` +
+`bencode.ts`, migration `051_transmission.sql` (`moteur`, `prive`, `en_partage`, `ratio`, `message_tracker`).
+`GET /api/torrents` donne le moteur de chaque ligne (pas de changement de `/api/etat`). Précisions :
+- Le torrent est ajouté **en pause** (`.torrent`) puis démarré après le choix des fichiers ; un lien magnet démarre
+  tout de suite, et dès ses métadonnées tous les fichiers sont décochés tant que le choix n'est pas fait (rien d'inutile
+  n'est téléchargé). Pause = `torrent-stop` (le torrent reste dans Transmission), reprise = `torrent-start`.
+- `messageTracker` sert aussi à expliquer l'attente quand Transmission ne répond pas (« Transmission est injoignable… »),
+  tant que la ligne est active ; « Le tracker n'a pas répondu : … » pour une panne réseau, « Le tracker a refusé : … » sinon.
+- Les trackers d'un torrent ou d'un magnet sont aussi vérifiés par DNS (un nom qui mène à une adresse interne est retiré) ;
+  les noms sans point et `.local`/`.internal`/`.lan` sont refusés.
+- Un torrent déjà présent dans Transmission dans un autre dossier (ajouté hors Canapé) n'est jamais repris : `erreur`.
+- Au démarrage, les partages (`termine` + `en_partage`) sont redonnés à Transmission ; un torrent disparu de Transmission
+  (retiré à la main) met fin au partage, le film reste. Une ligne WebTorrent non finie passe à Transmission dès qu'il
+  répond (`auto` ou `transmission`). `CANAPE_TORRENT_MOTEUR=transmission` est écrit par l'installateur : sans Transmission,
+  les téléchargements attendent au lieu de passer à WebTorrent (qui ne sait pas faire les trackers privés).
+- Installation : `deploiement/installer-transmission.sh` (essais : `deploiement/essais/essai-transmission.sh`) ; tests :
+  `serveur/tests/torrents/{transmission,securite}.test.ts` (faux RPC) et `transmission-reel.test.ts` (vrai Transmission,
+  `CANAPE_ESSAI_TRANSMISSION=<binaire>`).
 
 ## Torrents (1.1)
 

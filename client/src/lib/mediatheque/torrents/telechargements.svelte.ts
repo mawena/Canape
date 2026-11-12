@@ -3,7 +3,7 @@
 import { INTERVALLE_SUIVI_TORRENTS, type CorpsModifTorrent, type Telechargement } from '@canape/partage';
 import { ErreurApi } from '$lib/api/client.ts';
 import * as appel from './api.ts';
-import { doitRafraichir, estActif, messageAjout, nouvellementTermines, nouvellesErreurs, suivreInactivite, enAttentePlace } from './logique.ts';
+import { doitRafraichir, estActif, estEnPartage, messageAjout, nouvellementTermines, nouvellesErreurs, suivreInactivite, enAttentePlace, metadonneesLongues } from './logique.ts';
 
 class MagasinTelechargements {
   liste: Telechargement[] = $state([]);
@@ -23,8 +23,10 @@ class MagasinTelechargements {
 
   get actifs(): Telechargement[] { return this.liste.filter(estActif); }
   get nbEnCours(): number { return this.liste.filter((t) => !['termine', 'erreur', 'annule'].includes(t.etat)).length; }
+  get nbEnPartage(): number { return this.liste.filter(estEnPartage).length; }
 
   attentePlace(t: Telechargement): boolean { return enAttentePlace(t, this.inactif.get(t.id) ?? null, this.maintenant); }
+  metaLongue(t: Telechargement): boolean { return metadonneesLongues(t, this.inactif.get(t.id) ?? null, this.maintenant); }
 
   /** Appelé à chaque téléchargement qui vient de se terminer (la galerie rafraîchit sa grille). */
   surTermine(cb: (t: Telechargement) => void): () => void {
@@ -81,7 +83,7 @@ class MagasinTelechargements {
 
   /** Reprend le suivi si quelque chose est actif (onglet de nouveau visible, ajout…). */
   private async reveiller(): Promise<void> {
-    if (this.liste.some(estActif)) await this.charger();
+    if (this.liste.some((t) => estActif(t) || estEnPartage(t))) await this.charger();
   }
 
   /** Arrête le suivi (quitter la galerie). La liste reste en mémoire. */
