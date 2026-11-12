@@ -45,6 +45,8 @@ export async function creerAppTest(options: OptionsAppTest = {}): Promise<AppTes
     CANAPE_TELEVERSEMENTS: path.join(dossier, 'televersements'),
     CANAPE_TELECHARGEMENTS: path.join(dossier, 'telechargements'),
     CANAPE_URL_PUBLIQUE: ORIGINE_TEST,
+    // Les essais ne dépendent jamais d'un Transmission présent sur le poste : WebTorrent, sauf demande contraire.
+    CANAPE_TORRENT_MOTEUR: 'webtorrent',
     ...options.env,
   };
   const config = chargerConfig(env);

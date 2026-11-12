@@ -1,6 +1,6 @@
 // Cœur du module : dépôt des films, droits, traitement (analyse, fiche, images), TMDB, sous-titres.
 import { statSync } from 'node:fs';
-import { copyFile, mkdir, readdir, rename, rm, stat, unlink, writeFile } from 'node:fs/promises';
+import { copyFile, link, mkdir, readdir, rename, rm, stat, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { Analyse, Film, SousTitreExterne } from '@canape/partage';
 import type { FilmService, RegleAcces, ServiceMediatheque } from '../../commun/services.ts';
@@ -35,6 +35,29 @@ export async function deplacer(source: string, cible: string): Promise<void> {
     if ((e as NodeJS.ErrnoException).code !== 'EXDEV') throw e;
     await copyFile(source, cible);
     await unlink(source);
+  }
+}
+
+/**
+ * Lien physique de `source` vers `cible` (le film et le torrent partagé sont le même fichier, sans place en plus) ;
+ * copie en repli (autre disque, droits insuffisants, système de fichiers sans liens), avec une explication claire.
+ */
+export async function lierOuCopier(source: string, cible: string, journal: Journal): Promise<'lien' | 'copie'> {
+  try {
+    await link(source, cible);
+    return 'lien';
+  } catch (e) {
+    const code = (e as NodeJS.ErrnoException).code ?? '';
+    const raisons: Record<string, string> = {
+      EXDEV: 'le dossier des téléchargements et celui des films sont sur deux disques différents',
+      EPERM: "Canapé n'a pas les droits de lecture et d'écriture sur le fichier téléchargé (Transmission doit tourner avec l'umask 2, dans le groupe canape ; fs.protected_hardlinks=1)",
+      EACCES: "Canapé n'a pas les droits de lecture et d'écriture sur le fichier téléchargé (Transmission doit tourner avec l'umask 2, dans le groupe canape ; fs.protected_hardlinks=1)",
+      EMLINK: 'trop de liens sur ce fichier', ENOTSUP: 'ce système de fichiers ne sait pas faire de lien physique', EOPNOTSUPP: 'ce système de fichiers ne sait pas faire de lien physique',
+    };
+    if (!(code in raisons)) throw e;
+    journal.warn({ code }, `lien physique impossible (${raisons[code]}) : le film est copié, il prend donc de la place en plus tant que le torrent est gardé`);
+    await copyFile(source, cible);
+    return 'copie';
   }
 }
 
@@ -105,6 +128,8 @@ export class Mediatheque implements ServiceMediatheque {
   /** Crée la fiche d'un fichier déjà reçu (déplacé ou copié dans `<films>/<id>/`) puis lance l'analyse. */
   async creerFilm(o: {
     proprietaireId: number; nomOrigine: string; source: string; copier?: boolean; taille?: number; analyser?: boolean;
+    /** Lien physique (repli : copie) : le fichier source reste en place (torrent encore partagé). */
+    lier?: boolean;
   }): Promise<string> {
     const id = idBase32(12);
     const ext = extensionDe(o.nomOrigine);
@@ -112,7 +137,8 @@ export class Mediatheque implements ServiceMediatheque {
     await mkdir(path.join(dossier, 'sous-titres'), { recursive: true });
     const cible = path.join(dossier, `original${ext}`);
     try {
-      if (o.copier) await copyFile(o.source, cible);
+      if (o.lier) await lierOuCopier(o.source, cible, this.journal);
+      else if (o.copier) await copyFile(o.source, cible);
       else await deplacer(o.source, cible);
     } catch (e) {
       await rm(dossier, { recursive: true, force: true });

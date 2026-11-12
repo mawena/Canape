@@ -2,6 +2,7 @@
 import path from 'node:path';
 import { TAILLE_MAX_SOUS_TITRES, type FichierTorrent } from '@canape/partage';
 import { requeteInvalide } from '../../../commun/erreurs.ts';
+import { trackerAdmis } from './securite.ts';
 
 export const EXTENSIONS_VIDEO_TORRENT = ['mkv', 'mp4', 'm4v', 'mov', 'avi', 'webm', 'ts', 'm2ts', 'wmv', 'mpg', 'mpeg', 'flv', 'ogv'];
 const RE_VIDEO = new RegExp(`\\.(${EXTENSIONS_VIDEO_TORRENT.join('|')})$`, 'i');
@@ -122,7 +123,7 @@ export function analyserMagnet(texte: unknown): MagnetValide {
   const sortie: Array<[string, string]> = [['xt', `urn:btih:${infoHash}`]];
   if (nom) sortie.push(['dn', nom]);
   for (const tr of params.getAll('tr').slice(0, 20)) {
-    if (/^(udp|https?):\/\/[^\s]{3,500}$/i.test(tr)) sortie.push(['tr', tr]);
+    if (/^(udp|https?):\/\/[^\s]{3,500}$/i.test(tr) && trackerAdmis(tr)) sortie.push(['tr', tr]);
   }
   for (const pe of params.getAll('x.pe').slice(0, 10)) {
     if (/^(\d{1,3}(\.\d{1,3}){3}|\[[0-9a-f:]+\]):\d{1,5}$/i.test(pe)) sortie.push(['x.pe', pe]);

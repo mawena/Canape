@@ -39,6 +39,14 @@ export interface Config {
   torrentIsole: boolean;
   /** Interne (essais) : pairs `hôte:port` ajoutés à chaque torrent (un `.torrent` ne dit pas où est le pair local). */
   torrentPairs: string[];
+  /** Moteur des torrents : `auto` (Transmission s'il répond, sinon WebTorrent), `transmission` ou `webtorrent`. */
+  torrentMoteur: 'auto' | 'transmission' | 'webtorrent';
+  /** Adresse du RPC de Transmission (`CANAPE_TRANSMISSION_URL`). */
+  transmissionUrl: string;
+  transmissionUtilisateur: string;
+  transmissionMotDePasse: string;
+  /** Partage des torrents privés après la fin : `null` = toujours (jusqu'à ce que l'utilisateur les retire), sinon un ratio. */
+  torrentPartagePrives: number | null;
   /** Octets. */
   televersementMax: number;
   quotaDefaut: number;
@@ -102,6 +110,19 @@ function entier(v: string | undefined, defaut: number, nom: string, min: number,
 function booleen(v: string | undefined, defaut: boolean): boolean {
   if (v === undefined || v === '') return defaut;
   return ['1', 'true', 'oui', 'yes', 'on'].includes(v.toLowerCase());
+}
+
+function choix<T extends string>(v: string | undefined, valeurs: readonly T[], defaut: T, nom: string): T {
+  if (v === undefined || v.trim() === '') return defaut;
+  const m = v.trim().toLowerCase() as T;
+  if (!valeurs.includes(m)) throw new Error(`${nom} doit valoir ${valeurs.join(', ')} (reçu « ${v} »).`);
+  return m;
+}
+
+/** `toujours` (défaut) → `null` ; sinon un ratio (0 = on arrête dès la fin). */
+function partagePrives(v: string | undefined): number | null {
+  if (v === undefined || v.trim() === '' || v.trim().toLowerCase() === 'toujours') return null;
+  return decimal(v, 0, 'CANAPE_TORRENT_PARTAGE_PRIVES', 0, 1000);
 }
 
 function decimal(v: string | undefined, defaut: number, nom: string, min: number, max: number): number {
@@ -169,6 +190,11 @@ export function chargerConfig(env: Record<string, string | undefined> = process.
     torrentEnvoiMax: taille(v['CANAPE_TORRENT_ENVOI_MAX'], '1M', 'CANAPE_TORRENT_ENVOI_MAX'),
     torrentPartage: decimal(v['CANAPE_TORRENT_PARTAGE'], 0, 'CANAPE_TORRENT_PARTAGE', 0, 1000),
     torrentPort: entier(v['CANAPE_TORRENT_PORT'], 0, 'CANAPE_TORRENT_PORT', 0, 65535),
+    torrentMoteur: choix(v['CANAPE_TORRENT_MOTEUR'], ['auto', 'transmission', 'webtorrent'] as const, 'auto', 'CANAPE_TORRENT_MOTEUR'),
+    transmissionUrl: v['CANAPE_TRANSMISSION_URL'] || 'http://127.0.0.1:9091/transmission/rpc',
+    transmissionUtilisateur: v['CANAPE_TRANSMISSION_UTILISATEUR'] || '',
+    transmissionMotDePasse: v['CANAPE_TRANSMISSION_MOT_DE_PASSE'] || '',
+    torrentPartagePrives: partagePrives(v['CANAPE_TORRENT_PARTAGE_PRIVES']),
     torrentIsole: booleen(v['CANAPE_TORRENT_ISOLE'], false),
     torrentPairs: (v['CANAPE_TORRENT_PAIRS'] || '').split(',').map((s) => s.trim()).filter(Boolean),
     televersementMax: taille(v['CANAPE_TELEVERSEMENT_MAX'], '100G', 'CANAPE_TELEVERSEMENT_MAX'),
