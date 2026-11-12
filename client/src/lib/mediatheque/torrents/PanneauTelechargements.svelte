@@ -176,7 +176,9 @@
   .tracker :global(svg) { flex: none; margin-top: 1px; }
   .tracker.mal { background: var(--mal-fond, var(--alerte-fond)); color: var(--mal); }
   .arret { display: flex; }
-  .ligne { display: grid; gap: 8px; padding: var(--e-3) 0; }
+  .ligne { display: grid; gap: 8px; padding: var(--e-3) 0; min-width: 0; }
+  #liste-telechargements, ul, .haut { min-width: 0; }
+  ul, .ligne { grid-template-columns: minmax(0, 1fr); }
   .ligne + .ligne { border-top: 1px solid var(--bord); }
   .haut { display: flex; align-items: center; gap: 10px; }
   .icone { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: 10px; background: var(--s2); color: var(--lampe); }
