@@ -84,8 +84,8 @@ main, séances, chat et réactions, reprise, PWA, mise en production automatique
 
 ## Phase 10 — Livraison
 
-- [ ] Paquet, `installer-serveur.sh` 1.0 (mise à niveau depuis la 0.1), mise à jour atomique avec retour arrière
-- [ ] GitHub Actions : CI sur `develop`, déploiement automatique sur `main`, release GitHub du tag
+- [x] Paquet, `installer-serveur.sh` 1.0 (mise à niveau depuis la 0.1), mise à jour atomique avec retour arrière
+- [x] GitHub Actions : CI sur `develop`, déploiement automatique sur `main`, release GitHub du tag
 - [ ] Préparation du VPS pour le déploiement automatique (utilisateur, clé verrouillée, sudo limité, secrets du dépôt)
 
 ## Phase 11 — Intégration et essais
