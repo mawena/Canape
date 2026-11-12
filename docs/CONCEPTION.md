@@ -296,7 +296,7 @@ d'`Origin` égale à `CANAPE_URL_PUBLIQUE`. Types dans `partage/src/*.ts`.
 
 **Séances** (module seances)
 - `GET /api/seances` (à venir, en cours, récentes) ; `POST /api/seances` `{ filmId, titre?, prevueLe?, invites?: number[] }`
-- `GET|PATCH|DELETE /api/seances/:id` ; `POST|DELETE /api/seances/:id/lien` (crée → `{ lien }`, retire)
+- `GET|PATCH|DELETE /api/seances/:id` ; `POST|DELETE /api/seances/:id/lien` (crée le lien, ou redonne le lien existant → `{ lien }` ; retire)
 - `POST /api/rejoindre/:jeton` → `{ seanceId }` (ajoute aux participants)
 - `GET /api/seances/:id/messages?avant=<id>`
 - `GET /api/reprendre` (films commencés, non terminés) ; `GET /api/historique`

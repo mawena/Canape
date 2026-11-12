@@ -6,6 +6,7 @@ const FINE = ' ';
 /** `6720` → « 1 h 52 » ; `2520` → « 42 min » ; `null` → chaîne vide. */
 export function formaterDuree(secondes: number | null | undefined): string {
   if (secondes === null || secondes === undefined || !Number.isFinite(secondes) || secondes < 0) return '';
+  if (secondes < 59.5) return `${Math.max(1, Math.round(secondes))}${NBSP}s`; // extraits, bandes-annonces
   const minutes = Math.round(secondes / 60);
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;

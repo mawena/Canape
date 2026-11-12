@@ -23,6 +23,15 @@
   let erreur: string | null = $state(null);
   let survol = $state(false);
   let selecteur: HTMLInputElement | undefined = $state();
+  // `/galerie?ajouter=1` (bouton « Ajouter un film » de la barre du haut) : ouvre le choix de fichiers. La navigation
+  // monopage garde l'activation du clic d'origine ; si le navigateur refuse, le bouton de la page reste là.
+  let ajoutDemande = false;
+  $effect(() => {
+    if (ajoutDemande || !selecteur || page.url.searchParams.get('ajouter') !== '1') return;
+    ajoutDemande = true;
+    selecteur.click();
+    naviguer({ ajouter: null });
+  });
   let compteurSurvol = 0;
 
   function naviguer(maj: Record<string, string | null>): void {

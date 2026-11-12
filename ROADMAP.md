@@ -66,7 +66,7 @@ main, séances, chat et réactions, reprise, PWA, mise en production automatique
 
 - [x] Contrat commun 1.0 (`docs/CONCEPTION.md`)
 - [x] Recherche produit et design : direction artistique (`docs/DESIGN.md`)
-- [ ] Recherche technique : conversion à la volée, synchro, tus, WebRTC, SQLite, SvelteKit (`docs/RECHERCHE-TECHNIQUE.md`)
+- [x] Recherche technique : conversion à la volée, synchro, tus, WebRTC, SQLite, SvelteKit (`docs/RECHERCHE-TECHNIQUE.md`)
 
 ## Phase 8 — Socle
 
@@ -79,8 +79,8 @@ main, séances, chat et réactions, reprise, PWA, mise en production automatique
 - [x] Médiathèque : téléversement tus, analyse, fiches automatiques (titre, année, image, TMDB), partage, sous-titres, import 0.1
 - [ ] Lecture universelle : direct, son seul converti, vidéo convertie à la volée (HLS), HDR → SDR, préparation, sous-titres intégrés
 - [x] Séances (serveur) : séances et liens, WebSocket, synchro, chat, réactions, reprise et historique, TURN
-- [ ] Salle (client) : lecteur synchronisé, appel vidéo, langue et sous-titres partagés, chat, réactions, compte à rebours
-- [ ] Interface : direction artistique, kit d'interface, accueil « Ce soir », historique, navigation, PWA
+- [x] Salle (client) : lecteur synchronisé, appel vidéo, langue et sous-titres partagés, chat, réactions, compte à rebours
+- [x] Interface : direction artistique, kit d'interface, accueil « Ce soir », historique, navigation, PWA
 
 ## Phase 10 — Livraison
 

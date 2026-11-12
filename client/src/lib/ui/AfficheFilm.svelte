@@ -1,6 +1,6 @@
 <script lang="ts">
   /**
-   * <AfficheFilm film={film} href="/films/…" progression={0.4} sousTitre="Arrêté à 0 h 52 · avec Léa" />
+   * <AfficheFilm film={film} href="/galerie/…" progression={0.4} sousTitre="Arrêté à 0 h 52 · avec Léa" />
    * Carte d'affiche 2:3 (rayon 10, ombre niveau 2) ; au survol : monte de 4 px + « lueur » colorée (`couleur` `#rrggbb`, repli lampe
    * ou teinte du titre). Sans image : dégradé dérivé du titre + titre en Instrument Serif. Toute la carte est un lien (`<a>`) si `href`.
    * Sous l'affiche : titre (2 lignes) et « année · durée ».
@@ -23,6 +23,8 @@
     aAffiche?: boolean;
     visibilite?: string;
     proprietairePrenom?: string;
+    couleur?: string | null;
+    versionImages?: number;
   }
   interface Props {
     film?: FilmLike;
@@ -55,12 +57,13 @@
   const a = $derived(annee !== undefined ? annee : (film?.annee ?? null));
   const d = $derived(dureeSecondes !== undefined ? dureeSecondes : (film?.duree ?? null));
   const e = $derived(etat ?? film?.etat ?? 'pret');
-  const src = $derived(imageSrc !== undefined ? imageSrc : film?.aAffiche ? `/api/films/${film.id}/affiche` : null);
+  const src = $derived(imageSrc !== undefined ? imageSrc : film?.aAffiche ? `/api/films/${film.id}/affiche?v=${film.versionImages ?? 0}` : null);
   const estPartage = $derived(partage || film?.visibilite === 'partage' || film?.visibilite === 'tous');
   let imageEnErreur = $state(false);
   const avecImage = $derived(!!src && !imageEnErreur);
   const teinte = $derived(teinteTitre(t));
-  const lueur = $derived(couleurValide(couleur) ?? (avecImage ? '#f4a85b' : `hsl(${teinte} 60% 55%)`));
+  // Couleur dominante calculée par la médiathèque (`film.couleur`), sauf couleur donnée explicitement.
+  const lueur = $derived(couleurValide(couleur ?? film?.couleur ?? null) ?? (avecImage ? '#f4a85b' : `hsl(${teinte} 60% 55%)`));
   const detail = $derived([a, d ? formaterDuree(d) : ''].filter(Boolean).join(' · '));
   const pctPrep = $derived(preparation === null ? null : Math.round(preparation * 100));
   const nomEtat = $derived(e === 'pret' ? 'prêt' : e === 'analyse' ? 'préparation en cours' : 'illisible');
