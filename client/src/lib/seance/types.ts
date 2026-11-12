@@ -1,20 +1,7 @@
-// Types du protocole WebSocket côté salle. Ils reprennent `@canape/partage` et y ajoutent les messages de la
-// version à jour de l'agent séances (`ignorer_attente`, raisons `reprise` et `attente-ignoree`). À l'intégration, la
-// version de `partage/src/ws.ts` fait foi : ces ajouts deviennent alors des doublons sans effet.
-import type {
-  EtatSeance,
-  MessageChatWs,
-  MessageClient as MessageClientBase,
-  MessageServeur as MessageServeurBase,
-  Participant,
-  RaisonEtat as RaisonEtatBase,
-} from '@canape/partage';
+// Types du protocole WebSocket côté salle : ils viennent de `@canape/partage` (`partage/src/ws.ts` fait foi).
+import type { EtatSeance, MessageChatWs, MessageClient, MessageServeur, Participant, RaisonEtat } from '@canape/partage';
 
-export type { EtatSeance, MessageChatWs, Participant };
-
-export type MessageClient = MessageClientBase | { t: 'ignorer_attente'; cid: string };
-export type RaisonEtat = RaisonEtatBase | 'reprise' | 'attente-ignoree';
-export type MessageServeur = MessageServeurBase;
+export type { EtatSeance, MessageChatWs, MessageClient, MessageServeur, Participant, RaisonEtat };
 
 /** État de la liaison WebSocket. */
 export type EtatLiaison = 'connexion' | 'ouvert' | 'ferme';
