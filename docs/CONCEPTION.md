@@ -91,6 +91,7 @@ e2e/                          intégration (Playwright)
 deploiement/, .github/, scripts/paquet.sh                                             livraison
 docs/DESIGN.md                recherche produit et design
 docs/RECHERCHE-TECHNIQUE.md   recherche technique
+docs/DEPLOIEMENT.md           livraison
 README.md, CHANGELOG.md, ROADMAP.md, docs/CONCEPTION.md                               coordination (moi)
 ```
 
