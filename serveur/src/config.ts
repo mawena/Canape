@@ -158,7 +158,12 @@ export function chargerConfig(env: Record<string, string | undefined> = process.
     cache: path.resolve(v['CANAPE_CACHE'] || './cache'),
     televersements: path.resolve(v['CANAPE_TELEVERSEMENTS'] || './televersements'),
     torrents: booleen(v['CANAPE_TORRENTS'], true),
-    telechargements: path.resolve(v['CANAPE_TELECHARGEMENTS'] || './telechargements'),
+    // Par défaut à côté des envois (VPS : /srv/canape/telechargements), pour qu'une mise à jour sans ce réglage dans
+    // canape.conf n'aille pas écrire dans le dossier de l'application, où le service n'a pas le droit d'écrire.
+    telechargements: path.resolve(
+      v['CANAPE_TELECHARGEMENTS']
+        || path.join(path.dirname(path.resolve(v['CANAPE_TELEVERSEMENTS'] || './televersements')), 'telechargements'),
+    ),
     torrentSimultanes: entier(v['CANAPE_TORRENT_SIMULTANES'], 2, 'CANAPE_TORRENT_SIMULTANES', 1, 50),
     torrentDebitMax: taille(v['CANAPE_TORRENT_DEBIT_MAX'], '0', 'CANAPE_TORRENT_DEBIT_MAX'),
     torrentEnvoiMax: taille(v['CANAPE_TORRENT_ENVOI_MAX'], '1M', 'CANAPE_TORRENT_ENVOI_MAX'),

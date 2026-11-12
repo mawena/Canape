@@ -178,7 +178,7 @@ Réglages dans `/etc/canape/canape.conf` (format `CLÉ=valeur`, `#` pour un comm
 | `CANAPE_CACHE` | `./cache` | segments HLS, sous-titres extraits, index d'images clés |
 | `CANAPE_TELEVERSEMENTS` | `./televersements` | téléversements en cours |
 | `CANAPE_TORRENTS` | `1` | `0` désactive l'ajout par torrent |
-| `CANAPE_TELECHARGEMENTS` | `./telechargements` | données des torrents en cours et `.torrent` gardés |
+| `CANAPE_TELECHARGEMENTS` | à côté de `CANAPE_TELEVERSEMENTS` (VPS : `/srv/canape/telechargements`) | données des torrents en cours et `.torrent` gardés |
 | `CANAPE_TORRENT_SIMULTANES` | `2` | téléchargements actifs en même temps (les autres attendent) |
 | `CANAPE_TORRENT_DEBIT_MAX` | `0` | octets/s reçus au plus (`0` = sans limite ; `20M` accepté) |
 | `CANAPE_TORRENT_ENVOI_MAX` | `1M` | octets/s envoyés au plus |

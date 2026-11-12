@@ -78,3 +78,8 @@ test('réglages des torrents : défauts et analyse', () => {
   assert.throws(() => chargerConfig({ CANAPE_TORRENT_PORT: '70000' }), /CANAPE_TORRENT_PORT/);
   assert.throws(() => chargerConfig({ CANAPE_TORRENT_PARTAGE: 'beaucoup' }), /CANAPE_TORRENT_PARTAGE/);
 });
+
+test('dossier des téléchargements : à côté des envois quand CANAPE_TELECHARGEMENTS manque (mise à jour sans le réglage)', () => {
+  const c = chargerConfig({ CANAPE_TELEVERSEMENTS: '/srv/canape/televersements' }, null);
+  assert.equal(c.telechargements, '/srv/canape/telechargements');
+});

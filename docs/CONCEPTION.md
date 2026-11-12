@@ -350,7 +350,7 @@ Ajouter un film par un lien magnet ou un fichier `.torrent`, et suivre son tél�
 | Variable | Défaut | Rôle |
 |---|---|---|
 | `CANAPE_TORRENTS` | `1` | `0` désactive les torrents (`peutAjouter=false`, routes d'ajout en 403) |
-| `CANAPE_TELECHARGEMENTS` | `./telechargements` | données en cours (`<id>/…`) et `.torrent` gardés (`.torrents/`) ; VPS : `/srv/canape/telechargements` |
+| `CANAPE_TELECHARGEMENTS` | à côté de `CANAPE_TELEVERSEMENTS` (`<parent>/telechargements`) | données en cours (`<id>/…`) et `.torrent` gardés (`.torrents/`) ; VPS : `/srv/canape/telechargements` |
 | `CANAPE_TORRENT_SIMULTANES` | `2` | téléchargements actifs en même temps |
 | `CANAPE_TORRENT_DEBIT_MAX` | `0` | octets/s reçus au plus (`0` = sans limite ; `20M` accepté) |
 | `CANAPE_TORRENT_ENVOI_MAX` | `1M` | octets/s envoyés au plus |
