@@ -65,7 +65,7 @@ main, séances, chat et réactions, reprise, PWA, mise en production automatique
 ## Phase 7 — Conception et recherches
 
 - [x] Contrat commun 1.0 (`docs/CONCEPTION.md`)
-- [ ] Recherche produit et design : direction artistique (`docs/DESIGN.md`)
+- [x] Recherche produit et design : direction artistique (`docs/DESIGN.md`)
 - [ ] Recherche technique : conversion à la volée, synchro, tus, WebRTC, SQLite, SvelteKit (`docs/RECHERCHE-TECHNIQUE.md`)
 
 ## Phase 8 — Socle
