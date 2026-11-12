@@ -17,7 +17,7 @@ export interface AppTest {
   app: FastifyInstance;
   config: Config;
   db: Base;
-  /** Dossier temporaire racine (donnees, films, cache, televersements, client). */
+  /** Dossier temporaire racine (donnees, films, cache, televersements, telechargements, client). */
   dossier: string;
   /** Dossier d'une application construite factice (index.html) si `avecClient`. */
   clientBuild: string | null;
@@ -43,6 +43,7 @@ export async function creerAppTest(options: OptionsAppTest = {}): Promise<AppTes
     CANAPE_FILMS: path.join(dossier, 'films'),
     CANAPE_CACHE: path.join(dossier, 'cache'),
     CANAPE_TELEVERSEMENTS: path.join(dossier, 'televersements'),
+    CANAPE_TELECHARGEMENTS: path.join(dossier, 'telechargements'),
     CANAPE_URL_PUBLIQUE: ORIGINE_TEST,
     ...options.env,
   };

@@ -2,6 +2,7 @@ export * from './comptes.ts';
 export * from './films.ts';
 export * from './lecture.ts';
 export * from './seances.ts';
+export * from './torrents.ts';
 export * from './ws.ts';
 
 /** Format des erreurs de l'API : `{ erreur, message }`. */

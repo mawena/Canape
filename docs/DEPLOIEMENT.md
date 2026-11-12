@@ -11,7 +11,7 @@ Guide pour le serveur (VPS Ubuntu, nginx déjà en place pour d'autres sites). P
 | `/opt/canape/node` | copie de Node.js (celle indiquée par `--node`, jamais installée par le script) |
 | `/opt/canape/deploiement/` | scripts, `root:root`, non modifiables par l'utilisateur de déploiement |
 | `/etc/canape/canape.conf` | configuration (`CLÉ=valeur`) |
-| `/srv/canape/{donnees,films,cache,televersements}` | données ; sauvegardes de la base dans `donnees/sauvegardes/` (5 gardées) |
+| `/srv/canape/{donnees,films,cache,televersements,telechargements}` | données ; sauvegardes de la base dans `donnees/sauvegardes/` (5 gardées) |
 | `/etc/systemd/system/canape.service` | service (`CPUWeight=50`, `IOWeight=50` : les autres sites passent avant pendant les conversions) |
 | `/usr/local/bin/canape` | ligne de commande (`canape admin inviter`, `canape films importer`…) |
 
@@ -92,6 +92,19 @@ Vérifie le SHA-256, extrait dans `versions/`, arrête le service, sauvegarde la
 démarre, puis vérifie `/api/etat` (version attendue) pendant 30 s. En cas d'échec : arrêt, base restaurée à l'identique, ancien lien,
 redémarrage, code de sortie non nul. Verrou contre deux mises à jour simultanées. Ne touche jamais nginx.
 Codes : 0 réussi, 1 échec (retour arrière fait), 2 usage, 3 SHA-256 faux, 4 paquet invalide, 70 retour arrière en échec, 75 déjà en cours.
+
+## Torrents (1.1)
+
+Le moteur (WebTorrent) tourne dans un processus enfant du service, en `nice` ; ses données sont dans
+`/srv/canape/telechargements` (créé par l'installation et par `mettre-a-jour`, `CANAPE_TELECHARGEMENTS` ajouté à
+`canape.conf`). L'unité systemd laisse passer le TCP et l'UDP et n'autorise l'écriture que sous `/srv/canape`.
+
+- **Pare-feu** : sans port ouvert, Canapé télécharge quand même (connexions sortantes) mais trouve moins de pairs. Fixer
+  `CANAPE_TORRENT_PORT=51413`, puis `sudo ufw allow 51413` (TCP et UDP), puis `sudo systemctl restart canape`.
+- **Hébergeur** : beaucoup d'hébergeurs interdisent ou surveillent le téléchargement de torrents (courriers d'abus). Lire les
+  conditions avant d'activer la fonction ; `CANAPE_TORRENTS=0` la coupe. Ne télécharger que des contenus dont on a le droit.
+- **Ménagement des autres sites** : `CANAPE_TORRENT_SIMULTANES`, `CANAPE_TORRENT_DEBIT_MAX` et `CANAPE_TORRENT_ENVOI_MAX`
+  plafonnent le moteur ; il faut de la place pour le film en cours (le quota du compte compte les téléchargements).
 
 ## Retour arrière manuel
 

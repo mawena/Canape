@@ -31,11 +31,11 @@ function portLibre(): Promise<number> {
 }
 
 /** Démarre `bin/canape serve` sur un port libre, avec des dossiers temporaires neufs. */
-export async function demarrerServeur(): Promise<ServeurCanape> {
+export async function demarrerServeur(envSupplementaire: Record<string, string> = {}): Promise<ServeurCanape> {
   const port = await portLibre();
   const url = `http://127.0.0.1:${port}`;
   const dossier = mkdtempSync(path.join(process.env['CANAPE_E2E_RACINE'] ?? os.tmpdir(), 'srv-'));
-  const dirs = ['donnees', 'films', 'cache', 'televersements'];
+  const dirs = ['donnees', 'films', 'cache', 'televersements', 'telechargements'];
   for (const d of dirs) mkdirSync(path.join(dossier, d));
   const env = {
     ...process.env,
@@ -46,10 +46,12 @@ export async function demarrerServeur(): Promise<ServeurCanape> {
     CANAPE_FILMS: path.join(dossier, 'films'),
     CANAPE_CACHE: path.join(dossier, 'cache'),
     CANAPE_TELEVERSEMENTS: path.join(dossier, 'televersements'),
+    CANAPE_TELECHARGEMENTS: path.join(dossier, 'telechargements'),
     CANAPE_TRANSCODAGE_FILS: '1',
     CANAPE_TMDB_CLE: '',
     // Pas de STUN public : les deux pages sont sur la même machine.
     CANAPE_ICE: '[]',
+    ...envSupplementaire,
   };
   delete env['CANAPE_CONFIG'];
 
