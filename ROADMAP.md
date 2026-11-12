@@ -70,8 +70,8 @@ main, séances, chat et réactions, reprise, PWA, mise en production automatique
 
 ## Phase 8 — Socle
 
-- [ ] Espaces de travail npm, TypeScript exécuté par Node 26, Fastify, SQLite et migrations, SvelteKit, types partagés
-- [ ] Kit d'interface de base, client d'API, application de test, retrait du code 0.1
+- [x] Espaces de travail npm, TypeScript exécuté par Node 26, Fastify, SQLite et migrations, SvelteKit, types partagés
+- [x] Kit d'interface de base, client d'API, application de test, retrait du code 0.1
 
 ## Phase 9 — Modules (en parallèle)
 
