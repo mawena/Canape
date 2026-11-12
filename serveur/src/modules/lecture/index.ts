@@ -98,6 +98,11 @@ const modulelecture: FastifyPluginAsync = async (app) => {
     return c.signal;
   };
 
+  /** Les adresses `/media/…` sans session répondent 404 (comme tout refus d'accès : aucun indice d'existence). */
+  const sessionMedia = async (req: FastifyRequest, reply: FastifyReply) => {
+    if (!app.utilisateurOptionnel(req, reply)) throw introuvable();
+  };
+
   // --- Plan de lecture ---------------------------------------------------------------------------------------------
   app.get<{ Params: { id: string }; Querystring: { audio?: string } }>(
     '/api/films/:id/lecture', { preHandler: app.exigerConnexion }, async (req) => {
@@ -158,12 +163,12 @@ const modulelecture: FastifyPluginAsync = async (app) => {
   );
 
   // --- Fichiers directs --------------------------------------------------------------------------------------------
-  app.get<{ Params: { id: string } }>('/media/:id/original', { preHandler: app.exigerConnexion }, async (req, reply) => {
+  app.get<{ Params: { id: string } }>('/media/:id/original', { preHandler: sessionMedia }, async (req, reply) => {
     const film = filmVisible(app, req, req.params.id);
     return servirFichier(req, reply, film.cheminAbsolu, { cache: 'private, max-age=3600' });
   });
 
-  app.get<{ Params: { id: string; fichier: string } }>('/media/:id/prepare/:fichier', { preHandler: app.exigerConnexion }, async (req, reply) => {
+  app.get<{ Params: { id: string; fichier: string } }>('/media/:id/prepare/:fichier', { preHandler: sessionMedia }, async (req, reply) => {
     filmVisible(app, req, req.params.id);
     const m = /^(-?\d+|sans)\.mp4$/.exec(req.params.fichier);
     if (!m) throw introuvable();
@@ -174,19 +179,19 @@ const modulelecture: FastifyPluginAsync = async (app) => {
   });
 
   // --- HLS à la demande --------------------------------------------------------------------------------------------
-  app.get<{ Params: { id: string; audio: string } }>('/media/:id/hls/:audio/index.m3u8', { preHandler: app.exigerConnexion }, async (req, reply) => {
+  app.get<{ Params: { id: string; audio: string } }>('/media/:id/hls/:audio/index.m3u8', { preHandler: sessionMedia }, async (req, reply) => {
     const c = cibleHls(req, req.params.id, req.params.audio);
     const texte = await conversions.liste(c);
     return reply.header('Content-Type', 'application/vnd.apple.mpegurl').header('Cache-Control', 'private, no-cache').send(texte);
   });
 
-  app.get<{ Params: { id: string; audio: string } }>('/media/:id/hls/:audio/init.mp4', { preHandler: app.exigerConnexion }, async (req, reply) => {
+  app.get<{ Params: { id: string; audio: string } }>('/media/:id/hls/:audio/init.mp4', { preHandler: sessionMedia }, async (req, reply) => {
     const c = cibleHls(req, req.params.id, req.params.audio);
     const chemin = await conversions.init(c);
     return servirFichier(req, reply, chemin, { type: 'video/mp4', cache: 'private, max-age=3600' });
   });
 
-  app.get<{ Params: { id: string; audio: string; segment: string } }>('/media/:id/hls/:audio/:segment', { preHandler: app.exigerConnexion }, async (req, reply) => {
+  app.get<{ Params: { id: string; audio: string; segment: string } }>('/media/:id/hls/:audio/:segment', { preHandler: sessionMedia }, async (req, reply) => {
     const m = /^(\d+)\.m4s$/.exec(req.params.segment);
     if (!m) throw introuvable();
     const c = cibleHls(req, req.params.id, req.params.audio);
@@ -195,7 +200,7 @@ const modulelecture: FastifyPluginAsync = async (app) => {
   });
 
   // --- Sous-titres -------------------------------------------------------------------------------------------------
-  app.get<{ Params: { id: string; fichier: string } }>('/media/:id/sous-titres/:fichier', { preHandler: app.exigerConnexion }, async (req, reply) => {
+  app.get<{ Params: { id: string; fichier: string } }>('/media/:id/sous-titres/:fichier', { preHandler: sessionMedia }, async (req, reply) => {
     const film = filmVisible(app, req, req.params.id);
     const m = /^([pe])(\d+)\.vtt$/.exec(req.params.fichier);
     if (!m) throw introuvable();

@@ -65,7 +65,7 @@ describe('lecture : de bout en bout', () => {
     await Promise.all([1, 2, 3].map((n) => corps(p.url.replace('index.m3u8', `${n}.m4s`))));
     assert.equal(t.app.lecture.conversions.lister().length, 1);
     await attendreQue(() => t.app.lecture.conversions.actives() === 0, 20_000);
-    assert.deepEqual(pgrep(`ffmpeg.*${mpeg4}`), []);
+    assert.deepEqual(pgrep(`ffmpeg.*${t.dossier}`), []);
   });
 
   test('son seul converti : copie vidéo, liste d\'après les images clés, segments aux durées annoncées', async (tc) => {
@@ -194,6 +194,6 @@ describe('lecture : préparation automatique et arrêt du serveur', () => {
     await r1.catch(() => undefined);
     await t.fermer();
     await new Promise((r) => setTimeout(r, 300));
-    assert.deepEqual(pgrep('ffmpeg.*canape-test-'), [], 'aucun ffmpeg orphelin');
+    assert.deepEqual(pgrep(`ffmpeg.*${t.dossier}`), [], 'aucun ffmpeg orphelin');
   });
 });

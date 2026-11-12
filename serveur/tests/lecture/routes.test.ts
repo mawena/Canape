@@ -44,6 +44,7 @@ describe('lecture : routes (sans ffmpeg)', () => {
 
   test('sans session : 401 ; sans droit : 404 ; film inconnu : 404', async () => {
     assert.equal((await get(t.app, `/api/films/${hevc}/lecture`)).statusCode, 401);
+    assert.equal((await get(t.app, `/media/${hevc}/original`)).statusCode, 404);
     assert.equal((await get(t.app, `/api/films/${hevc}/lecture`, autre)).statusCode, 404);
     assert.equal((await get(t.app, '/api/films/inconnu/lecture', proprio)).statusCode, 404);
     assert.equal((await get(t.app, `/media/${hevc}/original`, autre)).statusCode, 404);
