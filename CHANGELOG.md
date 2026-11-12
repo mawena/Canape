@@ -2,6 +2,45 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) ; versions selon [SemVer](https://semver.org/lang/fr/).
 
+## [1.4.0] — 2026-11-12
+
+Les torrents passent par **Transmission** : les trackers privés (qui refusaient WebTorrent) marchent, et les torrents
+privés restent partagés comme ils le demandent.
+
+### Ajouté
+
+- **Moteur Transmission** : Canapé pilote `transmission-daemon`, installé sur le même serveur, par son RPC local
+  (identifiant et mot de passe, jamais exposé) pour tous les torrents, publics comme privés. WebTorrent ne sert plus
+  qu'en secours quand Transmission n'est pas installé (`CANAPE_TORRENT_MOTEUR` : `auto`, `transmission`,
+  `webtorrent`). Les téléchargements WebTorrent en cours passent à Transmission dès qu'il répond, sans tout reprendre
+  de zéro.
+- **Le film ne prend pas de place en plus** : à la fin, il entre dans la galerie par un lien physique vers le fichier
+  téléchargé (copie seulement en dernier recours).
+- **Torrents privés partagés** jusqu'à ce que tu les retires (`CANAPE_TORRENT_PARTAGE_PRIVES`, `toujours` par défaut,
+  ou un ratio) ; les torrents publics s'arrêtent dès que le film est dans la galerie (`CANAPE_TORRENT_PARTAGE`).
+- **Panneau « Téléchargements »** : pastille « Privé » avec une aide ; partie « Partagés » avec « En partage · ratio
+  1,24 · 480 Ko/s envoyés » et le bouton « Arrêter de partager » (le film reste dans ta galerie) ; réponse du tracker
+  en clair (« Le tracker a refusé : … ») ; « En attente des pairs… » au lieu d'une attente muette.
+- **Installation de Transmission en une commande** sur un serveur déjà en place :
+  `deploiement/installer-transmission.sh` (`--essai` pour voir ce qu'il ferait). RPC sur 127.0.0.1 seulement, mot de
+  passe généré dans `canape.conf`, Transmission dans le groupe `canape`, Canapé démarre après lui ; ni nginx ni le
+  pare-feu ne sont touchés (le port des pairs à ouvrir est affiché). Il refuse de modifier un Transmission réglé par
+  quelqu'un d'autre sans `--remplacer`. Aussi appelé par `installer-serveur.sh`.
+
+### Sécurité
+
+- Avant d'être confié à Transmission, un `.torrent` perd ses sources web (`url-list`, `httpseeds`) et ses trackers
+  qui visent le serveur lui-même ou un réseau privé (bouclage, adresses privées, lien local, noms internes) ; même
+  filtre pour les liens magnet. Personne ne peut ainsi faire appeler les services internes du serveur.
+- La clé personnelle d'un tracker privé n'apparaît jamais dans les journaux ni dans les messages affichés.
+
+### Essais
+
+- 391 tests serveur et client, dont des essais avec un faux Transmission et avec un **vrai Transmission 4.0.5 en
+  local** (sans Internet ni vrai torrent) : ajout, choix des fichiers, pause, reprise, fin, lien physique, partage d'un
+  privé jusqu'au retrait, sources web et trackers internes retirés ; essais de l'installateur (27 vérifications) ;
+  essais Playwright du panneau.
+
 ## [1.3.0] — 2026-11-12
 
 Inscription libre : n'importe qui peut venir sur le site, créer son compte et ajouter ses films, sans invitation.
