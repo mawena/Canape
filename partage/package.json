@@ -1,1 +1,1 @@
-{ "name": "@canape/partage", "version": "0.1.0", "private": true, "type": "module", "exports": { ".": "./src/index.ts" } }
+{ "name": "@canape/partage", "version": "1.0.0", "private": true, "type": "module", "exports": { ".": "./src/index.ts" } }
