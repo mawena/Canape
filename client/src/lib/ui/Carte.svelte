@@ -1,10 +1,15 @@
 <script lang="ts">
+  /**
+   * <Carte titre="…" doree>contenu{#snippet pied()}boutons{/snippet}</Carte>
+   * Surface `--s1`, contour `--bord`, rayon 22. `titre` : Instrument Serif. `doree` : contour lampe (carte mise
+   * en avant). `pied` : rangée d'actions alignée à droite. Reste : attributs d'une `<section>`.
+   */
   import type { Snippet } from 'svelte';
   import type { HTMLAttributes } from 'svelte/elements';
 
   interface Props extends Omit<HTMLAttributes<HTMLElement>, 'children'> {
     titre?: string;
-    /** Bordure dorée (carte mise en avant). */
+    /** Contour lampe (carte mise en avant). */
     doree?: boolean;
     children?: Snippet;
     pied?: Snippet;
@@ -20,10 +25,10 @@
 
 <style>
   .carte {
-    background: rgba(23, 16, 15, 0.88); border: 1px solid var(--bordure); border-radius: var(--rayon-l);
-    padding: var(--espace-5); display: grid; gap: var(--espace-4); box-shadow: var(--ombre);
+    background: var(--s1); border: 1px solid var(--bord); border-radius: var(--r-l);
+    padding: var(--e-6); display: grid; gap: var(--e-4); min-width: 0;
   }
-  .doree { border-color: rgba(233, 184, 114, 0.35); }
-  h2 { font-size: 1.3rem; }
-  footer { display: flex; gap: var(--espace-3); justify-content: flex-end; flex-wrap: wrap; }
+  .doree { border-color: var(--lampe); }
+  h2 { font: 400 1.75rem / 1.15 var(--titre); }
+  footer { display: flex; gap: var(--e-3); justify-content: flex-end; flex-wrap: wrap; }
 </style>

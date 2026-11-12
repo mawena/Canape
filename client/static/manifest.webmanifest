@@ -1,0 +1,25 @@
+{
+  "id": "/",
+  "name": "Canapé",
+  "short_name": "Canapé",
+  "description": "Regarde un film ensemble, chacun chez soi.",
+  "lang": "fr",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#14111a",
+  "theme_color": "#14111a",
+  "categories": ["entertainment"],
+  "icons": [
+    { "src": "/icones/icone-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icones/icone-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icones/icone-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icones/icone.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "shortcuts": [
+    { "name": "Ce soir", "url": "/", "icons": [{ "src": "/icones/icone-192.png", "sizes": "192x192" }] },
+    { "name": "Films", "url": "/galerie", "icons": [{ "src": "/icones/icone-192.png", "sizes": "192x192" }] },
+    { "name": "Séances", "url": "/seances", "icons": [{ "src": "/icones/icone-192.png", "sizes": "192x192" }] }
+  ]
+}

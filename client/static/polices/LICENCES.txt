@@ -1,0 +1,7 @@
+Polices hébergées par Canapé (SIL Open Font License 1.1, https://openfontlicense.org) :
+- Instrument Serif, © The Instrument Serif Project Authors (https://github.com/Instrument/instrument-serif)
+- Hanken Grotesk, © The Hanken Grotesk Project Authors (https://github.com/marcologous/hanken-grotesk)
+Fichiers issus de Fontsource (@fontsource/instrument-serif, @fontsource-variable/hanken-grotesk 5.2.8).
+
+Icônes : Lucide (@lucide/svelte), licence ISC, https://lucide.dev/license
+Certaines icônes viennent de Feather (MIT, © Cole Bemis). Les deux mentions sont conservées.
