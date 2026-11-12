@@ -51,5 +51,5 @@ Canapé est une application web déployée sur un serveur à soi, derrière ngin
 ## Phase 6 — Release
 
 - [x] Version 0.1.0, CHANGELOG, tag, push de `main`, `develop` et des tags
-- [ ] Release GitHub
+- [x] Release GitHub (v0.1.0)
 - [x] « About » GitHub : description sans dépôt APT, sans site GitHub Pages
