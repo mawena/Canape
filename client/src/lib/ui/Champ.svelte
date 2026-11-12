@@ -45,11 +45,11 @@
 
 <style>
   .champ { display: grid; gap: 6px; min-width: 0; }
-  label { font-size: 14px; font-weight: 500; color: var(--doux); }
+  label { font-size: 14px; font-weight: 600; color: var(--doux); }
   .entree { position: relative; display: flex; }
   input {
     width: 100%; min-height: 48px; padding: 0 16px; background: var(--s2); color: var(--texte);
-    border: 1px solid var(--bord-champ); border-radius: var(--r-m); font-size: 16px;
+    border: 1px solid var(--bord-champ); border-radius: var(--r-m); font-size: 16px; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25);
     transition: border-color var(--d-1) var(--ease);
   }
   input::placeholder { color: var(--discret); }

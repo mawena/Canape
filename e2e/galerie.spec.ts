@@ -6,10 +6,11 @@ test.describe('Galerie', () => {
     await page.goto('/galerie');
     await expect(page.getByRole('heading', { name: 'Films' })).toBeVisible();
 
-    // Le bouton « Ajouter un film » ouvre le sélecteur de fichiers.
+    // « Ajouter un film » propose l'ordinateur ou un torrent (torrents permis) ; « Depuis mon ordinateur » ouvre le sélecteur.
+    await page.getByTestId('ajouter-film').click();
     const [selecteur] = await Promise.all([
       page.waitForEvent('filechooser'),
-      page.getByRole('button', { name: 'Ajouter un film' }).first().click(),
+      page.getByTestId('ajouter-ordinateur').click(),
     ]);
     await selecteur.setFiles(cheminMedia(FILM_WEBM));
 

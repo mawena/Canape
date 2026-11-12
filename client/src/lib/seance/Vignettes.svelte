@@ -82,7 +82,7 @@
   .bas-gauche { bottom: 130px; left: 16px; flex-direction: column-reverse; }
   .bas-droite { bottom: 130px; right: 16px; flex-direction: column-reverse; }
   .vignettes.rangee { position: static; flex-direction: row; justify-content: center; gap: 10px; padding: 8px 12px; overflow-x: auto; cursor: auto; }
-  .reviennent { position: absolute; z-index: 4; top: 70px; right: 16px; border: 0; border-radius: 999px; padding: 6px 14px; background: rgba(20, 17, 26, 0.75); color: #fff; }
+  .reviennent { position: absolute; z-index: 4; top: 70px; right: 16px; border: 0; border-radius: 999px; padding: 6px 14px; background: rgba(13, 12, 18, 0.75); color: #fff; }
   @media (max-width: 1100px) { .vignettes { --largeur-vignette: 144px; } }
   @media (max-width: 640px) and (orientation: portrait) { .reviennent { position: static; margin: 6px auto; } }
 </style>

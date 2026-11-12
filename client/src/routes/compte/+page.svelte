@@ -1,4 +1,5 @@
 <script lang="ts">
+  import SelecteurTheme from '$lib/interface/SelecteurTheme.svelte';
   import { COULEURS_AVATAR, type Compte } from '@canape/partage';
   import { api, ErreurApi } from '$lib/api/client.ts';
   import { aideMotDePasse, formaterOctets, pourcentage } from '$lib/comptes/format.ts';
@@ -86,6 +87,11 @@
       </form>
     </Carte>
 
+    <Carte titre="Apparence">
+      <p class="doux">Clair par défaut. Le thème sombre est plus reposant le soir ; « Comme mon appareil » suit ses réglages.</p>
+      <SelecteurTheme />
+    </Carte>
+
     <Carte titre="Mon espace">
       {#if compte.quotaOctets === null}
         <p>{formaterOctets(compte.octetsUtilises)} utilisés, sans limite.</p>
@@ -101,15 +107,18 @@
 </main>
 
 <style>
-  main { max-width: 560px; margin: 0 auto; padding: var(--espace-5) var(--espace-4); display: grid; gap: var(--espace-4); }
-  form { display: grid; gap: var(--espace-3); }
-  .ident { display: flex; align-items: center; gap: var(--espace-3); }
-  .ident p { margin: 0; }
-  .doux { color: var(--doux); }
+  main { max-width: 640px; margin: 0 auto; display: grid; gap: var(--e-5); }
+  h1 { font: 400 clamp(2.25rem, 5vw, 3rem) / 1.02 var(--titre); letter-spacing: -0.01em; }
+  form { display: grid; gap: var(--e-4); }
+  .ident { display: flex; align-items: center; gap: var(--e-4); padding: var(--e-4); border-radius: var(--r-m); background: var(--s2); }
+  .ident p { margin: 0; font-weight: 650; }
+  .doux { color: var(--doux); font-weight: 500; }
   .retour { margin: 0; }
-  fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: var(--espace-2); }
-  legend { color: var(--doux); font-size: 0.85rem; padding: 0; margin-bottom: var(--espace-2); }
-  .couleurs { display: flex; flex-wrap: wrap; gap: var(--espace-2); }
-  .couleur { background: none; border: 2px solid transparent; border-radius: 50%; padding: 2px; cursor: pointer; }
-  .couleur.choisie { border-color: var(--creme, #fff); }
+  .retour a { display: inline-flex; align-items: center; min-height: 44px; color: var(--doux); text-decoration: none; font-weight: 600; }
+  .retour a:hover { color: var(--texte); }
+  fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: var(--e-2); }
+  legend { color: var(--doux); font-size: 14px; font-weight: 600; padding: 0; margin-bottom: var(--e-2); }
+  .couleurs { display: flex; flex-wrap: wrap; gap: var(--e-2); }
+  .couleur { background: none; border: 2px solid transparent; border-radius: 50%; padding: 3px; cursor: pointer; min-width: 44px; min-height: 44px; display: grid; place-items: center; }
+  .couleur.choisie { border-color: var(--texte); }
 </style>

@@ -151,7 +151,7 @@
   .qui { display: grid; gap: 2px; }
   .doux { color: var(--doux); font-size: 0.9rem; }
   .actions { display: flex; flex-wrap: wrap; gap: var(--espace-3); align-items: center; }
-  .actions label { display: flex; gap: var(--espace-2); align-items: center; font-size: 0.9rem; }
+  .actions label { display: flex; gap: var(--e-2); align-items: center; font-size: 0.9rem; min-height: 44px; }
   form { display: grid; gap: var(--espace-3); }
   .lien { word-break: break-all; display: block; }
 </style>

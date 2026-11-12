@@ -118,7 +118,14 @@ class MagasinTelechargements {
 
   /** Annule un téléchargement en cours, ou retire de la liste une ligne finie. */
   async retirer(id: string): Promise<void> {
-    try { await appel.supprimerTelechargement(id); }
+    const etait = this.liste.find((t) => t.id === id);
+    try {
+      await appel.supprimerTelechargement(id);
+      // Le serveur garde une ligne « annulé » après l'annulation d'un téléchargement en cours : un second appel la retire.
+      if (etait && !['termine', 'erreur', 'annule'].includes(etait.etat)) {
+        await appel.supprimerTelechargement(id).catch((e: unknown) => { if (!(e instanceof ErreurApi && (e.statut === 404 || e.statut === 409))) throw e; });
+      }
+    }
     catch (e) { if (!(e instanceof ErreurApi && e.statut === 404)) throw e instanceof ErreurApi ? new Error(e.message) : e; }
     this.liste = this.liste.filter((t) => t.id !== id);
     this.inactif.delete(id);
