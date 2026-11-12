@@ -16,7 +16,7 @@
   let volume = $state(0.8);
   let modale = $state(false);
   let dangereuse = $state(false);
-  const COULEURS = ['#ffb347', '#ff8fb4', '#8fc7f0', '#b4a2f0', '#9ad9a0', '#f0d27a', '#0d0c12', '#857a95', '#f7f3ee', '#6fd9b1', '#ffd166', '#ff7f70'];
+  const COULEURS = ['#ffb347', '#ff8fb4', '#8fc7f0', '#b4a2f0', '#9ad9a0', '#f0d27a', '#0d0c12', '#7d7790', '#f7f3ee', '#5fdcae', '#ffd166', '#ff7b6e'];
   const NOMS = ['fond', 'lampe', 'rose', 'bleu', 'violet', 'vert', 'jaune'];
   const FILMS = [
     { id: 'a', titre: 'Les Heures bleues', annee: 2023, duree: 6720, etat: 'pret' as const },

@@ -76,6 +76,7 @@
     return `Arrêté à ${formaterDuree(p.position)}${avecQui(p)}`;
   }
 
+  let pasVisibles = $state(false);
   let copie = $state(false);
   async function copierLien(): Promise<void> {
     if (!ceSoir) return;
@@ -116,10 +117,12 @@
       {#snippet actions()}<Bouton icone="actualiser" onclick={charger}>Réessayer</Bouton>{/snippet}
     </EtatVide>
   {:else if compteNeuf}
-    <PremiersPas films={films.length} seances={toutesSeances.length} estAdmin={session.estAdmin} />
-    <EtatVide icone="clap" titre="Ta galerie est vide." texte="Dépose ton premier film : dès qu’il est arrivé, il est prêt à regarder.">
-      {#snippet actions()}<Bouton taille="l" icone="televerser" href={liens.ajouterFilm}>Ajouter un film</Bouton>{/snippet}
-    </EtatVide>
+    <PremiersPas films={films.length} seances={toutesSeances.length} estAdmin={session.estAdmin} bind:visible={pasVisibles} />
+    {#if !pasVisibles}
+      <EtatVide icone="clap" titre="Ta galerie est vide." texte="Dépose ton premier film : dès qu’il est arrivé, il est prêt à regarder.">
+        {#snippet actions()}<Bouton taille="l" icone="televerser" href={liens.ajouterFilm}>Ajouter un film</Bouton>{/snippet}
+      </EtatVide>
+    {/if}
   {:else}
     <PremiersPas films={films.length} seances={toutesSeances.length} estAdmin={session.estAdmin} />
     <!-- Carte « Ce soir » -->
@@ -236,7 +239,7 @@
   .contenu { display: grid; gap: var(--e-3); min-width: 0; justify-items: start; }
   .puces { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
   .compte { font-weight: 600; color: var(--lampe); font-size: 16px; }
-  h2 { font: 400 clamp(2.25rem, 5vw, 3.375rem) / 1 var(--titre); letter-spacing: -0.01em; text-wrap: balance; }
+  .hero h2 { font: 400 clamp(2.25rem, 5vw, 3.375rem) / 1 var(--titre); letter-spacing: -0.01em; text-wrap: balance; }
   .resume { color: var(--doux); max-width: 60ch; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .sans-seance .resume { display: block; }
   .qui { display: flex; align-items: center; gap: 14px; color: var(--doux); margin: 6px 0 4px; }

@@ -108,7 +108,7 @@
     <h1>Nouvelle séance</h1>
     <form onsubmit={creer}>
       <section>
-        <h2>1. Le film</h2>
+        <h2><span class="num" aria-hidden="true">1</span>Le film</h2>
         <Champ libelle="Chercher un film" bind:value={recherche} type="search" />
         {#if !films.length}
           <p class="vide">Aucun film prêt pour l’instant.</p>
@@ -127,7 +127,7 @@
       </section>
 
       <section>
-        <h2>2. Quand</h2>
+        <h2><span class="num" aria-hidden="true">2</span>Quand</h2>
         <label class="case"><input type="radio" checked={maintenant} onchange={() => (maintenant = true)} /> Maintenant</label>
         <label class="case"><input type="radio" checked={!maintenant} onchange={() => (maintenant = false)} /> Plus tard</label>
         {#if !maintenant}<Champ libelle="Date et heure" type="datetime-local" bind:value={quand} />{/if}
@@ -135,7 +135,7 @@
       </section>
 
       <section>
-        <h2>3. Qui</h2>
+        <h2><span class="num" aria-hidden="true">3</span>Qui vient</h2>
         {#if comptes.length}
           <ul class="comptes">
             {#each comptes as c (c.id)}
@@ -161,20 +161,28 @@
 </main>
 
 <style>
-  main { max-width: 640px; margin: 0 auto; padding: 24px 16px; display: grid; gap: 16px; }
-  h1 { font: 400 2.2rem 'Instrument Serif', var(--titre, Georgia, serif); margin: 0; }
-  h2 { font: 400 1.3rem 'Instrument Serif', var(--titre, Georgia, serif); margin: 0; }
-  form, section { display: grid; gap: 12px; }
-  .films, .comptes { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; max-height: 280px; overflow-y: auto; }
-  .film { display: block; padding: 10px 14px; border-radius: 12px; background: var(--s2, #262031); cursor: pointer; border: 1px solid transparent; }
-  .film.choisi { border-color: var(--lampe, #ffb347); background: var(--lampe-fond, rgba(255, 179, 71, 0.14)); }
+  main { max-width: 680px; margin: 0 auto; display: grid; gap: var(--e-5); }
+  h1 { font: 400 clamp(2.25rem, 5vw, 3rem) / 1.02 var(--titre); letter-spacing: -0.01em; margin: 0; }
+  h2 { font: 700 1.125rem / 1.3 var(--texte-police); letter-spacing: -0.01em; margin: 0; display: flex; align-items: center; gap: var(--e-3); }
+  .num { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--lampe-fond); color: var(--lampe); font-size: 14px; font-weight: 700; }
+  form { display: grid; gap: var(--e-4); }
+  section { display: grid; gap: var(--e-3); padding: var(--e-5) var(--e-6); background: var(--s1); border: 1px solid var(--bord); border-radius: var(--r-l); box-shadow: inset 0 1px 0 var(--reflet); }
+  .films, .comptes { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; max-height: 300px; overflow-y: auto; }
+  .film { display: flex; align-items: center; gap: var(--e-3); min-height: 48px; padding: 0 var(--e-4); border-radius: var(--r-m); background: var(--s2); cursor: pointer; border: 1px solid transparent; font-weight: 600; }
+  .film::before { content: ''; flex: none; width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--bord-champ); }
+  .film.choisi { border-color: var(--lampe); background: var(--lampe-fond); }
+  .film.choisi::before { border-color: var(--lampe); background: radial-gradient(circle, var(--lampe) 0 4px, transparent 5px); }
   .film input { position: absolute; opacity: 0; }
-  .film:focus-within { outline: 2px solid var(--lampe-vive, #ffbf7d); }
-  .case { display: flex; gap: 10px; align-items: center; }
-  .vide { color: var(--doux, #b9afc4); margin: 0; }
-  .erreur { color: var(--mal, #ff7f70); margin: 0; }
+  .film:focus-within { outline: 3px solid var(--lampe-vive); outline-offset: 2px; }
+  @media (hover: hover) { .film:not(.choisi):hover { background: var(--s3); } }
+  .case { display: flex; gap: 10px; align-items: center; min-height: 44px; cursor: pointer; }
+  .case input { width: 20px; height: 20px; accent-color: var(--lampe); }
+  .vide { color: var(--doux); margin: 0; }
+  .erreur { color: var(--mal); margin: 0; }
   .actions { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
   .succes { display: grid; gap: 12px; }
+  .succes h1 { font-size: 2.25rem; }
   .lien { display: flex; gap: 8px; flex-wrap: wrap; }
-  .lien input { flex: 1; min-width: 200px; background: var(--s2, #262031); border: 1px solid var(--bord-champ, #857a95); border-radius: 10px; padding: 9px 12px; color: inherit; }
+  .lien input { flex: 1; min-width: 200px; background: var(--s2); border: 1px solid var(--bord-champ); border-radius: var(--r-m); padding: 0 14px; min-height: 48px; color: inherit; }
+  @media (max-width: 640px) { section { padding: var(--e-4); } .actions :global(.bouton) { flex: 1 1 auto; } }
 </style>

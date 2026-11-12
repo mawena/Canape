@@ -53,9 +53,9 @@
   .badges { position: absolute; top: 8px; left: 8px; display: flex; gap: 4px; flex-wrap: wrap; z-index: 2; }
   .puce { display: inline-flex; align-items: center; gap: 4px; background: rgba(13, 12, 18, 0.8); backdrop-filter: blur(8px); border-radius: 999px; padding: 4px 10px; font-size: 0.75rem; font-weight: 600; }
   .alerte { color: var(--alerte, #ffd166); }
-  .mal { color: var(--mal, #ff7f70); }
+  .mal { color: var(--mal, #ff7b6e); }
   .rose { color: var(--rose, #ff8fb4); }
   .titre { margin: 10px 0 2px; font-weight: 650; font-size: 0.95rem; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-  .details { margin: 0; font-size: 0.875rem; color: var(--discret, #9a90a7); }
+  .details { margin: 0; font-size: 0.875rem; color: var(--discret, #9f99ad); }
   @media (prefers-reduced-motion: reduce) { .affiche { transition: none; } .carte:hover .affiche { transform: none; } }
 </style>

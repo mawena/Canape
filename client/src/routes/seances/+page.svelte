@@ -23,6 +23,9 @@
   const avenir = $derived(liste ? [...liste.enCours, ...liste.aVenir] : []);
   const visibles = $derived(onglet === 'avenir' ? avenir : (liste?.recentes ?? []));
   const titre = (s: Seance): string => s.titre ?? s.filmTitre ?? 'Séance';
+  const quand = (s: Seance): Date => new Date(s.prevueLe ?? s.creeLe);
+  const jour = (s: Seance): string => String(quand(s).getDate());
+  const mois = (s: Seance): string => quand(s).toLocaleDateString('fr-FR', { month: 'short' }).replace('.', '');
 </script>
 
 <svelte:head><title>Séances — Canapé</title></svelte:head>
@@ -43,7 +46,9 @@
   {:else if !liste}
     <Chargement />
   {:else if !visibles.length}
-    <EtatVide titre={onglet === 'avenir' ? 'Aucune séance prévue.' : 'Pas encore de séance passée.'} texte={onglet === 'avenir' ? 'Choisis un film et fixe une heure.' : undefined} />
+    <EtatVide icone="popcorn" titre={onglet === 'avenir' ? 'Aucune séance prévue.' : 'Pas encore de séance passée.'} texte={onglet === 'avenir' ? 'Choisis un film, fixe une heure et invite quelqu’un : le salon s’ouvre pour vous deux.' : 'Les séances terminées apparaîtront ici.'}>
+      {#snippet actions()}{#if onglet === 'avenir'}<Bouton href="/seances/nouvelle" icone="plus">Lancer une séance</Bouton>{/if}{/snippet}
+    </EtatVide>
   {:else}
     <ul>
       {#each visibles as s (s.id)}
@@ -51,6 +56,7 @@
         <li>
           <Carte doree={enCours}>
             <div class="ligne" data-test="seance">
+              <div class="date-bloc" aria-hidden="true"><b class="tn">{jour(s)}</b><span>{mois(s)}</span></div>
               <div class="infos">
                 <strong>{titre(s)}</strong>
                 {#if s.titre && s.filmTitre}<span class="film">{s.filmTitre}</span>{/if}
@@ -71,16 +77,23 @@
 </main>
 
 <style>
-  main { max-width: 760px; margin: 0 auto; padding: 24px 16px; display: grid; gap: 16px; }
+  main { max-width: 820px; margin: 0 auto; display: grid; gap: var(--e-5); }
   header { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
-  h1 { font: 400 2.2rem 'Instrument Serif', var(--titre, Georgia, serif); margin: 0; }
-  .onglets { display: flex; gap: 4px; }
-  .onglets button { background: none; border: 0; padding: 8px 14px; border-radius: 999px; color: var(--doux, #b9afc4); }
-  .onglets button[aria-selected='true'] { background: var(--lampe-fond, rgba(255, 179, 71, 0.14)); color: var(--lampe, #ffb347); }
-  ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
-  .ligne { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-  .infos { flex: 1; display: grid; min-width: 180px; }
-  .film, .date { color: var(--doux, #b9afc4); font-size: 0.9rem; }
-  .avatars { display: flex; gap: 4px; }
-  .erreur { color: var(--mal, #ff7f70); }
+  h1 { font: 400 clamp(2.25rem, 5vw, 3rem) / 1.02 var(--titre); letter-spacing: -0.01em; margin: 0; }
+  .onglets { display: inline-flex; justify-self: start; gap: 2px; padding: 4px; background: var(--s1); border: 1px solid var(--bord); border-radius: var(--r-m); }
+  .onglets button { background: none; border: 0; padding: 0 18px; min-height: 40px; border-radius: 9px; color: var(--doux); font-weight: 600; font-size: 14.5px; }
+  .onglets button:hover:not([aria-selected='true']) { color: var(--texte); }
+  .onglets button[aria-selected='true'] { background: var(--s3); color: var(--texte); box-shadow: inset 0 1px 0 var(--reflet), 0 1px 3px rgba(0, 0, 0, 0.4); }
+  ul { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--e-3); }
+  ul :global(.carte) { padding: var(--e-4) var(--e-5); }
+  .ligne { display: flex; align-items: center; gap: var(--e-4); flex-wrap: wrap; }
+  .date-bloc { display: grid; place-content: center; justify-items: center; width: 56px; height: 64px; border-radius: var(--r-m); background: var(--s2); border: 1px solid var(--bord); flex: none; line-height: 1; }
+  .date-bloc b { font: 700 1.5rem / 1 var(--texte-police); }
+  .date-bloc span { margin-top: 4px; font-size: 0.75rem; font-weight: 600; color: var(--lampe); text-transform: lowercase; }
+  .infos { flex: 1; display: grid; gap: 2px; min-width: 160px; }
+  .infos strong { font-weight: 650; font-size: 1.0625rem; }
+  .film, .date { color: var(--doux); font-size: 0.9rem; }
+  .avatars { display: flex; }
+  .avatars :global(.avatar + .avatar) { margin-left: -8px; }
+  .erreur { color: var(--mal); }
 </style>

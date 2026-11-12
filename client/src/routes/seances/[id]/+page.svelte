@@ -274,11 +274,11 @@
   h1 { font: 400 1.5rem 'Instrument Serif', Georgia, serif; margin: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .a-droite { position: relative; display: flex; align-items: center; gap: 10px; }
   .synchro { display: inline-flex; align-items: center; gap: 8px; border: 0; border-radius: 999px; padding: 6px 12px; background: rgba(13, 12, 18, 0.7); color: #fff; font-size: 13px; }
-  .point { width: 10px; height: 10px; border-radius: 50%; background: var(--discret, #9a90a7); }
-  .ok .point { background: var(--ok, #6fd9b1); }
+  .point { width: 10px; height: 10px; border-radius: 50%; background: var(--discret, #9f99ad); }
+  .ok .point { background: var(--ok, #5fdcae); }
   .moyen .point { background: var(--alerte, #ffd166); }
-  .mal .point { background: var(--mal, #ff7f70); }
-  .details, .liste-presents { position: absolute; top: 44px; right: 0; z-index: 9; background: var(--s2, #262031); border-radius: 14px; padding: 12px 14px; display: grid; gap: 6px; min-width: 240px; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6); font-size: 0.9rem; margin: 0; list-style: none; }
+  .mal .point { background: var(--mal, #ff7b6e); }
+  .details, .liste-presents { position: absolute; top: 44px; right: 0; z-index: 9; background: var(--s2, #1d1b26); border-radius: 14px; padding: 12px 14px; display: grid; gap: 6px; min-width: 240px; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6); font-size: 0.9rem; margin: 0; list-style: none; }
   .details p { margin: 0; }
   .pile { display: flex; border: 0; background: none; padding: 0; color: #fff; }
   .av { margin-left: -10px; display: inline-flex; }
@@ -295,7 +295,7 @@
   .aide { position: absolute; z-index: 20; inset: 0; margin: auto; width: min(420px, 90vw); height: fit-content; background: var(--s1, #15141c); border-radius: 22px; padding: 20px 24px; display: grid; gap: 10px; }
   .aide h2 { font: 400 1.5rem 'Instrument Serif', Georgia, serif; margin: 0; }
   .aide ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
-  kbd { background: var(--s3, #312a3d); border-radius: 6px; padding: 1px 7px; font: inherit; font-size: 0.85rem; }
+  kbd { background: var(--s3, #282532); border-radius: 6px; padding: 1px 7px; font: inherit; font-size: 0.85rem; }
 
   /* Téléphone en portrait : le film n'est jamais couvert ; caméras en rangée dessous, commandes dans le flux. */
   .salle:not(.portrait) :global(.vignettes.rangee) { margin-bottom: 112px; position: relative; z-index: 4; }

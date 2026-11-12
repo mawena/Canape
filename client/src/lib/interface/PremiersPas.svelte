@@ -12,8 +12,8 @@
   import type { NomIcone } from '$lib/ui/index.ts';
   import { liens } from '$lib/interface/liens.ts';
 
-  interface Props { films: number; seances: number; estAdmin: boolean }
-  let { films, seances, estAdmin }: Props = $props();
+  interface Props { films: number; seances: number; estAdmin: boolean; /** Sortie : la carte est-elle affichée ? */ visible?: boolean }
+  let { films, seances, estAdmin, visible: affichee = $bindable(false) }: Props = $props();
 
   const CLE = 'canape.premiers-pas';
   let ferme = $state(false);
@@ -43,6 +43,7 @@
   const faites = $derived(etapes.filter((e) => e.fait).length);
   const courante = $derived(etapes.find((e) => !e.fait)?.id ?? '');
   const visible = $derived(!ferme && personnes !== null && faites < etapes.length);
+  $effect(() => { affichee = visible; });
 
   function fermer(): void {
     ferme = true;

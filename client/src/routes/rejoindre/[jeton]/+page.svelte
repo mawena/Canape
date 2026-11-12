@@ -38,5 +38,5 @@
 <style>
   main { min-height: 100dvh; display: grid; place-content: center; justify-items: center; gap: 12px; text-align: center; padding: 24px; }
   h1 { font: 400 2rem 'Instrument Serif', var(--titre, Georgia, serif); margin: 0; }
-  p { margin: 0; color: var(--doux, #b9afc4); }
+  p { margin: 0; color: var(--doux, #c0bacb); }
 </style>

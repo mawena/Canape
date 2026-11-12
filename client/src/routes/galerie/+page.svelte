@@ -194,7 +194,7 @@
 {/if}
 
 <style>
-  main { max-width: 1200px; margin: 0 auto; padding: 0 0 64px; display: grid; gap: var(--e-5); }
+  main { padding: 0 0 64px; display: grid; gap: var(--e-5); }
   .entete { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
   h1 { font-family: var(--titre); font-size: clamp(2.25rem, 5vw, 3rem); line-height: 1.02; margin: 0; font-weight: 400; letter-spacing: -0.01em; }
   .outils { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
@@ -207,7 +207,7 @@
   .recherche::placeholder { color: var(--discret); }
   .recherche:focus, select:focus { outline: 3px solid var(--lampe-vive); outline-offset: 2px; border-color: var(--lampe); }
   .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
-  .erreur { color: var(--mal, #ff7f70); }
+  .erreur { color: var(--mal, #ff7b6e); }
   .choix { display: grid; gap: var(--e-3); }
   .option { display: flex; align-items: center; gap: var(--e-4); width: 100%; min-height: 64px; padding: var(--e-3) var(--e-4); text-align: left; color: var(--texte); background: var(--s1); border: 1px solid var(--bord-champ); border-radius: var(--r-m); cursor: pointer; }
   .option:hover { border-color: var(--lampe); background: var(--lampe-fond); }

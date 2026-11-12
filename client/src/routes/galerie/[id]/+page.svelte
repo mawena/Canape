@@ -332,33 +332,33 @@
   .affiche img { width: 100%; height: 100%; object-fit: cover; }
   .affiche span { padding: 16px; font-family: var(--titre, 'Instrument Serif', Georgia, serif); font-size: 1.6rem; }
   h1 { font-family: var(--titre, 'Instrument Serif', Georgia, serif); font-size: clamp(2rem, 5vw, 3rem); line-height: 1.05; margin: 0; font-weight: 400; }
-  .sous-titre { color: var(--doux, #b9afc4); margin: 6px 0 14px; }
+  .sous-titre { color: var(--doux, #c0bacb); margin: 6px 0 14px; }
   .resume { max-width: 65ch; color: var(--texte, #f7f3ee); line-height: 1.55; }
   .puces { list-style: none; padding: 0; margin: 14px 0; display: flex; flex-wrap: wrap; gap: 8px; }
   .puce { display: inline-flex; align-items: center; gap: 6px; min-height: 30px; padding: 0 12px; border-radius: 999px; background: var(--s2); border: 1px solid var(--bord); font-size: 0.8125rem; font-weight: 600; color: var(--doux); margin: 0; }
   .puce.alerte { color: var(--alerte, #ffd166); }
-  .puce.mal { color: var(--mal, #ff7f70); }
+  .puce.mal { color: var(--mal, #ff7b6e); }
   .actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 24px 0; }
-  .section { border-top: 1px solid var(--bord, #3d3549); padding: 14px 0; }
+  .section { border-top: 1px solid var(--bord, #2f2c3b); padding: 14px 0; }
   .section summary { cursor: pointer; font-weight: 650; min-height: 44px; display: flex; align-items: center; }
   .section h3 { font-family: inherit; font-size: 0.9rem; font-weight: 650; color: var(--doux); margin: 14px 0 6px; }
   .liste { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
-  .discret { color: var(--discret, #9a90a7); }
+  .discret { color: var(--discret, #9f99ad); }
   dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; }
-  dt { color: var(--discret, #9a90a7); } dd { margin: 0; overflow-wrap: anywhere; }
+  dt { color: var(--discret, #9f99ad); } dd { margin: 0; overflow-wrap: anywhere; }
   .lien { background: none; border: 0; color: var(--lampe, #ffb347); text-decoration: underline; padding: 0 4px; }
   fieldset { border: 0; padding: 0; margin: 12px 0; display: grid; gap: 8px; }
   .radio { display: inline-flex; gap: 8px; align-items: center; }
   .comptes { margin: 8px 0 12px 4px; }
   .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
-  .erreur { color: var(--mal, #ff7f70); }
+  .erreur { color: var(--mal, #ff7b6e); }
   .formulaire { display: grid; gap: 14px; }
-  .zone { display: grid; gap: 6px; font-size: 0.85rem; color: var(--doux, #b9afc4); }
-  textarea, .recherche { background: var(--s2, #262031); border: 1px solid var(--bord-champ, #857a95); border-radius: var(--r-m); padding: 12px 14px; color: var(--texte); font: inherit; width: 100%; }
+  .zone { display: grid; gap: 6px; font-size: 0.85rem; color: var(--doux, #c0bacb); }
+  textarea, .recherche { background: var(--s2, #1d1b26); border: 1px solid var(--bord-champ, #7d7790); border-radius: var(--r-m); padding: 12px 14px; color: var(--texte); font: inherit; width: 100%; }
   .rangee { display: flex; gap: 8px; }
   .candidats { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 6px; max-height: 220px; overflow: auto; }
-  .candidats button { width: 100%; text-align: left; background: var(--s1, #15141c); border: 1px solid var(--bord, #3d3549); border-radius: 10px; padding: 8px 10px; display: grid; gap: 2px; }
+  .candidats button { width: 100%; text-align: left; background: var(--s1, #15141c); border: 1px solid var(--bord, #2f2c3b); border-radius: 10px; padding: 8px 10px; display: grid; gap: 2px; }
   .candidats button:hover { border-color: var(--lampe, #ffb347); }
-  .candidats small { color: var(--discret, #9a90a7); }
+  .candidats small { color: var(--discret, #9f99ad); }
   .boutons { display: flex; justify-content: flex-end; gap: 8px; }
 </style>
