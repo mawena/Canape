@@ -33,7 +33,12 @@ const VITESSE_CONFORTABLE = 4;
 interface Lancement {
   sequence: number;
   dir: string;
+  /** Recaler les horodatages (mode image convertie) ; faux en mode copie. */
+  recaler: boolean;
   decalages: Map<number, DecalagePiste> | null;
+  /** Arrêt demandé : seuls les segments déjà terminés à ce moment sont publiés (le dernier est tronqué par l'arrêt). */
+  gardes: Set<number> | null;
+  sortieEnEchec: boolean;
 }
 
 interface Conversion {
@@ -123,7 +128,7 @@ export class GestionnaireConversions {
   async arreterFilm(filmId: string): Promise<void> {
     const aArreter = [...this.conversions.values()].filter((c) => c.cible.filmId === filmId);
     for (const c of aArreter) this.conversions.delete(c.cle);
-    await Promise.all(aArreter.map((c) => c.proc?.arreter()));
+    await Promise.all(aArreter.map((c) => this.arreterLancement(c)));
   }
 
   private spectateurs(c: Conversion): number {
@@ -137,7 +142,7 @@ export class GestionnaireConversions {
     const cle = `${cible.filmId}:${cible.audio?.index ?? AUDIO_SANS}`;
     let c = this.conversions.get(cle);
     if (c && c.cible.mode !== cible.mode) {
-      void c.proc?.arreter();
+      void this.arreterLancement(c);
       this.conversions.delete(cle);
       c = undefined;
     }
@@ -226,7 +231,7 @@ export class GestionnaireConversions {
    * ffmpeg écrit des `tfdt` relatifs au lancement (le décalage est dans la liste d'édition du segment d'initialisation) :
    * chaque segment terminé est recalé sur le temps du film puis publié dans le cache.
    */
-  private finaliser(c: Conversion, st: Lancement | null = c.stage): void {
+  private finaliser(c: Conversion, st: Lancement | null = c.stage, termine = false): void {
     if (!st) return;
     let noms: string[];
     try {
@@ -234,15 +239,23 @@ export class GestionnaireConversions {
     } catch {
       return;
     }
-    for (const f of noms) {
-      const m = /^(\d+)\.m4s$/.exec(f);
-      if (!m) continue;
+    const numeros = noms.map((f) => /^(\d+)\.m4s$/.exec(f)?.[1]).filter((x): x is string => !!x).map(Number);
+    // Un ffmpeg qui plante laisse un dernier segment tronqué : on ne le garde pas.
+    const tronque = termine && !st.gardes && st.sortieEnEchec && numeros.length > 0 ? Math.max(...numeros) : -1;
+    for (const n of numeros) {
+      if (st.gardes ? !st.gardes.has(n) : n === tronque) continue;
+      const f = `${n}.m4s`;
       const source = path.join(st.dir, f);
       const dest = path.join(c.dossier, f);
       try {
         if (!existsSync(dest)) {
-          st.decalages ??= lireDecalages(readFileSync(path.join(st.dir, `init-${st.sequence}.mp4`)));
-          writeFileSync(`${dest}.tmp`, decalerSegment(readFileSync(source), st.decalages));
+          const brut = readFileSync(source);
+          let corps: Buffer = brut;
+          if (st.recaler) {
+            st.decalages ??= lireDecalages(readFileSync(path.join(st.dir, `init-${st.sequence}.mp4`)));
+            corps = decalerSegment(brut, st.decalages);
+          }
+          writeFileSync(`${dest}.tmp`, corps);
           renameSync(`${dest}.tmp`, dest);
         }
         rmSync(source, { force: true });
@@ -250,6 +263,23 @@ export class GestionnaireConversions {
         /* le segment sera repris au prochain passage */
       }
     }
+  }
+
+  /** Arrête le lancement en cours en mémorisant les segments terminés (celui qu'on interrompt sort tronqué). */
+  private async arreterLancement(c: Conversion): Promise<void> {
+    const p = c.proc;
+    if (!p) return;
+    const st = c.stage;
+    if (st && !st.gardes) {
+      let noms: string[] = [];
+      try {
+        noms = readdirSync(st.dir);
+      } catch {
+        /* dossier déjà supprimé */
+      }
+      st.gardes = new Set(noms.map((f) => /^(\d+)\.m4s$/.exec(f)?.[1]).filter((x): x is string => !!x).map(Number));
+    }
+    await p.arreter();
   }
 
   private noter(c: Conversion, utilisateurId: number, seg: number): void {
@@ -308,8 +338,7 @@ export class GestionnaireConversions {
   }
 
   private async relancer(c: Conversion, seg: number): Promise<void> {
-    const p = c.proc;
-    if (p) await p.arreter();
+    await this.arreterLancement(c);
     c.proc = null;
     this.lancer(c, c.cible.mode === 'conversion' ? seg : 0);
   }
@@ -320,14 +349,15 @@ export class GestionnaireConversions {
     for (const f of readdirSync(c.dossier)) if (f.endsWith('.tmp')) rmSync(path.join(c.dossier, f), { force: true });
     c.existants = new Set(readdirSync(c.dossier).map((f) => /^(\d+)\.m4s$/.exec(f)?.[1]).filter((x): x is string => !!x).map(Number));
     const sequence = ++c.sequence;
-    const stage: Lancement | null = c.cible.mode === 'conversion'
-      ? { sequence, dir: path.join(c.dossier, `.lancement-${sequence}`), decalages: null }
-      : null;
-    if (stage) mkdirSync(stage.dir, { recursive: true });
+    const stage: Lancement = {
+      sequence, dir: path.join(c.dossier, `.lancement-${sequence}`), recaler: c.cible.mode === 'conversion', decalages: null, gardes: null,
+      sortieEnEchec: false,
+    };
+    mkdirSync(stage.dir, { recursive: true });
     c.stage = stage;
     const args = argsHls({
       entree: c.cible.entree, videoIndex: v.index, audioIndex: c.cible.audio?.index ?? null, video: v, mode: c.cible.mode,
-      debut: seg, preset: PRESETS[c.presetIdx] as Preset, fils: this.config.transcodageFils, dossier: stage?.dir ?? c.dossier, sequence,
+      debut: seg, preset: PRESETS[c.presetIdx] as Preset, fils: this.config.transcodageFils, dossier: stage.dir, sequence,
     });
     const proc = new Processus('ffmpeg', args, {
       nice: this.config.transcodagePriorite,
@@ -342,12 +372,9 @@ export class GestionnaireConversions {
     c.vitesse = null;
     this.journal.info(`lecture : conversion ${c.cle} lancée au segment ${seg} (${c.cible.mode}, ${PRESETS[c.presetIdx]})`);
     void proc.fini.then((fin) => {
-      if (stage) {
-        this.finaliser(c, stage);
-        rmSync(stage.dir, { recursive: true, force: true });
-      } else {
-        for (const f of [`init-${sequence}.mp4`, `liste-${sequence}.m3u8`]) rmSync(path.join(c.dossier, f), { force: true });
-      }
+      stage.sortieEnEchec = fin.code !== 0;
+      this.finaliser(c, stage, true);
+      rmSync(stage.dir, { recursive: true, force: true });
       if (c.proc === proc) c.proc = null;
       if (fin.arretVoulu) return;
       if (fin.code === 0) c.echecs = 0;
@@ -367,7 +394,7 @@ export class GestionnaireConversions {
       const mode = c.cible.mode;
       if (maintenant - c.derniereDemande > DELAI_INACTIVITE_MS) {
         this.journal.info(`lecture : conversion ${c.cle} arrêtée (plus de spectateur)`);
-        void p.arreter();
+        void this.arreterLancement(c);
         continue;
       }
       this.finaliser(c);
@@ -385,7 +412,7 @@ export class GestionnaireConversions {
       if (tmpMax >= 0) c.courant = Math.max(c.courant, tmpMax);
       // Rattrapé : ffmpeg arrive sur un segment déjà produit par un lancement précédent.
       if (mode === 'conversion' && tmpMax > c.debut && c.existants.has(tmpMax)) {
-        void p.arreter();
+        void this.arreterLancement(c);
         continue;
       }
       let demande = 0;

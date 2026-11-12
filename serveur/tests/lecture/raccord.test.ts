@@ -1,7 +1,7 @@
 // Raccord entre deux lancements de ffmpeg : segments produits par des lancements différents, lus à la suite.
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { after, before, describe, test } from 'node:test';
 import { creerAppTest, creerUtilisateur, type AppTest, type UtilisateurTest } from '../aides.ts';
@@ -12,6 +12,7 @@ describe('lecture : raccord entre deux lancements de ffmpeg', () => {
   let t: AppTest;
   let u: UtilisateurTest;
   let filmId: string;
+  let longId: string;
 
   before(async () => {
     dossier = dossierMedias();
@@ -20,6 +21,8 @@ describe('lecture : raccord entre deux lancements de ffmpeg', () => {
     t = await creerAppTest({ env: { CANAPE_TRANSCODAGE_FILS: '2', CANAPE_PREPARATION_AUTO: '0' }, avantPret: (app) => installerFaux(app, faux) });
     u = await creerUtilisateur(t);
     filmId = creerFilmDeTest(t, faux, u.id, path.join(dossier, 'film.mkv')).id;
+    fabriquerMkvMpeg4(path.join(dossier, 'long.mkv'), 120);
+    longId = creerFilmDeTest(t, faux, u.id, path.join(dossier, 'long.mkv')).id;
   });
   after(async () => {
     await t.fermer();
@@ -74,5 +77,29 @@ describe('lecture : raccord entre deux lancements de ffmpeg', () => {
     assert.equal(lecture.status, 0);
     const erreurs = lecture.stderr.split('\n').filter((l) => l.trim() && !/non monotonically increasing dts/.test(l));
     assert.deepEqual(erreurs, [], 'la suite concaténée se décode sans erreur');
+  });
+  test('conversion interrompue en cours de route : le segment tronqué par l\'arrêt n\'est jamais publié', async (tc) => {
+    const base = `/media/${longId}/hls/1`;
+    const dir = path.join(t.config.cache, longId, 'hls', '1');
+    const liste = (await obtenir(`${base}/index.m3u8`)).toString();
+    const total = (liste.match(/#EXTINF/g) ?? []).length;
+    const init = await obtenir(`${base}/init.mp4`);
+    await obtenir(`${base}/1.m4s`); // lancement A au segment 1 : il avance jusqu'à 10 segments d'avance puis se suspend
+    await attendreQue(() => existsSync(path.join(dir, '10.m4s')), 30_000);
+    await obtenir(`${base}/0.m4s`); // retour en arrière : A est arrêté en cours de segment
+    for (let n = 0; n < total; n++) await obtenir(`${base}/${n}.m4s`);
+    await attendreQue(() => t.app.lecture.conversions.actives() === 0, 40_000);
+    const tout = path.join(dossier, 'long-tout.mp4');
+    const morceaux = [init];
+    for (let n = 0; n < total; n++) morceaux.push(readFileSync(path.join(dir, `${n}.m4s`)));
+    writeFileSync(tout, Buffer.concat(morceaux));
+    const { video, audio } = paquets(tout);
+    const pts = video.map((p) => p.pts).sort((a, b) => a - b);
+    const pas = pts.slice(1).map((v, i) => v - pts[i]!);
+    tc.diagnostic(`vidéo : ${pts.length} images, pas max ${Math.max(...pas).toFixed(4)} ; audio ${audio.length} paquets`);
+    assert.ok(Math.max(...pas) < 0.045, 'aucun trou dans la vidéo');
+    assert.ok(pts.length >= 2995 && pts.length <= 3010, `${pts.length} images pour 120 s`);
+    const a = audio.map((p) => ({ t: p.pts, d: p.duree })).sort((x, y) => x.t - y.t);
+    for (let i = 1; i < a.length; i++) assert.ok(Math.abs(a[i]!.t - (a[i - 1]!.t + a[i - 1]!.d)) < 0.05, `trou audio à ${a[i]!.t}`);
   });
 });
