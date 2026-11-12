@@ -19,6 +19,8 @@ declare module 'webtorrent' {
     name: string;
     path: string;
     files: FichierWebTorrent[];
+    pieces: unknown[];
+    deselect(debut: number, fin: number): void;
     ready: boolean;
     done: boolean;
     destroyed: boolean;

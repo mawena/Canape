@@ -180,6 +180,8 @@ export class Torrents {
       `INSERT INTO telechargements (id, proprietaire_id, info_hash, source, nom, etat, cree_le) VALUES (?, ?, ?, ?, ?, 'metadonnees', ?)`,
     ).run(id, u.id, source.infoHash, ref, source.nom, maintenantIso());
     this.planifier();
+    // Pas de place tout de suite : le contrat veut « telechargement » avec 0 pair et 0 de débit, jusqu'à son tour.
+    if (!this.envoyes.has(id)) this.db.prepare("UPDATE telechargements SET etat = 'telechargement' WHERE id = ? AND etat = 'metadonnees'").run(id);
     return this.vue(this.ligne(id)!);
   }
 
@@ -197,7 +199,11 @@ export class Torrents {
   }
 
   private confier(l: LigneTelechargement): void {
-    if (l.etat === 'metadonnees' && !l.fichiers) this.debutMeta.set(l.id, Date.now());
+    if (!l.fichiers) {
+      // Son tour est venu : on cherche les informations du torrent.
+      this.db.prepare("UPDATE telechargements SET etat = 'metadonnees' WHERE id = ? AND etat = 'telechargement'").run(l.id);
+      this.debutMeta.set(l.id, Date.now());
+    }
     this.moteur.demarrer();
     const fichiers = jsonOu<FichierTorrent[]>(l.fichiers, []);
     const choix = fichiers.filter((f) => f.choisi).map((f) => f.index);

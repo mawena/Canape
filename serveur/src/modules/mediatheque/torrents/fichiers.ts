@@ -127,5 +127,5 @@ export function analyserMagnet(texte: unknown): MagnetValide {
   for (const pe of params.getAll('x.pe').slice(0, 10)) {
     if (/^(\d{1,3}(\.\d{1,3}){3}|\[[0-9a-f:]+\]):\d{1,5}$/i.test(pe)) sortie.push(['x.pe', pe]);
   }
-  return { infoHash, magnet: `magnet:?${sortie.map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join('&')}`, nom };
+  return { infoHash, magnet: `magnet:?${sortie.map(([k, v]) => `${k}=${k === 'xt' || k === 'x.pe' ? v : encodeURIComponent(v)}`).join('&')}`, nom };
 }

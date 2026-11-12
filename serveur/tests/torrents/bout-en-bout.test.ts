@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { after, before, describe, test } from 'node:test';
 import type { Film } from '@canape/partage';
+import type { Mediatheque } from '../../src/modules/mediatheque/mediatheque.ts';
 import { creerAppTest, creerUtilisateur, get, patch, post, supprimer, type AppTest, type UtilisateurTest } from '../aides.ts';
 import {
   attendre, attendreEtat, fabriquerAutreSource, fabriquerSource, liste, posterTorrent, semer, telechargement, tracerEtats, vivant,
@@ -94,7 +95,7 @@ describe('torrents : de bout en bout avec un pair local', () => {
       const fiche = (await get(t.app, `/api/films/${fini.filmIds[0]}`, alice)).json() as Film;
       assert.equal(fiche.sousTitresExternes?.length, 1);
       assert.equal(fiche.sousTitresExternes?.[0]?.langue, 'fr');
-      await t.app.mediatheque.attendreTraitements?.();
+      await (t.app.mediatheque as unknown as Mediatheque).attendreTraitements();
 
       // Le dossier de téléchargement est effacé, le .torrent gardé aussi.
       assert.equal(existsSync(dossierTorrent(id)), false);
@@ -212,9 +213,10 @@ describe('torrents : de bout en bout avec un pair local', () => {
       const b = (await post(t.app, '/api/torrents', { magnet: autre.magnet }, alice)).json() as { id: string };
       await attendreEtat(t, alice, a.id, 'telechargement');
       const attente = (await telechargement(t, alice, b.id))!;
-      assert.equal(attente.etat, 'metadonnees');
+      assert.equal(attente.etat, 'telechargement');
       assert.equal(attente.nom, null);
       assert.equal(attente.pairs, 0);
+      assert.equal(attente.debit, 0);
       await attendreEtat(t, alice, a.id, 'termine');
       const fini = await attendreEtat(t, alice, b.id, 'termine');
       assert.equal(fini.filmIds.length, 1);

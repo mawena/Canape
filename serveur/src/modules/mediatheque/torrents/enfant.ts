@@ -43,13 +43,20 @@ interface Entree {
 const entrees = new Map<string, Entree>();
 
 function appliquerChoix(e: Entree): void {
-  if (!e.choix || !e.torrent.files.length) return;
-  e.torrent.files.forEach((f, i) => {
-    const veut = e.choix!.has(i);
-    const a = e.selectionnes.has(i);
-    if (veut && !a) { if (f.length > 0) f.select(); e.selectionnes.add(i); }
-    else if (!veut && a) { if (f.length > 0) f.deselect(); e.selectionnes.delete(i); }
-  });
+  const t = e.torrent;
+  if (!e.choix || !t.files.length) return;
+  const voulus = [...e.choix].filter((i) => i >= 0 && i < t.files.length).sort((x, y) => x - y);
+  const deja = [...e.selectionnes].sort((x, y) => x - y);
+  if (voulus.length === deja.length && voulus.every((v, i) => v === deja[i])) return;
+  // Un fichier ne se désélectionne pas seul : ses morceaux de bordure sont partagés avec ses voisins, et WebTorrent
+  // rogne alors leurs sélections. On repart donc de zéro et on sélectionne les fichiers voulus.
+  if (t.pieces.length > 0) t.deselect(0, t.pieces.length - 1);
+  e.selectionnes.clear();
+  for (const i of voulus) {
+    const f = t.files[i];
+    if (f && f.length > 0) f.select();
+    e.selectionnes.add(i);
+  }
   e.termine = false;
 }
 

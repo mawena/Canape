@@ -9,7 +9,7 @@ test('lien magnet : hex de 40 caractères et base32 de 32 acceptés', () => {
   const a = analyserMagnet(`magnet:?xt=urn:btih:${HEX.toUpperCase()}&dn=Mon+Film%202020&tr=udp%3A%2F%2Ftracker.exemple%3A1337`);
   assert.equal(a.infoHash, HEX);
   assert.equal(a.nom, 'Mon Film 2020');
-  assert.match(a.magnet, /^magnet:\?xt=urn%3Abtih%3Ac12fe1c0/);
+  assert.match(a.magnet, /^magnet:\?xt=urn:btih:c12fe1c0/);
   assert.match(a.magnet, /tr=udp%3A%2F%2Ftracker\.exemple%3A1337/);
   // « 77 » en base32 de 32 caractères : 20 octets 0x00 → 'a' * 32
   const b = analyserMagnet(`magnet:?xt=urn:btih:${'a'.repeat(32)}`);
@@ -28,7 +28,7 @@ test('lien magnet : refus des liens invalides et des paramètres qui font appele
   }
   const m = analyserMagnet(`magnet:?xt=urn:btih:${HEX}&xs=http%3A%2F%2F127.0.0.1%2Fx.torrent&ws=http%3A%2F%2F10.0.0.1%2F&as=http%3A%2F%2Fa&tr=ws%3A%2F%2Ft&x.pe=127.0.0.1%3A6881&x.pe=pas-une-adresse`);
   assert.doesNotMatch(m.magnet, /xs=|ws=|as=|tr=/);
-  assert.match(m.magnet, /x\.pe=127\.0\.0\.1%3A6881/);
+  assert.match(m.magnet, /x\.pe=127\.0\.0\.1:6881/);
   assert.doesNotMatch(m.magnet, /pas-une-adresse/);
 });
 
