@@ -80,8 +80,9 @@ tar --sort=name --owner=0 --group=0 --numeric-owner --mtime="@$DATE_COMMIT" -C "
 ( cd dist && sha256sum "$NOM.tar.gz" > SHA256SUMS )
 
 # Contrôle : ce que mettre-a-jour exige.
-tar -tzf "dist/$NOM.tar.gz" | grep -qx './VERSION' || echec "VERSION manque dans l'archive."
-tar -tzf "dist/$NOM.tar.gz" | grep -qx './serveur/src/index.ts' || echec "serveur/src/index.ts manque dans l'archive."
+LISTE="$(tar -tzf "dist/$NOM.tar.gz")"   # liste lue en entier : « grep -q » dans un tube ferait échouer tar (SIGPIPE) sous pipefail
+grep -qx './VERSION' <<<"$LISTE" || echec "VERSION manque dans l'archive."
+grep -qx './serveur/src/index.ts' <<<"$LISTE" || echec "serveur/src/index.ts manque dans l'archive."
 echo
 echo "Paquet : dist/$NOM.tar.gz ($(du -h "dist/$NOM.tar.gz" | cut -f1))"
 cat dist/SHA256SUMS

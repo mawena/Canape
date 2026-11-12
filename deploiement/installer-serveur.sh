@@ -469,8 +469,9 @@ copier_noeud() { # copie le seul binaire node dans $APP/node (npm n'est pas néc
 # ---------------------------------------------------------------------------------------------------------
 # Le paquet
 # ---------------------------------------------------------------------------------------------------------
-prefixe_tar() { # « ./ » si les entrées du paquet commencent ainsi
-  if tar -tzf "$1" 2>/dev/null | grep -q '^\./'; then echo './'; fi
+prefixe_tar() { # « ./ » si les entrées du paquet commencent ainsi (liste lue en entier : pas de SIGPIPE sous pipefail)
+  local liste; liste="$(tar -tzf "$1" 2>/dev/null || true)"
+  if grep -q '^\./' <<<"$liste"; then echo './'; fi
 }
 
 obtenir_paquet() {
@@ -499,8 +500,8 @@ obtenir_paquet() {
   SHA_PAQUET="$(sha256sum "$PAQUET" | cut -d' ' -f1)"
   # On n'extrait que VERSION et deploiement/ : les scripts, le service et le gabarit nginx viennent du paquet installé.
   local p; p="$(prefixe_tar "$PAQUET")"
-  tar -tzf "$PAQUET" >/dev/null 2>&1 || echec "$PAQUET n'est pas une archive tar.gz lisible."
-  if tar -tzf "$PAQUET" | grep -Eq '(^/|(^|/)\.\.(/|$))'; then echec "le paquet contient des chemins absolus ou « .. » : refusé."; fi
+  local liste; liste="$(tar -tzf "$PAQUET" 2>/dev/null)" || echec "$PAQUET n'est pas une archive tar.gz lisible."
+  if grep -Eq '(^/|(^|/)\.\.(/|$))' <<<"$liste"; then echec "le paquet contient des chemins absolus ou « .. » : refusé."; fi
   mkdir "$TMP_INSTALL/paquet"
   tar -xzf "$PAQUET" -C "$TMP_INSTALL/paquet" --no-same-owner --no-same-permissions -- "${p}VERSION" "${p}deploiement" 2>/dev/null \
     || echec "le paquet n'a pas VERSION et deploiement/ (est-ce bien un paquet construit par scripts/paquet.sh ?)."
@@ -549,7 +550,7 @@ reglages() {
   else
     dossier 0750 root canape "$(dirname "$CONF")"
     if en_root; then install -m 0640 -o root -g canape "$SRC/deploiement/canape.conf.exemple" "$CONF"; else install -m 0640 "$SRC/deploiement/canape.conf.exemple" "$CONF"; fi
-    sed -i "s|^CANAPE_PORT=.*|CANAPE_PORT=$PORT|" "$CONF"
+    sed -i -e "s|^CANAPE_PORT=.*|CANAPE_PORT=$PORT|" -e "s|=/srv/canape/|=$SRV/|" "$CONF"
     echo "$CONF créé (droits 640, groupe canape)."
     # le gabarit porte une URL d'exemple : remplacée plus bas, ou signalée
     sed -i '/^CANAPE_URL_PUBLIQUE=https:\/\/canape\.exemple\.fr$/d' "$CONF"
