@@ -38,7 +38,18 @@ export interface PlanDeLecture {
   /** Pourquoi ce mode, en français (« Conversion du son seul », « Vidéo HEVC convertie »…). */
   raison: string;
   preparation: ResumePreparation | null;
+  /** Ajout : sous-titres image (PGS, VobSub) que le navigateur ne sait pas afficher. */
+  sousTitresImage?: SousTitresIgnores[];
 }
+
+/** Piste de sous-titres exclue du plan (image : non affichable). */
+export interface SousTitresIgnores {
+  langue: string | null;
+  libelle: string;
+}
+
+/** Valeur de `:audio` dans les adresses `/media/:id/hls/:audio/…` quand le film n'a aucune piste audio. */
+export const AUDIO_SANS = 'sans';
 
 /** Ligne de `GET /api/films/:id/preparations`. */
 export interface Preparation {
@@ -54,7 +65,16 @@ export interface Preparation {
 
 /** `GET /api/admin/lecture` */
 export interface EtatLectureAdmin {
-  conversionsALaVolee: Array<{ filmId: string; titre: string; pisteAudio: number; spectateurs: number; vitesse: number | null }>;
+  conversionsALaVolee: Array<{
+    filmId: string;
+    titre: string;
+    pisteAudio: number;
+    spectateurs: number;
+    vitesse: number | null;
+    /** Ajouts : `copie` (son seul) ou `conversion` (image), préréglage x264 en cours. */
+    mode?: 'copie' | 'conversion';
+    preset?: string;
+  }>;
   preparations: Preparation[];
   charge: { cpu1min: number; coeurs: number };
   cache: { octets: number; max: number };
