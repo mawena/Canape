@@ -7,7 +7,10 @@
   import GrilleFilms from '$lib/mediatheque/GrilleFilms.svelte';
   import PanneauTeleversement from '$lib/mediatheque/PanneauTeleversement.svelte';
   import { televersements } from '$lib/mediatheque/televersements.svelte.ts';
-  import { Bouton, Chargement, EtatVide, toast } from '$lib/ui/index.ts';
+  import ModaleAjoutTorrent from '$lib/mediatheque/torrents/ModaleAjoutTorrent.svelte';
+  import PanneauTelechargements from '$lib/mediatheque/torrents/PanneauTelechargements.svelte';
+  import { telechargements } from '$lib/mediatheque/torrents/telechargements.svelte.ts';
+  import { Bouton, Chargement, EtatVide, Icone, Modale, toast } from '$lib/ui/index.ts';
 
   const FILTRES: Array<{ valeur: VueFilms; libelle: string }> = [
     { valeur: 'tous', libelle: 'Tous' },
@@ -25,13 +28,37 @@
   let selecteur: HTMLInputElement | undefined = $state();
   // `/galerie?ajouter=1` (bouton « Ajouter un film » de la barre du haut) : ouvre le choix de fichiers. La navigation
   // monopage garde l'activation du clic d'origine ; si le navigateur refuse, le bouton de la page reste là.
+  // Si les torrents sont permis, on propose d'abord le choix « Depuis mon ordinateur » / « Par torrent ».
   let ajoutDemande = false;
+  let choixOuvert = $state(false);
+  let torrentOuvert = $state(false);
+  let fichierTorrent: File | null = $state(null);
   $effect(() => {
-    if (ajoutDemande || !selecteur || page.url.searchParams.get('ajouter') !== '1') return;
+    if (ajoutDemande || !selecteur || page.url.searchParams.get('ajouter') !== '1' || telechargements.peutAjouter === null) return;
     ajoutDemande = true;
-    selecteur.click();
+    ouvrirAjout();
     naviguer({ ajouter: null });
   });
+
+  function ouvrirAjout(): void {
+    if (telechargements.peutAjouter) choixOuvert = true; else selecteur?.click();
+  }
+  function ouvrirTorrent(fichier: File | null = null): void {
+    fichierTorrent = fichier;
+    choixOuvert = false;
+    torrentOuvert = true;
+  }
+
+  // Suivi des torrents : liste au chargement de la page, arrêt en la quittant.
+  $effect(() => {
+    void telechargements.charger();
+    return () => telechargements.arreter();
+  });
+  // Un torrent terminé : toast, et la carte du film apparaît dans la grille (en analyse puis prête).
+  $effect(() => telechargements.surTermine((t) => {
+    toast.ok(`${t.nom ?? 'Le film'} est dans ta galerie.`);
+    void charger();
+  }));
   let compteurSurvol = 0;
 
   function naviguer(maj: Record<string, string | null>): void {
@@ -88,7 +115,15 @@
   function depose(e: DragEvent): void {
     e.preventDefault();
     compteurSurvol = 0; survol = false;
-    if (e.dataTransfer?.files.length) ajouter(Array.from(e.dataTransfer.files));
+    const tous = Array.from(e.dataTransfer?.files ?? []);
+    // Un `.torrent` déposé part vers l'ajout par torrent au lieu d'être refusé comme vidéo.
+    const torrents = tous.filter((f) => /\.torrent$/i.test(f.name));
+    const autres = tous.filter((f) => !/\.torrent$/i.test(f.name));
+    if (torrents.length) {
+      if (telechargements.peutAjouter) ouvrirTorrent(torrents[0]!);
+      else toast.erreur('Tu ne peux pas ajouter de film par torrent ici.');
+    }
+    if (autres.length) ajouter(autres);
   }
 </script>
 
@@ -98,7 +133,7 @@
 <main>
   <header class="entete">
     <h1>Films</h1>
-    <Bouton icone="plus" onclick={() => selecteur?.click()}>Ajouter un film</Bouton>
+    <Bouton icone="plus" onclick={ouvrirAjout} data-test="ajouter-film">Ajouter un film</Bouton>
     <input bind:this={selecteur} type="file" multiple accept="video/*,.mkv,.mp4,.m4v,.mov,.avi,.webm,.ts,.m2ts" hidden
       onchange={() => { if (selecteur?.files) ajouter(Array.from(selecteur.files)); if (selecteur) selecteur.value = ''; }} />
   </header>
@@ -121,6 +156,7 @@
   </div>
 
   <PanneauTeleversement />
+  <PanneauTelechargements />
 
   {#if erreur}
     <p class="erreur" role="alert">{erreur}</p>
@@ -133,13 +169,25 @@
       <EtatVide titre="Rien n’est partagé avec toi" texte="Quand quelqu’un partagera un film avec toi, il apparaîtra ici." />
     {:else}
       <EtatVide titre="Rien à l’affiche pour l’instant" texte="Dépose un film ici, il sera prêt à regarder dès qu’il est arrivé.">
-        {#snippet actions()}<Bouton icone="plus" onclick={() => selecteur?.click()}>Ajouter un film</Bouton>{/snippet}
+        {#snippet actions()}<Bouton icone="plus" onclick={ouvrirAjout}>Ajouter un film</Bouton>{/snippet}
       </EtatVide>
     {/if}
   {:else}
     <GrilleFilms {films} />
   {/if}
 </main>
+
+<Modale bind:ouverte={choixOuvert} titre="Ajouter un film">
+  <div class="choix">
+    <button type="button" class="option" onclick={() => { choixOuvert = false; selecteur?.click(); }}>
+      <Icone nom="televerser" /><span><strong>Depuis mon ordinateur</strong><span class="t-petit">Choisis ou dépose un fichier vidéo.</span></span>
+    </button>
+    <button type="button" class="option" data-test="ajouter-torrent" onclick={() => ouvrirTorrent()}>
+      <Icone nom="lien" /><span><strong>Par torrent</strong><span class="t-petit">Un lien magnet ou un fichier .torrent.</span></span>
+    </button>
+  </div>
+</Modale>
+<ModaleAjoutTorrent bind:ouverte={torrentOuvert} fichierInitial={fichierTorrent} />
 
 {#if survol}
   <div class="voile" aria-hidden="true"><p>Dépose pour envoyer</p></div>
@@ -157,6 +205,12 @@
   .recherche { flex: 1; min-width: 180px; }
   .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
   .erreur { color: var(--mal, #ff7f70); }
+  .choix { display: grid; gap: var(--e-3); }
+  .option { display: flex; align-items: center; gap: var(--e-4); width: 100%; min-height: 64px; padding: var(--e-3) var(--e-4); text-align: left; color: var(--texte); background: var(--s1); border: 1px solid var(--bord-champ); border-radius: var(--r-m); cursor: pointer; }
+  .option:hover { border-color: var(--lampe); background: var(--lampe-fond); }
+  .option > :global(svg) { color: var(--lampe); flex: none; }
+  .option span { display: grid; gap: 2px; }
+  .option .t-petit { color: var(--doux); }
   .voile { position: fixed; inset: 0; z-index: 50; background: rgba(8, 6, 12, 0.7); display: grid; place-items: center; pointer-events: none; }
   .voile p { margin: 0; padding: 48px 72px; border: 2px dashed var(--lampe, #f4a85b); background: var(--lampe-fond, rgba(244, 168, 91, 0.14)); border-radius: 22px; font-family: var(--titre, 'Instrument Serif', Georgia, serif); font-size: 1.9rem; }
 </style>
