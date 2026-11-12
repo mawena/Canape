@@ -101,7 +101,7 @@
     void goto('/seances');
   }
   function choisirFilm(): void {
-    void goto('/films');
+    void goto('/galerie');
   }
 
   function clavier(e: KeyboardEvent): void {

@@ -1,6 +1,6 @@
 <script lang="ts">
   /**
-   * <LigneListe titre="Les Heures bleues" detail="vu avec Léa" href="/films/…" mise-en-avant>
+   * <LigneListe titre="Les Heures bleues" detail="vu avec Léa" href="/galerie/…" mise-en-avant>
    *   {#snippet debut()}<mini-affiche/>{/snippet}  {#snippet fin()}<Bouton>Revoir</Bouton>{/snippet}  contenu libre…
    * </LigneListe>
    * Ligne de liste (à mettre dans `<Liste>`). `titre` (Hanken 600) + `detail` (`--discret`). `debut` : vignette, avatar…
