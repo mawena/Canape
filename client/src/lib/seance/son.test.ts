@@ -52,7 +52,7 @@ test('casque : indice par l’étiquette ; contraintes du micro', () => {
   assert.equal(estCasque('Casque Bluetooth'), true);
   assert.equal(estCasque('Haut-parleurs intégrés'), false);
   assert.equal(aUnCasque([{ label: 'Speakers' }, { label: 'Headphones' }]), true);
-  assert.equal(contraintesMicro(false).echoCancellation, true);
+  assert.deepEqual(contraintesMicro(false).echoCancellation, { ideal: 'all' });
   assert.equal(contraintesMicro(false).autoGainControl, true);
   const c = contraintesMicro(true, 'abc');
   assert.equal(c.echoCancellation, false);

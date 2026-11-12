@@ -91,7 +91,9 @@ export function aUnCasque(sorties: Array<{ label: string }>): boolean {
  */
 export function contraintesMicro(casque: boolean, deviceId?: string): MediaTrackConstraints {
   return {
-    echoCancellation: !casque,
+    // Recherche technique § 4.3 : `ideal: 'all'` demande l'annulation d'écho sur tout l'audio du navigateur (le film
+    // compris) quand la plateforme sait le faire ; sans effet nuisible ailleurs.
+    echoCancellation: casque ? false : ({ ideal: 'all' } as unknown as ConstrainBoolean),
     noiseSuppression: true,
     autoGainControl: !casque,
     channelCount: 1,
