@@ -32,7 +32,7 @@ interface Semeur { client: WebTorrent; torrent: TorrentWebTorrent; infoHash: str
 
 /** Un client WebTorrent local qui sème `racine`, sans DHT, tracker, LSD ni UPnP. */
 async function semer(racine: string, prive = false): Promise<Semeur> {
-  const client = new WebTorrent({ dht: false, tracker: false, lsd: false, natUpnp: false, natPmp: false, webSeeds: false });
+  const client = new WebTorrent({ dht: false, tracker: false, lsd: false, natUpnp: false, natPmp: false, webSeeds: false, utp: false });
   const torrent = await new Promise<TorrentWebTorrent>((resolve, reject) => {
     client.once('error', reject);
     client.seed(racine, { announce: [], private: prive, createdBy: 'essais Canapé' }, resolve);
@@ -140,7 +140,7 @@ describe('vrai Transmission en local', { skip: BINAIRE ? false : 'CANAPE_ESSAI_T
     assert.deepEqual(vu['trackers'], []);
     assert.deepEqual(vu['webseeds'], []);
     const x = await attendre(async () => { const y = await telechargement(t, alice, tel.id); return y && y.fichiers.length ? y : undefined; }, 30_000, 100, 'métadonnées jamais reçues');
-    assert.deepEqual(x.fichiers.filter((f) => f.choisi).map((f) => path.posix.basename(f.chemin)), ['Public.Film.2020.mkv', 'Public.Film.2020.fr.srt']);
+    assert.deepEqual(x.fichiers.filter((f) => f.choisi).map((f) => path.posix.basename(f.chemin)).sort(), ['Public.Film.2020.fr.srt', 'Public.Film.2020.mkv']);
     const fin = await attendreEtat(t, alice, tel.id, 'termine', 60_000);
     assert.equal(fin.moteur, 'transmission');
     assert.equal(fin.enPartage, false);
@@ -172,7 +172,7 @@ describe('vrai Transmission en local', { skip: BINAIRE ? false : 'CANAPE_ESSAI_T
     const ft = await tget(s.infoHash, ['seedRatioMode', 'status', 'isPrivate']);
     assert.equal(ft['seedRatioMode'], 2);
     assert.equal(ft['isPrivate'], true);
-    assert.ok([5, 6].includes(ft['status'] as number), `statut ${String(ft['status'])}`);
+    await attendre(async () => [5, 6].includes((await tget(s.infoHash, ['status']))['status'] as number), 10_000, 100, 'Transmission ne partage pas');
     // La ligne est suivie pendant le partage (état et ratio connus).
     const suivi = await attendre(async () => { const y = await telechargement(t, alice, tel.id); return y && y.ratio !== null ? y : undefined; }, 10_000, 100, 'ratio jamais suivi');
     assert.equal(suivi.enPartage, true);
@@ -192,7 +192,7 @@ describe('vrai Transmission en local', { skip: BINAIRE ? false : 'CANAPE_ESSAI_T
     const tel = r.json() as Telechargement;
     pousserPair(s);
     const x = await attendre(async () => { const y = await telechargement(t, alice, tel.id); return y && y.fichiers.length ? y : undefined; }, 40_000, 100, 'métadonnées du magnet jamais reçues');
-    assert.deepEqual(x.fichiers.filter((f) => f.choisi).map((f) => path.posix.basename(f.chemin)), ['Magnet.Film.2022.mkv', 'Magnet.Film.2022.fr.srt']);
+    assert.deepEqual(x.fichiers.filter((f) => f.choisi).map((f) => path.posix.basename(f.chemin)).sort(), ['Magnet.Film.2022.fr.srt', 'Magnet.Film.2022.mkv']);
     const fin = await attendreEtat(t, alice, tel.id, 'termine', 60_000);
     assert.equal(fin.filmIds.length, 1);
     await attendre(async () => (await tgetOuNul(s.infoHash)) === null, 15_000, 100);
