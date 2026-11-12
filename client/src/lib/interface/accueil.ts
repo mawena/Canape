@@ -62,7 +62,7 @@ export function accroche(prenom: string, seance: Seance | null, moiId: number, r
     return { salut, suite: 'la salle est prête.' };
   }
   if (reprise) return { salut, suite: 'reprends où tu t’étais arrêté.' };
-  return { salut, suite: 'qu’est-ce qu’on regarde ?' };
+  return { salut, suite: 'qu’est-ce qu’on regarde\u00a0?' };
 }
 
 /** Films commencés et pas terminés, les plus récents d'abord. */

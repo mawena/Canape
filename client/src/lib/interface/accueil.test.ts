@@ -36,7 +36,7 @@ describe('accueil', () => {
   });
   it('compose l’accroche', () => {
     assert.deepEqual(accroche('Awa', seance({ prevueLe: ce21h }), 1, false, maintenant), { salut: 'Bonsoir Awa,', suite: 'Léa arrive à 21 h.' });
-    assert.equal(accroche('Awa', null, 1, false, maintenant).suite, 'qu’est-ce qu’on regarde ?');
+    assert.equal(accroche('Awa', null, 1, false, maintenant).suite, 'qu’est-ce qu’on regarde\u00a0?');
     assert.equal(accroche('Awa', null, 1, true, maintenant).suite, 'reprends où tu t’étais arrêté.');
     assert.equal(accroche('Awa', seance({ presents: 1 }), 1, false, maintenant).suite, 'Léa est déjà là.');
   });

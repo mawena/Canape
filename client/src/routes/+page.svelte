@@ -53,7 +53,7 @@
   const personnesSeance = $derived(
     ceSoir
       ? [
-          { prenom: ceSoir.hotePrenom, couleur: null as string | null, present: false },
+          { prenom: ceSoir.hotePrenom, couleur: ceSoir.invites.find((i) => i.id === ceSoir.hoteId)?.couleur ?? null, present: false },
           ...ceSoir.invites.filter((i) => i.id !== ceSoir.hoteId).map((i) => ({ prenom: i.prenom, couleur: i.couleur, present: false })),
         ]
       : [],
@@ -126,13 +126,13 @@
         <div class="affiche-hero">
           <AfficheFilm
             {...(filmDeSeance ? { film: filmDeSeance } : { titre: ceSoir.filmTitre ?? 'Film' })}
-            etat="pret"
+            etat="pret" sansLegende
           />
         </div>
         <div class="contenu">
           <p class="puces">
             <Badge ton="lampe" icone="calendrier">
-              {ceSoir.termineeLe === null && ceSoir.presents > 0 && !ceSoir.prevueLe ? 'Séance en cours' : `Séance de ce soir${heureSeance ? ` · ${heureSeance}` : ''}`}
+              {ceSoir.termineeLe === null && ceSoir.presents > 0 && !ceSoir.prevueLe ? 'Séance en cours' : `${maintenant.getHours() >= 18 ? 'Séance de ce soir' : 'Séance du jour'}${heureSeance ? ` · ${heureSeance}` : ''}`}
             </Badge>
             {#if ceSoir.prevueLe && !ouverte}<span class="compte tn">{formaterDans(ceSoir.prevueLe, maintenant)}</span>{/if}
           </p>

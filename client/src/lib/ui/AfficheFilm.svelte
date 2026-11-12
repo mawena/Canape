@@ -43,10 +43,12 @@
     selectionne?: boolean;
     surSelection?: (selectionne: boolean) => void;
     surClic?: (e: MouseEvent) => void;
+    /** Masque titre et détail sous l'affiche (déjà écrits à côté, ex. carte « Ce soir »). */
+    sansLegende?: boolean;
   }
   let {
     film, titre, annee, dureeSecondes, href, imageSrc, couleur = null, etat, preparation = null, partage = false,
-    nouveau = false, progression = null, sousTitre, taille = 'normal', selectionnable = false, selectionne = false, surSelection, surClic,
+    nouveau = false, progression = null, sousTitre, taille = 'normal', selectionnable = false, selectionne = false, surSelection, surClic, sansLegende = false,
   }: Props = $props();
 
   const t = $derived(titre ?? film?.titre ?? '');
@@ -88,18 +90,22 @@
   {#if href}
     <a {href} class="lien" aria-label={etiquette} onclick={surClic}>
       {@render visuel()}
+      {#if !sansLegende}
       <span class="textes">
         <span class="nom">{t}</span>
         {#if sousTitre || detail}<span class="detail">{sousTitre ?? detail}</span>{/if}
       </span>
+      {/if}
     </a>
   {:else}
     <div class="lien" role="group" aria-label={etiquette}>
       {@render visuel()}
+      {#if !sansLegende}
       <span class="textes">
         <span class="nom">{t}</span>
         {#if sousTitre || detail}<span class="detail">{sousTitre ?? detail}</span>{/if}
       </span>
+      {/if}
     </div>
   {/if}
   {#if selectionnable}
