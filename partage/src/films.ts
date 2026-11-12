@@ -14,8 +14,12 @@ export interface PisteVideoAnalysee {
   /** Profondeur de couleur par composante (8, 10…). */
   profondeurBits: number;
   pixFmt: string | null;
-  /** HDR (PQ / HLG, BT.2020). */
+  /** HDR (PQ / HLG / Dolby Vision) : `hdrType !== 'non'`. */
   hdr: boolean;
+  /** Détail du HDR d'après `color_transfer` et les données annexes DOVI. */
+  hdrType: 'non' | 'hdr10' | 'hlg' | 'dolby-vision';
+  /** Profil Dolby Vision (5, 7, 8…), `null` hors Dolby Vision ou si inconnu. */
+  dvProfil: number | null;
   fps: number | null;
   debit: number | null;
 }
@@ -79,6 +83,10 @@ export interface Film {
   partages: number[];
   aAffiche: boolean;
   aFond: boolean;
+  /** Couleur dominante `#rrggbb` (lueur de l'interface), `null` si incalculable : l'interface prend la couleur lampe. */
+  couleur: string | null;
+  /** Change quand les images changent (pour le cache du navigateur : `?v=`). */
+  versionImages: number;
   /** Analyse complète (seulement sur la fiche). */
   analyse?: Analyse | null;
   sousTitresExternes?: SousTitreExterne[];
