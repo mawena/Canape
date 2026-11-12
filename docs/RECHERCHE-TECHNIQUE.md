@@ -12,7 +12,53 @@ Les fichiers d'essai sont hors dépôt : `/tmp/claude-1000/-home-charles-gamligo
 
 ## À lire par chaque module (synthèse)
 
-*(complétée à la fin du document ; voir la fin pour les sections 2 à 9)*
+**Comptes** (sections 5, 6)
+- Argon2id `@node-rs/argon2` : `m=47104, t=2, p=1` (OWASP : minimum 19 MiB/2/1, mesuré 34 ms), format PHC, `algorithm: 2` écrit ; réhachage à la connexion si les paramètres du hachage sont plus faibles ; `verify` sur un hachage factice si l'identifiant est inconnu.
+- Jeton de session : 32 octets `base64url`, SHA-256 en base ; **`vu_le`/`expire_le` mis à jour au plus toutes les 5 min** (pas une écriture par segment).
+- `node:sqlite` : importer **une seule fois** (`DatabaseSync` en 26.4, `Database` dans les versions récentes) ; `BEGIN IMMEDIATE` pour écrire ; `foreign_keys` déjà actif.
+- Contrôle d'`Origin` des requêtes qui modifient ; si `Origin` absent exiger `Sec-Fetch-Site: same-origin`. Limite de débit de connexion par IP **et** identifiant.
+- Désactiver un compte : supprimer ses sessions **et** fermer ses WebSocket.
+
+**Médiathèque** (section 3)
+- `@tus/server` se branche par `addContentTypeParser('application/offset+octet-stream', … done(null))` + `reply.hijack(); tus.handle(req.raw, reply.raw)` ; refus par hooks qui lèvent `{status_code, body}` (essayé : 401/413/507).
+- Quota : refuser dès `onUploadCreate` sur la **taille déclarée** (et `Upload-Defer-Length`) ; propriétaire pris de la session, jamais des métadonnées.
+- `onUploadFinish` doit être rapide (`rename`, lancer l'analyse en tâche de fond) ; nettoyage horaire par `cleanUpExpiredUploads()` + recoupement avec la table `televersements`.
+- Client : morceaux 50 Mo, `retryDelays`, ne pas réessayer sur 401/403/413/507, reprise par `findPreviousUploads()`.
+- nginx : `proxy_request_buffering off`, `client_max_body_size 64m`, `respectForwardedHeaders`.
+
+**Lecture** (section 1, à lire en entier)
+- Transcodage à la demande : liste VOD calculée, `-ss D -output_ts_offset D -start_number N -force_key_frames expr:gte(t,n_forced*6) -sc_threshold 0`, hls fMP4 ; relance de ffmpeg si segment **avant** la position courante ou **> 4 segments après** (règle de Jellyfin).
+- **Copie vidéo : une seule passe séquentielle** (la relance par segment en HEVC est peu fiable, essayé) ; copie HEVC réservée à Safari.
+- HDR → SDR : `zscale` réduit d'abord, puis `tonemap=mobius` (ou `hable`) ; **`bt2390` n'existe pas** dans `tonemap` ; DV profil 5 impossible sans libplacebo (GPU) ; pas de GPU.
+- Vitesses (4 fils) : 1080p veryfast 73 i/s ; 4K HDR→SDR veryfast 27 i/s (≈ 1,1× le temps réel) : goulot = décodage HEVC 4K.
+- hls.js : `lowLatencyMode: false`, `maxTimeToFirstByteMs` ≥ 45 s sur `fragLoadPolicy`, `backBufferLength: 30`, liste servie instantanément, segments attendus côté serveur.
+
+**Séances** (sections 2, 3)
+- Garder le protocole 0.1 (position à l'instant serveur, horloge à plus petit RTT, saut > 1 s, vitesse 0,95/1,05).
+- Avec HLS : saut seulement si la cible est dans `video.buffered` ou écart > 4 s ; `aller`/changement de piste = **barrière** avec délai maximal 20 s ; reprise planifiée à `instant` serveur ; jamais de rattrapage pendant `seeking`/`readyState < 3`.
+- `@fastify/websocket` : refuser **avant** la poignée de main dans `preValidation` (Origin 403, session 401, séance 404) ; `maxPayload: 65536` (1009 constaté) ; battement `ping` 25 s ; débit maison par connexion.
+
+**Salle** (section 4)
+- WebRTC : transceivers `sendrecv` créés d'avance + `replaceTrack` (pas de renégociation) ; présents offrent, nouvel arrivant répond ; garde-fou : paire en `new`/`checking` > 8 s → la recréer.
+- Écho : l'AEC de Chrome n'annule pas le son d'un `<video>` (Firefox/Safari oui) ; casque recommandé + bandeau, ducking WebAudio du film, boucle locale WebRTC = piste à prototyper (latence 30–80 ms).
+- Débit des caméras par `setParameters` selon le nombre de pairs (2–3 : 400 kb/s ; 4–5 : 150 ; 6–8 : 80) ; surveiller `qualityLimitationReason`.
+- TURN : `use-auth-secret`, `username = "<expiration>:<id>"`, mot de passe HMAC-SHA1 base64, `denied-peer-ip` pour les réseaux internes.
+- Le client doit fonctionner sans média local (WebKit headless n'a pas de caméra simulée).
+
+**Interface** (sections 6, 7)
+- Monopage : `ssr = false`, `adapter-static` + `fallback: 'index.html'` ; le serveur rend `index.html` pour toute URL sans extension hors `/api /media /ws`.
+- Magasins runes : classes à instance unique dans `*.svelte.ts` (pas d'export d'un `$state` primitif réassigné) ; `$state.raw` pour les gros objets reçus par WebSocket ; jamais `bind:currentTime`.
+- Service worker : intercepter seulement `build` + `files` ; **jamais** `/api`, `/media`, `/ws`, `Range`, navigations ; pas de `skipWaiting` pendant une séance.
+- CSP : `media-src 'self' blob:`, `worker-src 'self' blob:` (hls.js), `connect-src 'self' wss://hôte`, hachage du script de démarrage via `kit.csp`.
+- Manifeste : icônes 192/512 + maskable, `apple-touch-icon`, `display: standalone`.
+
+**Livraison** (sections 6, 9)
+- Clé SSH : `restrict,command="/opt/canape/bin/recevoir" ssh-ed25519 …` ; SHA-256 passé en argument de commande, paquet sur l'entrée standard ; `sudoers` limité à `mettre-a-jour`.
+- Job de déploiement : `environment: production` limité à `main`, secrets rattachés à l'environnement, `concurrency` sans annulation, `permissions: contents: read`, actions épinglées par SHA.
+- `known_hosts` en secret (pas de `ssh-keyscan` dans la CI) ; Node de la CI = Node du VPS (`26.4.0`).
+- systemd : journal JSON sur stdout (`journalctl -u canape -o cat`), `redact` des cookies, ne pas journaliser les segments, arrêt propre sur SIGTERM.
+- nginx : `/api/televersement` sans tampon, `/media/` sans tampon, `/ws/` avec `proxy_read_timeout` long (≥ 3600 s ou battement 25 s).
+- Playwright en CI : `playwright install --with-deps`, cache `ms-playwright`, `workers: 1` ; fixtures WebM VP9/Opus (pas de H.264 dans le Chromium de Playwright, à valider).
 
 ---
 
@@ -683,7 +729,7 @@ Versions du dépôt : `fastify` 5.12.8, `@fastify/websocket` 11.3.7, `@fastify/s
   vérifier `socket.bufferedAmount` avant d'envoyer des rafales ; limite de débit de messages **maison** (jetons par
   connexion : 5/s réactions et messages), `@fastify/rate-limit` ne couvre pas les messages WebSocket.
 - **`@fastify/static` + repli d'une application monopage** : `app.register(fastifyStatic, { root: clientBuild, wildcard: false,
-  index: false, preCompressed: true? })` puis
+  index: false })` puis
   `app.setNotFoundHandler((req, reply) => { if (/^\/(api|media|ws)\//.test(req.url)) return reply.code(404).send({erreur:'introuvable', message:'…'});
   return reply.header('Cache-Control','no-cache').sendFile('index.html'); })`. Un `GET` d'URL inconnue **sans** extension rend
   `index.html` ; une ressource manquante avec extension (`.js`, `.png`) doit rester **404**. En-têtes de cache : `/_app/immutable/*` →
