@@ -38,24 +38,24 @@
 </a>
 
 <style>
-  .carte { display: block; color: inherit; text-decoration: none; border-radius: 10px; }
+  .carte { display: block; color: inherit; text-decoration: none; border-radius: var(--r-affiche); }
   .carte:focus-visible { outline: 3px solid var(--lampe, #ffb347); outline-offset: 3px; }
   .affiche {
-    position: relative; aspect-ratio: 2 / 3; border-radius: 10px; overflow: hidden; background: var(--s2, #262031);
-    box-shadow: 0 6px 18px rgba(6, 5, 10, 0.5); transition: transform 160ms ease, box-shadow 160ms ease;
+    position: relative; aspect-ratio: 2 / 3; border-radius: var(--r-affiche); overflow: hidden; background: var(--s2);
+    box-shadow: var(--ombre-2), 0 0 0 1px rgba(255, 255, 255, 0.06); transition: transform var(--d-2) var(--ease), box-shadow var(--d-2) var(--ease);
   }
-  .carte:hover .affiche, .carte:focus-visible .affiche { transform: translateY(-4px); box-shadow: 0 10px 30px color-mix(in srgb, var(--lueur) 40%, transparent), 0 6px 18px rgba(6, 5, 10, 0.5); }
+  .carte:hover .affiche, .carte:focus-visible .affiche { transform: translateY(-4px); box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5), 0 0 44px -8px var(--lueur), 0 0 0 1px rgba(255, 255, 255, 0.1); }
   img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .sans { background: linear-gradient(160deg, hsl(var(--teinte) 38% 30%), hsl(var(--teinte) 38% 12%)); display: flex; flex-direction: column; justify-content: flex-end; padding: 14px; gap: 4px; }
   .titre-genere { font-family: var(--titre, 'Instrument Serif', Georgia, serif); font-size: 1.5rem; line-height: 1.1; color: #fff; display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; position: relative; z-index: 1; }
   .annee-generee { font-size: 0.75rem; color: #fff; opacity: 0.85; position: relative; z-index: 1; }
   .pied { position: absolute; inset: auto 0 0 0; height: 40%; background: linear-gradient(transparent, rgba(0, 0, 0, 0.55)); pointer-events: none; }
   .badges { position: absolute; top: 8px; left: 8px; display: flex; gap: 4px; flex-wrap: wrap; z-index: 2; }
-  .puce { display: inline-flex; align-items: center; gap: 4px; background: rgba(13, 12, 18, 0.8); border-radius: 999px; padding: 3px 9px; font-size: 0.75rem; }
+  .puce { display: inline-flex; align-items: center; gap: 4px; background: rgba(13, 12, 18, 0.8); backdrop-filter: blur(8px); border-radius: 999px; padding: 4px 10px; font-size: 0.75rem; font-weight: 600; }
   .alerte { color: var(--alerte, #ffd166); }
   .mal { color: var(--mal, #ff7f70); }
   .rose { color: var(--rose, #ff8fb4); }
-  .titre { margin: 10px 0 2px; font-weight: 600; font-size: 0.95rem; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .titre { margin: 10px 0 2px; font-weight: 650; font-size: 0.95rem; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .details { margin: 0; font-size: 0.875rem; color: var(--discret, #9a90a7); }
   @media (prefers-reduced-motion: reduce) { .affiche { transition: none; } .carte:hover .affiche { transform: none; } }
 </style>

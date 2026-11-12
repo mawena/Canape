@@ -8,6 +8,7 @@
   } from '$lib/ui/index.ts';
   import { accroche, autresPersonnes, filmsARreprendre, ouvertureSalle, salleOuverte, seanceDeCeSoir } from '$lib/interface/accueil.ts';
   import Installer from '$lib/interface/Installer.svelte';
+  import PremiersPas from '$lib/interface/PremiersPas.svelte';
   import { liens } from '$lib/interface/liens.ts';
   import { session } from '$lib/interface/session.svelte.ts';
 
@@ -115,10 +116,12 @@
       {#snippet actions()}<Bouton icone="actualiser" onclick={charger}>Réessayer</Bouton>{/snippet}
     </EtatVide>
   {:else if compteNeuf}
-    <EtatVide icone="clap" titre="Ta galerie est vide — dépose ton premier film." texte="Dès qu’il est arrivé, il est prêt à regarder : tu pourras lancer une séance et inviter quelqu’un.">
+    <PremiersPas films={films.length} seances={toutesSeances.length} estAdmin={session.estAdmin} />
+    <EtatVide icone="clap" titre="Ta galerie est vide." texte="Dépose ton premier film : dès qu’il est arrivé, il est prêt à regarder.">
       {#snippet actions()}<Bouton taille="l" icone="televerser" href={liens.ajouterFilm}>Ajouter un film</Bouton>{/snippet}
     </EtatVide>
   {:else}
+    <PremiersPas films={films.length} seances={toutesSeances.length} estAdmin={session.estAdmin} />
     <!-- Carte « Ce soir » -->
     {#if ceSoir}
       <section class="hero ce-soir" aria-labelledby="titre-ce-soir">
@@ -223,9 +226,9 @@
 
   .hero {
     position: relative; isolation: isolate; overflow: hidden; display: grid; grid-template-columns: 220px 1fr; gap: 36px; align-items: center;
-    padding: var(--e-7); border-radius: var(--r-l); background: var(--s1); border: 1px solid var(--bord);
+    padding: var(--e-8); border-radius: var(--r-xl); background: var(--s1); border: 1px solid var(--bord); box-shadow: var(--ombre-3);
   }
-  .hero.sans-seance { grid-template-columns: 1fr; padding: var(--e-8) var(--e-7); }
+  .hero.sans-seance { grid-template-columns: 1fr; padding: var(--e-9) var(--e-8); }
   .hero.chargement { align-items: start; }
   .lignes { display: grid; gap: 14px; }
   .affiche-hero { filter: drop-shadow(0 0 60px color-mix(in srgb, var(--lampe) 30%, transparent)); }

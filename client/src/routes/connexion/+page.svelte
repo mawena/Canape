@@ -4,7 +4,7 @@
   import { ErreurApi } from '$lib/api/client.ts';
   import { retourSur } from '$lib/comptes/format.ts';
   import { session } from '$lib/comptes/session.svelte.ts';
-  import { Bouton, Carte, Champ, Chargement } from '$lib/ui/index.ts';
+  import { Bouton, Carte, Champ, Chargement, Logo } from '$lib/ui/index.ts';
 
   let identifiant = $state('');
   let motDePasse = $state('');
@@ -40,8 +40,8 @@
 <svelte:head><title>Connexion · Canapé</title></svelte:head>
 
 <main>
-  <h1>Canapé</h1>
-  <p class="accroche">Le même film, au même instant, chacun chez soi.</p>
+  <a class="marque" href="/" aria-label="Canapé"><Logo taille={44} mot /></a>
+  <h1>Le même film, au même instant, chacun chez soi.</h1>
   {#if !prete}
     <Chargement />
   {:else if session.installationRequise}
@@ -62,11 +62,15 @@
 </main>
 
 <style>
-  main { min-height: 100%; display: grid; place-content: center; justify-items: center; gap: var(--espace-3); padding: var(--espace-5) var(--espace-4); }
-  h1 { color: var(--or); text-align: center; }
-  .accroche { color: var(--doux); font-family: var(--titre); margin: 0 0 var(--espace-3); text-align: center; }
-  main :global(.carte) { width: min(400px, calc(100vw - 2 * var(--espace-4))); }
-  form { display: grid; gap: var(--espace-3); }
-  .voir { color: var(--doux); font-size: 0.9rem; display: flex; gap: var(--espace-2); align-items: center; }
+  main {
+    min-height: 100%; display: grid; place-content: center; justify-items: center; gap: var(--e-5); padding: var(--e-7) var(--e-4); text-align: center;
+    background: radial-gradient(700px 420px at 50% 18%, rgba(255, 179, 71, 0.13), transparent 70%);
+  }
+  .marque { text-decoration: none; margin-bottom: var(--e-2); }
+  h1 { font: 400 clamp(2.1rem, 6vw, 3.25rem) / 1.04 var(--titre); letter-spacing: -0.01em; max-width: 16ch; text-wrap: balance; margin-bottom: var(--e-3); }
+  main :global(.carte) { width: min(420px, calc(100vw - 2 * var(--e-4))); text-align: left; box-shadow: var(--ombre-3); border-radius: var(--r-xl); padding: var(--e-7); }
+  form { display: grid; gap: var(--e-4); }
+  .voir { color: var(--doux); font-size: 0.9rem; display: flex; gap: var(--e-2); align-items: center; min-height: 32px; }
+  .voir input { width: 18px; height: 18px; accent-color: var(--lampe); }
   .aide { margin: 0; color: var(--doux); font-size: 0.9rem; }
 </style>

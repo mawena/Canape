@@ -320,27 +320,28 @@
 </main>
 
 <style>
-  main { position: relative; max-width: 1100px; margin: 0 auto; padding: 16px 16px 64px; }
-  .retour a { color: var(--doux, #b9afc4); text-decoration: none; }
-  .fond { position: absolute; inset: 0 0 auto 0; height: 420px; overflow: hidden; z-index: -1; mask-image: linear-gradient(#000, transparent); -webkit-mask-image: linear-gradient(#000, transparent); opacity: 0.35; }
-  .fond img { width: 100%; height: 100%; object-fit: cover; filter: blur(8px); }
+  main { position: relative; max-width: 1100px; margin: 0 auto; padding: 0 0 64px; }
+  .retour a { color: var(--doux); text-decoration: none; display: inline-flex; align-items: center; min-height: 44px; font-weight: 600; }
+  .retour a:hover { color: var(--texte); }
+  .fond { position: absolute; inset: -44px calc(var(--gouttiere) * -1) auto; height: 520px; overflow: hidden; z-index: -1; mask-image: linear-gradient(#000, transparent); -webkit-mask-image: linear-gradient(#000, transparent); opacity: 0.4; }
+  .fond img { width: 100%; height: 100%; object-fit: cover; filter: blur(28px) saturate(1.3); transform: scale(1.15); }
   .fiche { display: grid; gap: 28px; margin-top: 12px; }
   @media (min-width: 760px) { .fiche { grid-template-columns: 280px minmax(0, 1fr); } }
   .affiche-bloc { display: grid; justify-items: center; align-content: start; }
-  .affiche { width: min(280px, 60vw); aspect-ratio: 2 / 3; border-radius: 10px; overflow: hidden; background: var(--s2, #262031); box-shadow: 0 24px 60px color-mix(in srgb, var(--lueur) 35%, transparent), 0 6px 18px rgba(6, 5, 10, 0.5); display: grid; place-items: end start; }
+  .affiche { width: min(280px, 60vw); aspect-ratio: 2 / 3; border-radius: var(--r-l); overflow: hidden; background: var(--s2); box-shadow: 0 30px 70px color-mix(in srgb, var(--lueur) 40%, transparent), 0 8px 24px rgba(6, 5, 10, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.07); display: grid; place-items: end start; }
   .affiche img { width: 100%; height: 100%; object-fit: cover; }
   .affiche span { padding: 16px; font-family: var(--titre, 'Instrument Serif', Georgia, serif); font-size: 1.6rem; }
   h1 { font-family: var(--titre, 'Instrument Serif', Georgia, serif); font-size: clamp(2rem, 5vw, 3rem); line-height: 1.05; margin: 0; font-weight: 400; }
   .sous-titre { color: var(--doux, #b9afc4); margin: 6px 0 14px; }
   .resume { max-width: 65ch; color: var(--texte, #f7f3ee); line-height: 1.55; }
   .puces { list-style: none; padding: 0; margin: 14px 0; display: flex; flex-wrap: wrap; gap: 8px; }
-  .puce { display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 0 12px; border-radius: 999px; background: var(--s2, #262031); font-size: 0.8125rem; margin: 0; }
+  .puce { display: inline-flex; align-items: center; gap: 6px; min-height: 30px; padding: 0 12px; border-radius: 999px; background: var(--s2); border: 1px solid var(--bord); font-size: 0.8125rem; font-weight: 600; color: var(--doux); margin: 0; }
   .puce.alerte { color: var(--alerte, #ffd166); }
   .puce.mal { color: var(--mal, #ff7f70); }
-  .actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 20px 0; }
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 24px 0; }
   .section { border-top: 1px solid var(--bord, #3d3549); padding: 14px 0; }
-  .section summary { cursor: pointer; font-weight: 600; }
-  .section h3 { font-family: inherit; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--discret, #9a90a7); margin: 14px 0 6px; }
+  .section summary { cursor: pointer; font-weight: 650; min-height: 44px; display: flex; align-items: center; }
+  .section h3 { font-family: inherit; font-size: 0.9rem; font-weight: 650; color: var(--doux); margin: 14px 0 6px; }
   .liste { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
   .discret { color: var(--discret, #9a90a7); }
   dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; }
@@ -353,7 +354,7 @@
   .erreur { color: var(--mal, #ff7f70); }
   .formulaire { display: grid; gap: 14px; }
   .zone { display: grid; gap: 6px; font-size: 0.85rem; color: var(--doux, #b9afc4); }
-  textarea, .recherche { background: var(--s2, #262031); border: 1px solid var(--bord-champ, #857a95); border-radius: 10px; padding: 10px 12px; color: var(--texte, #f7f3ee); font: inherit; width: 100%; }
+  textarea, .recherche { background: var(--s2, #262031); border: 1px solid var(--bord-champ, #857a95); border-radius: var(--r-m); padding: 12px 14px; color: var(--texte); font: inherit; width: 100%; }
   .rangee { display: flex; gap: 8px; }
   .candidats { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 6px; max-height: 220px; overflow: auto; }
   .candidats button { width: 100%; text-align: left; background: var(--s1, #15141c); border: 1px solid var(--bord, #3d3549); border-radius: 10px; padding: 8px 10px; display: grid; gap: 2px; }
