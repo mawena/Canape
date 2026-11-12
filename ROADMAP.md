@@ -153,3 +153,17 @@ le VPS pour tous les torrents. Contrat : [docs/CONCEPTION.md](docs/CONCEPTION.md
 - [x] Correctif 1.4.1 : dossiers de téléchargement ouverts au groupe sans chmod setgid (refusé par `RestrictSUIDSGID` : « Permission denied » chez Transmission), `mettre-a-jour` garde `telechargements` en `2770`
 - [x] Mise en production de la 1.4.1 : le torrent privé C411 se télécharge (vérifié par l'utilisateur)
 - [ ] Premier film privé arrivé dans la galerie (lien physique, partage qui continue)
+
+---
+
+# Canapé 1.5 — inviter pendant la séance
+
+## Phase 17 — Lien de la séance à tout moment
+
+L'hôte peut retrouver et envoyer le lien de la séance quand elle est déjà lancée, film en cours : la personne invitée
+arrive dans la salle au bon moment du film.
+
+- [ ] Interface : bouton « Inviter » dans la salle (pendant le film, plein écran compris, sans pause) et dans le sas : lien, « Copier le lien », « Partager » sur téléphone ; « Copier le lien » dans la liste des séances ; seulement pour l'hôte
+- [ ] Arrivée en cours de film : la personne qui rejoint par le lien est synchronisée au bon moment (corrigé si besoin)
+- [ ] Essais (unitaires, Playwright : invitation pendant le film, troisième personne qui rejoint, invité sans le bouton), captures
+- [ ] Release 1.5.0 et mise en production
