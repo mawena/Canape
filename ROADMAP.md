@@ -90,8 +90,8 @@ main, séances, chat et réactions, reprise, PWA, mise en production automatique
 
 ## Phase 11 — Intégration et essais
 
-- [ ] Réunion des modules, corrections d'intégration
-- [ ] Essais de bout en bout Playwright (Chromium, Firefox, WebKit), caméras simulées
+- [x] Réunion des modules, corrections d’intégration
+- [x] Essais de bout en bout Playwright (Chromium, Firefox, WebKit), caméras simulées
 - [x] README 1.0
 
 ## Phase 12 — Release 1.0.0
