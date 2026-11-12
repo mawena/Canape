@@ -18,6 +18,7 @@ CANAPE_DONNEES=/srv/canape/donnees
 CANAPE_FILMS=/srv/canape/films
 CANAPE_CACHE=/srv/canape/cache
 CANAPE_TELEVERSEMENTS=/srv/canape/televersements
+CANAPE_TELECHARGEMENTS=/srv/canape/telechargements
 
 # Limites (valeurs par défaut) :
 #CANAPE_TELEVERSEMENT_MAX=100G
@@ -27,6 +28,18 @@ CANAPE_TELEVERSEMENTS=/srv/canape/televersements
 #CANAPE_TRANSCODAGE_FILS=2
 #CANAPE_TRANSCODAGE_PRIORITE=10
 #CANAPE_PREPARATION_AUTO=1
+
+# Films par torrent (lien magnet ou fichier .torrent). Le moteur tourne dans un processus enfant, en nice
+# (CANAPE_TRANSCODAGE_PRIORITE). Valeurs par défaut :
+#CANAPE_TORRENTS=1
+#CANAPE_TORRENT_SIMULTANES=2
+# Octets par seconde (0 = sans limite) ; 20M accepté.
+#CANAPE_TORRENT_DEBIT_MAX=0
+#CANAPE_TORRENT_ENVOI_MAX=1M
+# Ratio de partage après la fin (0 = on arrête dès que le film est reçu).
+#CANAPE_TORRENT_PARTAGE=0
+# Port des pairs (0 = au hasard) : un port fixe, ouvert dans le pare-feu (TCP et UDP), aide beaucoup.
+#CANAPE_TORRENT_PORT=51413
 
 # Affiches et résumés des films (clé gratuite sur themoviedb.org).
 #CANAPE_TMDB_CLE=
