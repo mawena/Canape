@@ -121,5 +121,5 @@ Ajouter un film par un lien magnet ou un fichier `.torrent` et suivre son télé
 - [x] Kit d'interface et navigation repris (boutons, cartes, champs, modales, panneaux, états vides, chargements)
 - [x] Écrans repris un par un : accueil, galerie et fiche, téléchargements, séances, salle, compte, administration, connexion et invitation
 - [x] Facilité d'usage : premiers pas guidés, textes d'aide, messages d'erreur clairs, retours visuels, cibles tactiles
-- [ ] Captures avant / après (ordinateur et téléphone), DESIGN.md à jour, essais Playwright verts
+- [x] Captures avant / après (ordinateur et téléphone), DESIGN.md à jour, essais Playwright verts
 - [ ] Release du nouveau design (version mineure : rien d'incompatible)
