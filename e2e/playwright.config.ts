@@ -20,6 +20,7 @@ const chromiumArgs = [
   '--disable-features=WebRtcHideLocalIpsWithMdns',
 ];
 
+// Firefox : pas de `permissions` du contexte (inconnues), ce sont les préférences qui accordent la caméra simulée.
 const firefoxPrefs = {
   'media.navigator.streams.fake': true,
   'media.navigator.permission.disabled': true,
@@ -49,13 +50,12 @@ export default defineConfig({
     video: 'off',
     locale: 'fr-FR',
     timezoneId: 'Europe/Paris',
-    permissions: ['camera', 'microphone'],
     testIdAttribute: 'data-test',
   },
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'], launchOptions: { args: chromiumArgs } },
+      use: { ...devices['Desktop Chrome'], permissions: ['camera', 'microphone'], launchOptions: { args: chromiumArgs } },
     },
     {
       name: 'firefox',
@@ -65,13 +65,13 @@ export default defineConfig({
       ? [{
           // Pas de caméra simulée sous WebKit : la salle doit marcher sans média local.
           name: 'webkit',
-          use: { ...devices['Desktop Safari'], permissions: [] },
+          use: { ...devices['Desktop Safari'] },
         }]
       : []),
     {
       name: 'telephone',
       testMatch: '**/telephone.spec.ts',
-      use: { ...devices['Pixel 7'], launchOptions: { args: chromiumArgs } },
+      use: { ...devices['Pixel 7'], permissions: ['camera', 'microphone'], launchOptions: { args: chromiumArgs } },
     },
   ],
 });
