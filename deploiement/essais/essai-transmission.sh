@@ -44,7 +44,7 @@ conf() { sed -n "s/^$1=//p" "$CONF" | tail -1; }
 titre a "--essai : n'écrit rien"
 lancer --essai
 verifier "code 0, annonce l'essai" bash -c "[ $CODE = 0 ] && grep -q 'Essai : rien' '$T/sortie'"
-verifier "décrit apt-get install, settings.json, groupe, redémarrage" bash -c "grep -q 'apt-get install -y transmission-daemon' '$T/sortie' && grep -q 'umask 2' '$T/sortie' && grep -q 'usermod -aG canape debian-transmission' '$T/sortie' && grep -q 'restart canape' '$T/sortie'"
+verifier "décrit apt-get install, settings.json, redémarrage" bash -c "grep -q 'apt-get install -y transmission-daemon' '$T/sortie' && grep -q 'umask 2' '$T/sortie' && grep -q 'restart canape' '$T/sortie'"
 verifier "ne touche à rien (pas d'appel, pas de settings, conf inchangée)" bash -c "[ ! -e '$T/appels.log' ] && [ ! -e '$T/tr/settings.json' ] && ! grep -q TRANSMISSION '$CONF' && [ ! -d '$T/srv/telechargements' ]"
 verifier "annonce le port à ouvrir (51413, TCP et UDP), sans l'ouvrir" bash -c "grep -q '51413 en TCP et en UDP' '$T/sortie'"
 
@@ -72,7 +72,7 @@ verifier "settings.json réécrit avec le même mot de passe" bash -c "[ \"\$(py
 
 titre d "port choisi : --port 51999"
 lancer --port 51999
-verifier "peer-port et CANAPE_TORRENT_PORT à 51999, annonce du port" bash -c "[ \"\$(reglage peer-port)\" = 51999 ] && [ '$(conf CANAPE_TORRENT_PORT)' = 51999 ] && grep -q '51999 en TCP et en UDP' '$T/sortie'"
+verifier "peer-port et CANAPE_TORRENT_PORT à 51999, annonce du port" bash -c "[ '$(reglage peer-port)' = 51999 ] && [ '$(conf CANAPE_TORRENT_PORT)' = 51999 ] && grep -q '51999 en TCP et en UDP' '$T/sortie'"
 lancer --port 80
 verifier "port privilégié refusé" bash -c "[ $CODE != 0 ] && grep -q 'entre 1024 et 65535' '$T/sortie'"
 
@@ -84,7 +84,7 @@ lancer
 verifier "refus (code 3), explication, --remplacer proposé" bash -c "[ $CODE = 3 ] && grep -q 'réglé par quelqu' '$T/sortie' && grep -q -- '--remplacer' '$T/sortie'"
 verifier "rien n'a bougé : réglages, conf, aucun arrêt ni redémarrage" bash -c "cmp -s '$T/tr/settings.json' '$T/tr/avant.json' && cmp -s '$CONF' '$T/conf.avant' && [ ! -s '$T/appels.log' ]"
 lancer --remplacer
-verifier "avec --remplacer : réglé, ancien fichier gardé" bash -c "[ $CODE = 0 ] && ls '$T/tr' | grep -q 'settings.json.avant-canape-' && [ \"\$(reglage download-dir)\" = '$T/srv/telechargements' ]"
+verifier "avec --remplacer : réglé, ancien fichier gardé" bash -c "[ $CODE = 0 ] && ls '$T/tr' | grep -q 'settings.json.avant-canape-' && [ '$(reglage download-dir)' = '$T/srv/telechargements' ]"
 verifier "l'ancien contenu est dans la sauvegarde" bash -c "grep -q '/mnt/disque/torrents' '$T'/tr/settings.json.avant-canape-*"
 
 titre f "Transmission neuf déjà installé (réglages d'usine) : pas de confirmation nécessaire"

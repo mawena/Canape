@@ -125,6 +125,7 @@ if installe; then
   echo "transmission-daemon est déjà installé ($("$DPKG" -s transmission-daemon | sed -n 's/^Version: //p'))."
 else
   agir env DEBIAN_FRONTEND=noninteractive "$APT" install -y transmission-daemon
+  a_nous=1 # installé par nous à l'instant : ses réglages d'usine n'ont pas à être sauvegardés
   # Le démon démarre dès l'installation ; il est arrêté plus bas avant d'écrire ses réglages.
 fi
 en_essai || [ -e "$TRDIR" ] || mkdir -p "$TRDIR"
