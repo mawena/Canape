@@ -8,7 +8,8 @@
   import { BarreProgression, Bouton, Icone, Modale, toast } from '$lib/ui/index.ts';
   import { telechargements } from './telechargements.svelte.ts';
   import ModaleChoixFichiers from './ModaleChoixFichiers.svelte';
-  import { detailChiffres, estFini, fichiersModifiables, libelleEtat, nomAffiche } from './logique.ts';
+  import Lock from '@lucide/svelte/icons/lock';
+  import { AIDE_PRIVE, TEXTE_ARRET_PARTAGE, detailChiffres, detailPartage, estEnPartage, estFini, estPrive, fichiersModifiables, libelleEtat, messageTrackerAffiche, nomAffiche, repartir, resumePanneau } from './logique.ts';
   import { raccourcirNom } from '../formats.ts';
 
   const liste = $derived(telechargements.liste);
@@ -20,7 +21,12 @@
   let occupes = $state(new Set<string>());
 
   const nbEnCours = $derived(telechargements.nbEnCours);
-  const resume = $derived(nbEnCours > 0 ? `${nbEnCours} téléchargement${nbEnCours > 1 ? 's' : ''} en cours` : 'Téléchargements');
+  const groupes = $derived(repartir(liste));
+  const resume = $derived(resumePanneau(nbEnCours, groupes.enPartage.length));
+  let aides = $state(new Set<string>());
+  const basculerAide = (id: string): void => { const n = new Set(aides); if (!n.delete(id)) n.add(id); aides = n; };
+  let aArreter: Telechargement | null = $state(null);
+  let arretOuvert = $state(false);
 
   async function agir(t: Telechargement, action: () => Promise<void>): Promise<void> {
     if (occupes.has(t.id)) return;
@@ -47,64 +53,105 @@
       <span class="titre">{resume}</span>
       <span class="chevron" aria-hidden="true"><Icone nom="chevron-bas" taille={16} /></span>
     </button>
-    <ul id="liste-telechargements">
-      {#each liste as t (t.id)}
-        {@const attente = telechargements.attentePlace(t)}
-        {@const p = Math.round(t.progression * 100)}
-        <li class="ligne" class:erreur={t.etat === 'erreur'} class:fini={t.etat === 'termine'} data-test="telechargement" data-etat={t.etat}>
-          <div class="haut">
-            <span class="icone" aria-hidden="true">
-              <Icone nom={t.etat === 'termine' ? 'verifier' : t.etat === 'erreur' ? 'alerte' : t.etat === 'pause' ? 'pause' : 'telecharger'} />
-            </span>
-            <span class="nom" title={t.nom ?? ''}>{t.nom ? raccourcirNom(nomAffiche(t)) : nomAffiche(t)}</span>
-            <span class="actions">
-              {#if t.etat === 'telechargement' || t.etat === 'metadonnees'}
-                <Bouton variante="discret" taille="s" icone="pause" aria-label={`Mettre en pause ${nomAffiche(t)}`} data-test="pause-torrent"
-                  disabled={occupes.has(t.id)} onclick={() => agir(t, () => telechargements.pause(t.id))} />
-              {:else if t.etat === 'pause'}
-                <Bouton variante="secondaire" taille="s" icone="lecture" aria-label={`Reprendre ${nomAffiche(t)}`} data-test="reprendre-torrent"
-                  disabled={occupes.has(t.id)} onclick={() => agir(t, () => telechargements.reprendre(t.id))}>Reprendre</Bouton>
-              {/if}
-              {#if t.fichiers.length > 0 && fichiersModifiables(t)}
-                <Bouton variante="discret" taille="s" icone="crayon" aria-label={`Choisir les fichiers de ${nomAffiche(t)}`} data-test="choisir-fichiers"
-                  onclick={() => { aChoisir = t; choixOuvert = true; }}>Fichiers</Bouton>
-              {/if}
-              {#if t.etat === 'termine' && t.filmIds.length}
-                <Bouton variante="secondaire" taille="s" href={t.filmIds.length === 1 ? `/galerie/${t.filmIds[0]}` : '/galerie'} data-test="voir-film">
-                  {t.filmIds.length === 1 ? 'Voir le film' : 'Voir la galerie'}
-                </Bouton>
-              {/if}
-              {#if t.etat !== 'import'}
-                <Bouton variante="discret" taille="s" icone="fermer" data-test="annuler-torrent" disabled={occupes.has(t.id)}
-                  aria-label={estFini(t) ? `Retirer ${nomAffiche(t)} de la liste` : `Annuler le téléchargement de ${nomAffiche(t)}`}
-                  onclick={() => demanderAnnulation(t)} />
-              {/if}
-            </span>
-          </div>
-          {#if t.etat !== 'erreur' && t.etat !== 'annule'}
-            <div data-test="progression-torrent">
-              <BarreProgression valeur={indetermine(t) ? null : t.progression} ton={ton(t)} fine libelle={`Progression de ${nomAffiche(t)}`} />
-            </div>
-          {/if}
-          <p class="etat" class:alerte={t.etat === 'erreur'}>
-            <strong class:attente>{libelleEtat(t, attente)}</strong>
-            {#if t.etat === 'telechargement' || t.etat === 'pause'}
-              <span class="chiffres tn">{detailChiffres(t, attente)}</span>
-            {:else if t.etat === 'metadonnees' && t.pairs > 0}
-              <span class="chiffres tn">{detailChiffres(t)}</span>
-            {/if}
-          </p>
-          {#if t.proprietairePrenom && liste.some((x) => x.proprietaireId !== t.proprietaireId)}
-            <p class="proprio">Ajouté par {t.proprietairePrenom}</p>
-          {/if}
-        </li>
-      {/each}
-    </ul>
+    <div id="liste-telechargements">
+      <ul data-test="telechargements-en-cours">
+        {#each groupes.enCours as t (t.id)}{@render ligneTorrent(t)}{/each}
+      </ul>
+      {#if groupes.enPartage.length}
+        <h3 class="sous-titre" data-test="section-partage">Partagés</h3>
+        <ul data-test="telechargements-en-partage">
+          {#each groupes.enPartage as t (t.id)}{@render ligneTorrent(t)}{/each}
+        </ul>
+      {/if}
+    </div>
     <p class="vh" role="status" aria-live="polite">{telechargements.annonce}</p>
   </section>
 {/if}
 
+{#snippet ligneTorrent(t: Telechargement)}
+  {@const attente = telechargements.attentePlace(t)}
+  {@const partage = estEnPartage(t)}
+  {@const message = messageTrackerAffiche(t)}
+  <li class="ligne" class:erreur={t.etat === 'erreur'} class:fini={t.etat === 'termine'} class:partage data-test="telechargement" data-etat={t.etat} data-partage={partage ? 'oui' : 'non'} data-prive={estPrive(t) ? 'oui' : 'non'}>
+    <div class="haut">
+      <span class="icone" aria-hidden="true">
+        <Icone nom={partage ? 'partager' : t.etat === 'termine' ? 'verifier' : t.etat === 'erreur' ? 'alerte' : t.etat === 'pause' ? 'pause' : 'telecharger'} />
+      </span>
+      <span class="nom" title={t.nom ?? ''}>{t.nom ? raccourcirNom(nomAffiche(t)) : nomAffiche(t)}</span>
+      <span class="actions">
+        {#if t.etat === 'telechargement' || t.etat === 'metadonnees'}
+          <Bouton variante="discret" taille="s" icone="pause" aria-label={`Mettre en pause ${nomAffiche(t)}`} data-test="pause-torrent"
+            disabled={occupes.has(t.id)} onclick={() => agir(t, () => telechargements.pause(t.id))} />
+        {:else if t.etat === 'pause'}
+          <Bouton variante="secondaire" taille="s" icone="lecture" aria-label={`Reprendre ${nomAffiche(t)}`} data-test="reprendre-torrent"
+            disabled={occupes.has(t.id)} onclick={() => agir(t, () => telechargements.reprendre(t.id))}>Reprendre</Bouton>
+        {/if}
+        {#if t.fichiers.length > 0 && fichiersModifiables(t)}
+          <Bouton variante="discret" taille="s" icone="crayon" aria-label={`Choisir les fichiers de ${nomAffiche(t)}`} data-test="choisir-fichiers"
+            onclick={() => { aChoisir = t; choixOuvert = true; }}>Fichiers</Bouton>
+        {/if}
+        {#if t.etat === 'termine' && t.filmIds.length}
+          <Bouton variante="secondaire" taille="s" href={t.filmIds.length === 1 ? `/galerie/${t.filmIds[0]}` : '/galerie'} data-test="voir-film">
+            {t.filmIds.length === 1 ? 'Voir le film' : 'Voir la galerie'}
+          </Bouton>
+        {/if}
+        {#if t.etat !== 'import' && !partage}
+          <Bouton variante="discret" taille="s" icone="fermer" data-test="annuler-torrent" disabled={occupes.has(t.id)}
+            aria-label={estFini(t) ? `Retirer ${nomAffiche(t)} de la liste` : `Annuler le téléchargement de ${nomAffiche(t)}`}
+            onclick={() => demanderAnnulation(t)} />
+        {/if}
+      </span>
+    </div>
+    {#if t.etat !== 'erreur' && t.etat !== 'annule' && !partage}
+      <div data-test="progression-torrent">
+        <BarreProgression valeur={indetermine(t) ? null : t.progression} ton={ton(t)} fine libelle={`Progression de ${nomAffiche(t)}`} />
+      </div>
+    {/if}
+    <p class="etat" class:alerte={t.etat === 'erreur'}>
+      {#if partage}
+        <strong data-test="detail-partage">{detailPartage(t)}</strong>
+      {:else}
+        <strong class:attente={attente || (t.etat === 'metadonnees' && telechargements.metaLongue(t))}>{libelleEtat(t, attente, telechargements.metaLongue(t))}</strong>
+        {#if t.etat === 'telechargement' || t.etat === 'pause'}
+          <span class="chiffres tn">{detailChiffres(t, attente)}</span>
+        {:else if t.etat === 'metadonnees' && t.pairs > 0}
+          <span class="chiffres tn">{detailChiffres(t)}</span>
+        {/if}
+      {/if}
+      {#if estPrive(t)}
+        <button type="button" class="prive" data-test="pastille-prive" aria-expanded={aides.has(t.id)} aria-controls={`aide-prive-${t.id}`}
+          title={AIDE_PRIVE} onclick={() => basculerAide(t.id)}>
+          <Lock size={13} strokeWidth={2} aria-hidden="true" />Privé
+        </button>
+      {/if}
+    </p>
+    {#if aides.has(t.id)}
+      <p class="aide" id={`aide-prive-${t.id}`} data-test="aide-prive">{AIDE_PRIVE}</p>
+    {/if}
+    {#if message}
+      <p class="tracker" class:mal={t.etat === 'erreur'} data-test="message-tracker"><Icone nom="info" taille={15} /><span>{message}</span></p>
+    {/if}
+    {#if partage}
+      <div class="arret">
+        <Bouton variante="secondaire" taille="s" data-test="arreter-partage" disabled={occupes.has(t.id)} aria-label={`Arrêter de partager ${nomAffiche(t)}`}
+          onclick={() => { aArreter = t; arretOuvert = true; }}>Arrêter de partager</Bouton>
+      </div>
+    {/if}
+    {#if t.proprietairePrenom && liste.some((x) => x.proprietaireId !== t.proprietaireId)}
+      <p class="proprio">Ajouté par {t.proprietairePrenom}</p>
+    {/if}
+  </li>
+{/snippet}
+
 <ModaleChoixFichiers bind:ouverte={choixOuvert} telechargement={aChoisir ? (liste.find((x) => x.id === aChoisir!.id) ?? aChoisir) : null} />
+
+<Modale bind:ouverte={arretOuvert} titre="Arrêter de partager ?">
+  <p>{TEXTE_ARRET_PARTAGE}</p>
+  {#snippet pied()}
+    <Bouton variante="discret" onclick={() => (arretOuvert = false)}>Continuer</Bouton>
+    <Bouton variante="primaire" data-test="confirmer-arret-partage" onclick={() => { const t = aArreter; arretOuvert = false; if (t) void agir(t, () => telechargements.retirer(t.id)); }}>Arrêter de partager</Bouton>
+  {/snippet}
+</Modale>
 
 <Modale bind:ouverte={annulerOuvert} titre="Annuler ce téléchargement ?" dangereuse>
   <p>« {aAnnuler ? nomAffiche(aAnnuler) : ''} » sera arrêté et ce qui a déjà été téléchargé sera effacé. Les films déjà ajoutés à ta galerie restent.</p>
@@ -118,6 +165,17 @@
   .panneau { background: var(--s1); border: 1px solid var(--bord); border-radius: var(--r-m); padding: 4px var(--e-4); }
   .entete { display: none; }
   ul { list-style: none; margin: 0; padding: 0; display: grid; }
+  .sous-titre { margin: var(--e-2) 0 0; padding-top: var(--e-3); border-top: 1px solid var(--bord-champ); font: 600 0.875rem/1.2 var(--texte-police); color: var(--doux); }
+  .partage .icone { color: var(--lampe); }
+  .prive { display: inline-flex; align-items: center; gap: 5px; min-height: 24px; padding: 0 9px; border: 0; border-radius: var(--r-pill); background: var(--s2); color: var(--doux);
+    font: 600 0.75rem/1 var(--texte-police); cursor: pointer; }
+  .prive:hover { color: var(--texte); }
+  .prive:focus-visible { outline: 2px solid var(--lampe); outline-offset: 2px; }
+  .aide { margin: 0; padding: 8px 12px; border-radius: var(--r-s, 8px); background: var(--s2); color: var(--doux); font-size: 0.8125rem; line-height: 1.45; }
+  .tracker { margin: 0; display: flex; align-items: flex-start; gap: 6px; padding: 7px 10px; border-radius: var(--r-s, 8px); background: var(--alerte-fond); color: var(--alerte); font-size: 0.8125rem; line-height: 1.4; }
+  .tracker :global(svg) { flex: none; margin-top: 1px; }
+  .tracker.mal { background: var(--mal-fond, var(--alerte-fond)); color: var(--mal); }
+  .arret { display: flex; }
   .ligne { display: grid; gap: 8px; padding: var(--e-3) 0; }
   .ligne + .ligne { border-top: 1px solid var(--bord); }
   .haut { display: flex; align-items: center; gap: 10px; }
@@ -142,6 +200,6 @@
     .titre { flex: 1; }
     .chevron { display: grid; transform: rotate(180deg); transition: transform var(--d-2) var(--ease); }
     .replie .chevron { transform: none; }
-    .replie ul { display: none; }
+    .replie #liste-telechargements { display: none; }
   }
 </style>
