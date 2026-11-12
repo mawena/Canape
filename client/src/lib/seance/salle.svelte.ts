@@ -614,7 +614,13 @@ export class Salle {
 
   private surDepart(cid: string): void {
     this.appel?.retirer(cid);
+    const parti = this.autres.find((p) => p.cid === cid);
     this.autres = this.autres.filter((p) => p.cid !== cid);
+    if (parti) {
+      const texte = `${parti.utilisateur.prenom} est parti·e`;
+      this.annoncer('arrivee', texte);
+      this.ajouterSysteme(texte);
+    }
   }
 
   // ---- Commandes partagées ----------------------------------------------------------------------------------
