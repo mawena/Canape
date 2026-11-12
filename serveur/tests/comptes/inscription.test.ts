@@ -255,12 +255,12 @@ describe('inscription libre', () => {
       t3.db.prepare('UPDATE utilisateurs SET actif = 0 WHERE id = ?').run(inv.id);
       assert.deepEqual(await lister(a, '?identifiant=invite-1'), []);
       t3.db.prepare('UPDATE utilisateurs SET actif = 1 WHERE id = ?').run(inv.id);
-      // Une séance où Alice invite Bob : sans recherche, refusé ; après recherche, permis.
-      const refus = await post(t3.app, '/api/seances', { invites: [b.id] }, a);
+      t3.db.prepare("INSERT INTO films (id, proprietaire_id, titre, fichier, nom_origine, taille, visibilite, ajoute_le) VALUES ('sceancefilm1', ?, 'S', 'x', 'x', 1, 'tous', '2026-01-01')").run(a.id);
+      // Alice invite à une séance : un inconnu jamais trouvé est refusé ; Bob, déjà trouvé par recherche, est permis.
+      const refus = await post(t3.app, '/api/seances', { filmId: 'sceancefilm1', invites: [inv.id] }, a);
       assert.equal(refus.statusCode, 400);
       assert.deepEqual(noms(await lister(a)), ['Alice', 'Chef']);
-      await lister(a, '?identifiant=bob');
-      const ok = await post(t3.app, '/api/seances', { invites: [b.id] }, a);
+      const ok = await post(t3.app, '/api/seances', { filmId: 'sceancefilm1', invites: [b.id] }, a);
       assert.equal(ok.statusCode, 201, ok.body);
       // Bob et Alice se connaissent désormais ; Invité reste inconnu des deux.
       assert.deepEqual(noms(await lister(a)), ['Alice', 'Bob', 'Chef']);
@@ -277,7 +277,7 @@ describe('inscription libre', () => {
       assert.ok(noms(await lister(inv)).includes('Alice'));
       assert.ok(noms(await lister(a)).includes('Invité'));
       // Admin : peut cibler n'importe qui.
-      assert.equal((await post(t3.app, '/api/seances', { invites: [inv.id, b.id] }, admin)).statusCode, 201);
+      assert.equal((await post(t3.app, '/api/seances', { filmId: 'sceancefilm1', invites: [inv.id, b.id] }, admin)).statusCode, 201);
     } finally { await t3.fermer(); }
   });
 

@@ -162,3 +162,8 @@ export const patch = (app: FastifyInstance, url: string, corps: Corps, utilisate
   requete(app, 'PATCH', url, { utilisateur, corps });
 export const supprimer = (app: FastifyInstance, url: string, utilisateur?: UtilisateurTest | null) =>
   requete(app, 'DELETE', url, { utilisateur });
+
+/** Le viewer retrouve la cible par son identifiant exact (recherche de `GET /api/utilisateurs`) : il peut ensuite la viser (partage, invitation). */
+export async function faireConnaitre(app: FastifyInstance, viewer: UtilisateurTest, cible: Pick<UtilisateurTest, 'identifiant'>): Promise<void> {
+  await app.inject({ method: 'GET', url: `/api/utilisateurs?identifiant=${encodeURIComponent(cible.identifiant)}`, headers: viewer.entetes });
+}
