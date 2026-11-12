@@ -21,7 +21,8 @@ casser les autres sites du VPS ; une interface « générique » sans âme.
 - Chaque compte (admin ou viewer) a sa galerie et peut téléverser ; l'admin fixe un quota par compte et peut retirer
   le droit de téléverser. Un film est **privé** par défaut ; son propriétaire le partage avec certains comptes ou avec
   tous. Être invité à une séance donne accès à son film pendant la séance. L'admin voit tout.
-- Pas d'inscription publique : l'admin invite par lien (valable 7 jours, usage unique).
+- L'admin invite par lien (valable 7 jours, usage unique) ; depuis la phase 15, chacun peut aussi **s'inscrire
+  librement** (« Inscription libre », réglable par l'admin).
 - Caractéristiques du VPS inconnues : la lecture s'adapte (direct → conversion du son seul → conversion de l'image
   à la volée), et les films lourds (4K, HDR) sont convertis à l'avance quand le serveur est calme.
 - Affiches et résumés TMDB seulement si une clé est configurée ; sinon titre et année tirés du nom de fichier et image
@@ -324,6 +325,48 @@ Serveur → client :
 compteARebours: number|null, serveur }` : mêmes règles qu'en 0.1 (position à l'instant serveur `instant`,
 rattrapage par saut au-delà de 1 s et par vitesse 0,95/1,05 entre 0,3 et 1 s, attente mutuelle, aucun écho
 d'événement). Changer de piste audio ou de film remet tout le monde en pause à la même position.
+
+## Inscription libre (phase 15)
+
+N'importe qui peut venir sur le site, **créer son compte** et ajouter des films, sans invitation. Module **comptes**
+(et médiathèque pour les droits). Types : `partage/src/comptes.ts` (`EtatInscription`, `CorpsInscription`,
+`OrigineCompte`, `Reglages`, `Utilisateur.peutTorrent`/`origine`, `EtatApi.inscriptionOuverte`) ; migration
+`011_inscription.sql` (`peut_torrent`, `origine`).
+
+- **Réglages de l'admin** (`GET|PATCH /api/admin/reglages`, page Réglages) : `inscriptionsOuvertes` (défaut `true`),
+  `quotaInscriptionOctets` (défaut 20 Go), `torrentsInscrits` (défaut **`false`** : un inconnu ne fait pas télécharger
+  de torrents au VPS sans l'accord de l'admin), `maxComptesInscrits` (défaut 100).
+- **Compte né d'une inscription** : `viewer`, `origine='inscription'`, `peut_televerser=1`, quota
+  `quotaInscriptionOctets`, `peut_torrent` = `torrentsInscrits`. L'admin change chaque compte comme les autres
+  (`PATCH /api/admin/utilisateurs/:id` accepte aussi `peutTorrent`) ; la liste des comptes montre l'origine. Un compte
+  invité ou le premier admin a `peut_torrent=1`.
+- **Routes** (libres, contrôle d'`Origin`) :
+  - `GET /api/inscription` → `EtatInscription` (le `jeton` est signé avec le secret du serveur et horodaté) ;
+  - `POST /api/inscription` `CorpsInscription` → 201 + cookie + `Utilisateur` ; 403 fermées ou complètes ; 400 jeton
+    absent, invalide, trop récent (< 3 s : robot) ou trop vieux (> 2 h), champ piège rempli, règles non acceptées,
+    identifiant (3 à 32 caractères : lettres, chiffres, `.`, `_`, `-`, ou une adresse e-mail), prénom (1 à 40),
+    mot de passe (≥ `MOT_DE_PASSE_MIN_INSCRIPTION`, pas égal à l'identifiant) ; 409 identifiant déjà pris ;
+    429 au-delà de 3 inscriptions par heure et par IP (et 30 par jour en tout).
+  - `GET /api/etat` donne `inscriptionOuverte`.
+- **Vie privée entre inconnus** : `GET /api/utilisateurs` ne liste plus tout le monde : l'admin voit tous les comptes
+  actifs ; un viewer voit seulement les comptes « connus » (ceux avec qui il partage un film dans un sens ou dans
+  l'autre, ceux de ses séances, celui qui l'a invité, les admins). `GET /api/utilisateurs?identifiant=<x>` cherche un
+  compte par son identifiant exact (insensible à la casse) pour partager un film ou inviter à une séance : `[un]` ou
+  `[]`, 30 recherches par minute. La visibilité `tous` d'un film s'appelle dans l'interface « Tous les inscrits » et
+  avertit qu'avec les inscriptions ouvertes, ce sont des inconnus.
+- **Torrents** : `ListeTelechargements.peutAjouter` exige aussi `peut_torrent` ; sinon `POST /api/torrents` → 403
+  « L'ajout par torrent n'est pas ouvert pour ton compte. ».
+- **Interface** : page `/inscription` (prénom, identifiant, mot de passe et confirmation, couleur, case « J'accepte les
+  règles d'usage » avec lien vers `/regles`, champ piège invisible `site`), lien « Créer un compte » sur `/connexion`
+  quand c'est ouvert ; page `/regles` (règles d'usage : pas de contenu dont on n'a pas les droits, rien d'illégal,
+  l'admin peut retirer un film ou fermer un compte, les films sont privés par défaut) ; Réglages et Comptes de
+  l'administration avec les nouveaux champs ; partage d'un film et invitation à une séance par identifiant (« Ajouter
+  quelqu'un : son identifiant »), plus la liste des comptes connus.
+
+*Réalisé (interface)* : pages `/inscription` (attend 3,2 s avant l'envoi pour le garde-fou anti-robot, erreurs près des
+champs, 409/403/429 traduits) et `/regles`, composant `ChercherCompte` (partage d'un film, invitation à une séance),
+réglages et origine des comptes dans l'administration ; essais `e2e/inscription.spec.ts` (Chromium et Firefox) et captures
+à la demande (`CANAPE_CAPTURES_INSCRIPTION=<dossier>`, clair/sombre, ordinateur/téléphone).
 
 ## Torrents (1.1)
 

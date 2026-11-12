@@ -3,7 +3,7 @@
   import { api, ErreurApi } from '$lib/api/client.ts';
   import { analyserTaille, dateCourte, formaterOctets } from '$lib/comptes/format.ts';
   import { session } from '$lib/comptes/session.svelte.ts';
-  import { Avatar, Bouton, Carte, Champ, Chargement, Modale, toast } from '$lib/ui/index.ts';
+  import { Avatar, Badge, Bouton, Carte, Champ, Chargement, Modale, toast } from '$lib/ui/index.ts';
 
   let comptes = $state<UtilisateurAdmin[] | null>(null);
   let echec = $state<string | null>(null);
@@ -16,6 +16,8 @@
   let aSupprimer = $state<UtilisateurAdmin | null>(null);
   let lien = $state<string | null>(null);
   let lienOuvert = $state(false);
+
+  const ORIGINES = { inscription: 'Inscrit', invitation: 'Invité', installation: 'Premier compte' } as const;
 
   async function charger(): Promise<void> {
     try { comptes = await api.get<UtilisateurAdmin[]>('/api/admin/utilisateurs'); } catch (x) {
@@ -95,6 +97,7 @@
             <Avatar prenom={c.prenom} couleur={c.couleur} />
             <div class="qui">
               <strong>{c.prenom}</strong>{#if c.id === session.utilisateur?.id} <span class="doux">(toi)</span>{/if}
+              <span data-test="origine-compte"><Badge ton={c.origine === 'inscription' ? 'lampe' : 'neutre'}>{ORIGINES[c.origine]}</Badge></span>
               <div class="doux">{c.identifiant} · {c.role === 'admin' ? 'administrateur' : 'spectateur'}{c.actif ? '' : ' · désactivé'}</div>
               <div class="doux">{formaterOctets(c.octetsUtilises)} / {c.quotaOctets === null ? 'illimité' : formaterOctets(c.quotaOctets)} · dernière visite {dateCourte(c.derniereConnexion)}</div>
             </div>
@@ -102,6 +105,7 @@
           <div class="actions">
             <label><input type="checkbox" checked={c.role === 'admin'} onchange={(e) => { const v = e.currentTarget.checked; void modifier(c, { role: v ? 'admin' : 'viewer' }).then(() => charger()); }} /> Administrateur</label>
             <label><input type="checkbox" checked={c.peutTeleverser} onchange={(e) => modifier(c, { peutTeleverser: e.currentTarget.checked })} /> Peut ajouter des films</label>
+            <label><input type="checkbox" checked={c.peutTorrent} data-test="torrent-compte" onchange={(e) => modifier(c, { peutTorrent: e.currentTarget.checked })} /> Torrents</label>
             <label><input type="checkbox" checked={c.actif} onchange={(e) => { const v = e.currentTarget.checked; void modifier(c, { actif: v }).then(() => charger()); }} /> Actif</label>
           </div>
           <div class="actions">

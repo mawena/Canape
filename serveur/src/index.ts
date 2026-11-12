@@ -3,7 +3,7 @@ import { creerApp } from './app.ts';
 import { version } from './commun/version.ts';
 import { chargerConfig } from './config.ts';
 import { migrer, ouvrirBase } from './db/index.ts';
-import { inviterCli, reinitialiserCli, type ContexteCli } from './modules/comptes/cli.ts';
+import { inscriptionsCli, inviterCli, reinitialiserCli, type ContexteCli } from './modules/comptes/cli.ts';
 import { importerFilmsCli } from './modules/mediatheque/cli.ts';
 import path from 'node:path';
 
@@ -14,6 +14,7 @@ Utilisation : canape [--config <fichier>] <commande>
 Commandes :
   serve                                       démarre le serveur
   admin inviter [--role admin|viewer] [--jours 7]   crée un lien d'invitation
+  admin inscriptions [ouvrir|fermer]          ouvre ou ferme l'inscription libre (sans argument : état)
   admin reinitialiser <identifiant>           crée un lien de réinitialisation de mot de passe
   films importer <dossier> --proprietaire <identifiant> [--copier]   importe des films existants (déplacés, ou copiés avec --copier)
   --version, --aide
@@ -65,6 +66,10 @@ async function main(argv: string[]): Promise<number> {
     const jours = typeof values.jours === 'string' ? Number(values.jours) : 7;
     if (!Number.isFinite(jours) || jours <= 0) throw new Error('--jours doit être un nombre positif.');
     console.log(await inviterCli(ouvrirContexte(configFichier), { role, jours }));
+    return 0;
+  }
+  if (commande === 'admin' && sous === 'inscriptions') {
+    console.log(await inscriptionsCli(ouvrirContexte(configFichier), reste[0]));
     return 0;
   }
   if (commande === 'admin' && sous === 'reinitialiser') {

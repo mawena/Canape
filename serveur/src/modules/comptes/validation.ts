@@ -54,6 +54,11 @@ const LIBELLES: Record<string, string> = {
   actif: 'Valeur invalide pour l’état du compte.',
   preparationAuto: 'La préparation automatique doit valoir oui ou non.',
   quotaDefautOctets: 'Le quota par défaut doit être un nombre d’octets positif.',
+  peutTorrent: 'Valeur invalide pour le droit d’ajouter des torrents.',
+  inscriptionsOuvertes: 'Les inscriptions doivent être ouvertes ou fermées (oui ou non).',
+  quotaInscriptionOctets: 'Le quota des inscrits doit être un nombre d’octets positif.',
+  torrentsInscrits: 'Les torrents des inscrits doivent valoir oui ou non.',
+  maxComptesInscrits: 'Le nombre maximal d’inscrits doit être un entier entre 0 et 1 000 000.',
 };
 
 /** Formateur d'erreurs de schéma Fastify : un message français précis par champ. */

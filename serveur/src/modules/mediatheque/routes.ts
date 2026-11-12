@@ -6,6 +6,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { CorpsModifierFilm, Film, VueFilms } from '@canape/partage';
 import { EXTENSIONS_SOUS_TITRES } from '@canape/partage';
 import { ErreurHttp, introuvable, requeteInvalide } from '../../commun/erreurs.ts';
+import { comptesCiblables } from '../comptes/connus.ts';
 import { type LigneFilm, type Mediatheque } from './mediatheque.ts';
 
 const VUES = new Set<VueFilms>(['miens', 'partages', 'tous']);
@@ -84,7 +85,7 @@ export function installerRoutes(app: FastifyInstance, med: Mediatheque): void {
       if (!Array.isArray(c.partages) || c.partages.some((n) => !Number.isInteger(n))) throw requeteInvalide('Liste de partage invalide.');
       const proprietaire = med.ligne(id)!.proprietaire_id;
       partages = [...new Set(c.partages)].filter((n) => n !== proprietaire);
-      const existants = new Set((app.db.prepare('SELECT id FROM utilisateurs WHERE actif = 1').all() as Array<{ id: number }>).map((r) => r.id));
+      const existants = comptesCiblables(app.db, req.utilisateur);
       if (partages.some((n) => !existants.has(n))) throw requeteInvalide('Un des comptes choisis n’existe pas.');
     }
     if (sets.length) app.db.prepare(`UPDATE films SET ${sets.join(', ')} WHERE id = ?`).run(...vals, id);
