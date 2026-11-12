@@ -1,6 +1,6 @@
 <script lang="ts">
   /**
-   * <Avatar prenom="Awa" couleur="#e892b0" taille={36} present />
+   * <Avatar prenom="Awa" couleur="#ff8fb4" taille={36} present />
    * Rond avec l'initiale sur la couleur de présence (texte #16101c, contour `--fond` pour se chevaucher).
    * - `couleur` : `#rrggbb` ; repli : lampe. - `taille` : 24 (chat), 36 (défaut), 56 (profil).
    * - `present` : pastille verte « est dans la salle ». - `decoratif` : masque l'avatar aux lecteurs d'écran

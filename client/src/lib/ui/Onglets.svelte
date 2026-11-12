@@ -63,15 +63,15 @@
 <style>
   .onglets {
     display: inline-flex; gap: 2px; padding: 4px; max-width: 100%; overflow-x: auto; scrollbar-width: none;
-    background: var(--s1); border: 1px solid var(--bord); border-radius: var(--r-pill);
+    background: var(--s1); border: 1px solid var(--bord); border-radius: var(--r-m);
   }
   .onglets::-webkit-scrollbar { display: none; }
   a, button {
-    display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 16px; border: 0; border-radius: var(--r-pill);
-    background: transparent; color: var(--doux); font: 500 14.5px/1 var(--texte-police); text-decoration: none; white-space: nowrap;
+    display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 16px; border: 0; border-radius: 9px;
+    background: transparent; color: var(--doux); font: 600 14.5px/1 var(--texte-police); text-decoration: none; white-space: nowrap;
     transition: background var(--d-1) var(--ease), color var(--d-1) var(--ease);
   }
-  .actif { background: var(--s3); color: var(--texte); }
+  .actif { background: var(--s3); color: var(--texte); box-shadow: inset 0 1px 0 var(--reflet), 0 1px 3px rgba(0, 0, 0, 0.4); }
   @media (hover: hover) { a:not(.actif):hover, button:not(.actif):hover { color: var(--texte); } }
   .nombre { color: var(--discret); font-size: 13px; }
   .actif .nombre { color: var(--doux); }

@@ -112,16 +112,16 @@ Ajouter un film par un lien magnet ou un fichier `.torrent` et suivre son télé
 - [x] Serveur : moteur WebTorrent dans un processus enfant, choix des fichiers, quota, import dans la galerie, reprise après redémarrage
 - [x] Interface : « Par torrent » (lien magnet ou `.torrent`), panneau « Téléchargements » avec progression, pause, reprise, annulation, choix des fichiers
 - [x] Livraison : dossier `/srv/canape/telechargements`, réglages d'exemple, guide de déploiement, README
-- [ ] Essais de bout en bout (pair local, sans Internet), release 1.1.0
+- [x] Essais de bout en bout (pair local, sans Internet), release 1.1.0
 
 ## Phase 14 — Design plus attirant, plus pro, plus facile
 
-- [ ] Recherche : applications de streaming et de visionnage à deux de 2026, palettes, typographie, composants
-- [ ] Nouvelle palette et jetons (contrastes AA vérifiés), typographie, élévations, mouvement
-- [ ] Kit d'interface et navigation repris (boutons, cartes, champs, modales, panneaux, états vides, chargements)
-- [ ] Écrans repris un par un : accueil, galerie et fiche, téléchargements, séances, salle, compte, administration, connexion et invitation
-- [ ] Facilité d'usage : premiers pas guidés, textes d'aide, messages d'erreur clairs, retours visuels, cibles tactiles
-- [ ] Captures avant / après (ordinateur et téléphone), DESIGN.md à jour, essais Playwright verts
+- [x] Recherche : applications de streaming et de visionnage à deux de 2026, palettes, typographie, composants
+- [x] Nouvelle palette et jetons (contrastes AA vérifiés), typographie, élévations, mouvement
+- [x] Kit d'interface et navigation repris (boutons, cartes, champs, modales, panneaux, états vides, chargements)
+- [x] Écrans repris un par un : accueil, galerie et fiche, téléchargements, séances, salle, compte, administration, connexion et invitation
+- [x] Facilité d'usage : premiers pas guidés, textes d'aide, messages d'erreur clairs, retours visuels, cibles tactiles
+- [x] Captures avant / après (ordinateur et téléphone), DESIGN.md à jour, essais Playwright verts
 - [ ] Release du nouveau design (version mineure : rien d'incompatible)
 
 ## Phase 15 — Inscription libre

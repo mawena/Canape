@@ -94,7 +94,7 @@
   .menu { position: relative; display: inline-flex; }
   .declencheur { display: inline-flex; align-items: center; justify-content: center; border: 0; background: transparent; color: var(--doux); padding: 0; }
   .rond { width: 44px; height: 44px; border-radius: 50%; }
-  .secondaire { min-height: 44px; padding: 0 18px; gap: 8px; border-radius: var(--r-pill); background: var(--s2); border: 1px solid var(--bord-champ); color: var(--texte); font: 600 15px/20px var(--texte-police); }
+  .secondaire { min-height: 44px; padding: 0 18px; gap: 8px; border-radius: var(--r-m); background: var(--s2); border: 1px solid var(--bord-champ); color: var(--texte); font: 650 15px/20px var(--texte-police); }
   .libre { border-radius: 50%; }
   @media (hover: hover) {
     .rond:hover { background: var(--s2); color: var(--texte); }
@@ -102,15 +102,15 @@
   }
   .pop {
     position: absolute; z-index: 60; top: calc(100% + 8px); min-width: 220px; padding: 6px;
-    background: var(--s2); border: 1px solid var(--bord-champ); border-radius: var(--r-m); box-shadow: var(--ombre-2);
+    background: var(--s2); border: 1px solid var(--bord-vif); border-radius: 16px; box-shadow: var(--ombre-3);
     animation: entree var(--d-2) var(--ease);
   }
   .pop.haut { top: auto; bottom: calc(100% + 8px); }
   .fin { right: 0; }
   .debut { left: 0; }
   .pop > :where(a, button) {
-    display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 0 12px; border: 0; border-radius: var(--r-s);
-    background: transparent; color: var(--texte); font: 400 15px/20px var(--texte-police); text-align: left; text-decoration: none; cursor: pointer;
+    display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 0 12px; border: 0; border-radius: 10px;
+    background: transparent; color: var(--texte); font: 500 15px/20px var(--texte-police); text-align: left; text-decoration: none; cursor: pointer;
   }
   .pop > :where(a, button):hover, .pop > :where(a, button):focus-visible { background: var(--s3); }
   .pop > :where(a, button):focus-visible { outline-offset: -3px; }
