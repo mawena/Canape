@@ -151,7 +151,7 @@ describe('séances : TURN configuré', () => {
     const { fauxMediatheque } = await import('./aides-seances.ts');
     const t = await creerAppTest({
       env: { CANAPE_TURN_URLS: 'turn:turn.exemple.test:3478', CANAPE_TURN_SECRET: 'secret-de-test' },
-      avantPret: (app) => { app.decorate('mediatheque', fauxMediatheque(app).service); },
+      avantPret: (app) => { app.mediatheque = fauxMediatheque(app).service; },
     });
     env = { ...t, port: 0 } as unknown as Env;
     u = await creerUtilisateur(env);

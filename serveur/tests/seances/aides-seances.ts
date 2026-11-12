@@ -60,7 +60,8 @@ export async function creerEnv(): Promise<Env> {
   const t = await creerAppTest({
     avantPret: (app) => {
       faux = fauxMediatheque(app);
-      app.decorate('mediatheque', faux.service);
+      // La vraie médiathèque est déjà enregistrée par creerApp : on la remplace par le faux service.
+      app.mediatheque = faux.service;
     },
   });
   await t.app.listen({ port: 0, host: '127.0.0.1' });

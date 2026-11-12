@@ -1,4 +1,6 @@
 // Accès à la base pour les séances (lignes SQL <-> types du partage).
+import { statSync } from 'node:fs';
+import path from 'node:path';
 import type { FastifyInstance } from 'fastify';
 import type { Film, MessageChat, MessageChatWs, ProgressionFilm, Seance, UtilisateurPublic } from '@canape/partage';
 import type { UtilisateurConnecte } from '../../commun/auth.ts';
@@ -85,7 +87,17 @@ interface LigneProgression {
   titre: string; annee: number | null; resume: string | null; genres: string | null; tmdb_id: number | null; nom_origine: string;
   taille: number; f_duree: number | null; etat: 'analyse' | 'pret' | 'erreur'; erreur: string | null;
   visibilite: 'prive' | 'partage' | 'tous'; affiche: string | null; fond: string | null; ajoute_le: string;
-  proprietaire_id: number; proprietaire_prenom: string;
+  proprietaire_id: number; proprietaire_prenom: string; couleur: string | null;
+}
+
+/** Même règle que la médiathèque : date de dernière écriture des images (cache du navigateur, `?v=`). */
+function versionImages(dossierFilms: string, l: LigneProgression): number {
+  let v = 0;
+  for (const rel of [l.affiche, l.fond]) {
+    if (!rel) continue;
+    try { v = Math.max(v, Math.floor(statSync(path.join(dossierFilms, rel)).mtimeMs / 1000)); } catch { /* image absente */ }
+  }
+  return v;
 }
 
 function genres(v: string | null): string[] {
@@ -102,7 +114,7 @@ export function progressions(app: FastifyInstance, u: UtilisateurConnecte, filtr
   const lignes = app.db.prepare(
     `SELECT p.film_id, p.position, p.duree, p.seance_id, p.termine, p.vu_le,
             f.titre, f.annee, f.resume, f.genres, f.tmdb_id, f.nom_origine, f.taille, f.duree AS f_duree, f.etat, f.erreur,
-            f.visibilite, f.affiche, f.fond, f.ajoute_le, f.proprietaire_id, o.prenom AS proprietaire_prenom
+            f.visibilite, f.affiche, f.fond, f.ajoute_le, f.proprietaire_id, f.couleur, o.prenom AS proprietaire_prenom
        FROM progression p JOIN films f ON f.id = p.film_id JOIN utilisateurs o ON o.id = f.proprietaire_id
       WHERE p.utilisateur_id = ? ${filtre === 'reprise' ? 'AND p.termine = 0 AND p.position >= 5' : ''}
       ORDER BY p.vu_le DESC`,
@@ -118,7 +130,7 @@ export function progressions(app: FastifyInstance, u: UtilisateurConnecte, filtr
       id: l.film_id, proprietaireId: l.proprietaire_id, proprietairePrenom: l.proprietaire_prenom, titre: l.titre, annee: l.annee,
       resume: l.resume, genres: genres(l.genres), tmdbId: l.tmdb_id, nomOrigine: l.nom_origine, taille: l.taille, duree: l.f_duree,
       etat: l.etat, erreur: l.erreur, visibilite: l.visibilite, partages, aAffiche: l.affiche !== null, aFond: l.fond !== null,
-      modifiable, ajouteLe: l.ajoute_le,
+      couleur: l.couleur, versionImages: versionImages(app.config.films, l), modifiable, ajouteLe: l.ajoute_le,
     };
     sortie.push({ film, position: l.position, duree: l.duree, seanceId: l.seance_id, termine: l.termine === 1, vuLe: l.vu_le });
     if (sortie.length >= limite) break;
