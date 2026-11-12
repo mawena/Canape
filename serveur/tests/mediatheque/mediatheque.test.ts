@@ -115,7 +115,7 @@ describe('médiathèque : téléversement tus', () => {
         endpoint: `${base}/api/televersement`, headers: { cookie: bob.cookie }, metadata: { filename: 'Repris.2020.mp4' },
         retryDelays: null, onError: reject, onSuccess: () => resolve(),
       });
-      up.resumeFromPreviousUpload({ uploadUrl: url, size: octets.length, metadata: {}, creationTime: '', urlStorageKey: 'x' });
+      up.resumeFromPreviousUpload({ uploadUrl: url, size: octets.length, metadata: {}, creationTime: '', urlStorageKey: 'x', parallelUploadUrls: null } as never);
       up.start();
     });
     const f = await attendreFilm(t, bob, 'pret');
