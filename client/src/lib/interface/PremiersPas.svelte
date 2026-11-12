@@ -33,7 +33,7 @@
     {
       id: 'inviter', titre: 'Invite quelqu’un', icone: 'utilisateurs', fait: personnes !== null && personnes > 1,
       action: estAdmin ? 'Créer une invitation' : '', href: estAdmin ? '/admin/invitations' : undefined,
-      texte: estAdmin ? 'Crée un lien d’invitation et envoie-le à la personne avec qui tu regardes.' : 'Demande à un administrateur de créer un compte pour la personne avec qui tu regardes.',
+      texte: estAdmin ? 'Crée un lien d’invitation et envoie-le à la personne avec qui tu regardes.' : 'Dis à la personne avec qui tu regardes de créer son compte (ou demande une invitation à un administrateur), puis ajoute-la par son identifiant.',
     },
     {
       id: 'seance', titre: 'Lance une séance', icone: 'popcorn', fait: seances > 0, action: 'Lancer une séance', href: liens.nouvelleSeance(),

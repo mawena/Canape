@@ -20,7 +20,7 @@ même temps, chacun avec son volume. Les caméras et les micros circulent direct
 ## Fonctions
 
 **Comptes et accès**
-- Pas d'inscription publique : l'administrateur invite par lien (valable 7 jours, usage unique).
+- Inscription libre (réglable) : n'importe qui peut créer son compte sur `/inscription` ; l'administrateur peut aussi inviter par lien (valable 7 jours, usage unique), fermer les inscriptions ou fixer leurs limites.
 - Deux rôles : `admin` et `viewer` ; quota d'espace par compte, droit de téléverser retirable.
 - Un film est privé par défaut ; son propriétaire le partage avec certains comptes ou avec tous.
 
@@ -160,6 +160,18 @@ inviter parmi les comptes). Chacun rejoint la salle, autorise sa caméra et son 
   `CANAPE_TURN_SECRET`, voir ci-dessous).
 - Les films lourds (4K, HDR) se préparent à l'avance depuis leur fiche ou automatiquement quand le serveur est calme.
 
+**Inscription libre, côté visiteur** : sur `/connexion`, le lien « Créer un compte » (visible seulement quand c'est ouvert)
+mène à `/inscription` : prénom, identifiant, mot de passe (au moins 10 caractères, jauge et confirmation), couleur, et la
+case « J'accepte les règles d'usage » (page `/regles`, lisible sans compte). Une fois inscrit, il arrive connecté sur
+l'accueil avec les premiers pas. Si l'administrateur a fermé les inscriptions (ou si le maximum est atteint), la page
+l'explique. Ses films restent privés tant qu'il ne les partage pas.
+
+**Inscription libre** : page Réglages de l'administration (ou `sudo canape admin inscriptions ouvrir|fermer`) :
+`inscriptionsOuvertes` (défaut : oui), `quotaInscriptionOctets` (défaut 20 Go par inscrit), `torrentsInscrits` (défaut :
+non, un inconnu ne fait pas télécharger de torrents au serveur sans ton accord ; le droit se donne compte par compte
+dans la page Comptes) et `maxComptesInscrits` (défaut 100). Un inscrit ne voit pas les autres comptes : il retrouve
+quelqu'un par son identifiant exact pour partager un film ou l'inviter à une séance.
+
 ## Configuration
 
 Réglages dans `/etc/canape/canape.conf` (format `CLÉ=valeur`, `#` pour un commentaire ; modèle commenté :
@@ -205,6 +217,7 @@ canape [--config <fichier>] <commande>
 
   serve                                              démarre le serveur
   admin inviter [--role admin|viewer] [--jours 7]    crée un lien d'invitation
+  admin inscriptions [ouvrir|fermer]                 ouvre ou ferme l'inscription libre (sans argument : état)
   admin reinitialiser <identifiant>                  crée un lien de réinitialisation de mot de passe
   films importer <dossier> --proprietaire <identifiant> [--copier]
                                                      importe des films existants (déplacés, ou copiés avec --copier)

@@ -4,6 +4,7 @@ import type { ListeSeances, ReponseIce, ReponseLienSeance, Seance } from '@canap
 import { ErreurHttp, introuvable, requeteInvalide } from '../../commun/erreurs.ts';
 import { idBase32, jetonAleatoire, maintenantIso, sha256Hex } from '../../commun/identifiants.ts';
 import { transaction } from '../../db/index.ts';
+import { comptesCiblables } from '../comptes/connus.ts';
 import { accesSeance, ligneSeance, messagesDe, progressions, versSeance, type LigneSeance } from './depot.ts';
 import type { Salles } from './salles.ts';
 import { serveursIce } from './turn.ts';
@@ -41,10 +42,12 @@ export function enregistrerRoutes(app: FastifyInstance, salles: Salles): void {
   const db = app.db;
   const pre = { preHandler: app.exigerConnexion };
 
-  function verifierInvites(ids: number[], hoteId: number): number[] {
+  function verifierInvites(ids: number[], hoteId: number, agent: { id: number; role: string }): number[] {
     const sains = ids.filter((i) => i !== hoteId);
+    // Même réponse pour un compte absent et pour un compte qu'on n'a pas le droit de viser (pas d'énumération).
+    const permis = comptesCiblables(db, agent);
     for (const i of sains) {
-      if (!db.prepare('SELECT 1 AS x FROM utilisateurs WHERE id = ? AND actif = 1').get(i)) throw requeteInvalide('Invité inconnu.');
+      if (!permis.has(i)) throw requeteInvalide('Invité inconnu.');
     }
     return sains;
   }
@@ -87,7 +90,7 @@ export function enregistrerRoutes(app: FastifyInstance, salles: Salles): void {
     if (!film || !app.mediatheque.peutVoir(u, film.id)) throw introuvable('Film introuvable.');
     const titre = c['titre'] === undefined ? null : titreValide(c['titre']);
     const prevueLe = c['prevueLe'] === undefined ? null : dateValide(c['prevueLe']);
-    const invites = verifierInvites(c['invites'] === undefined ? [] : listeIds(c['invites']), u.id);
+    const invites = verifierInvites(c['invites'] === undefined ? [] : listeIds(c['invites']), u.id, u);
     const id = idBase32();
     transaction(db, () => {
       db.prepare('INSERT INTO seances (id, hote_id, film_id, titre, prevue_le, position, cree_le) VALUES (?, ?, ?, ?, ?, 0, ?)')
@@ -119,7 +122,7 @@ export function enregistrerRoutes(app: FastifyInstance, salles: Salles): void {
     }
     const titre = c['titre'] === undefined ? undefined : titreValide(c['titre']);
     const prevueLe = c['prevueLe'] === undefined ? undefined : dateValide(c['prevueLe']);
-    const invites = c['invites'] === undefined ? undefined : verifierInvites(listeIds(c['invites']), ligne.hote_id);
+    const invites = c['invites'] === undefined ? undefined : verifierInvites(listeIds(c['invites']), ligne.hote_id, u);
     if (c['terminee'] !== undefined && typeof c['terminee'] !== 'boolean') throw requeteInvalide();
     transaction(db, () => {
       if (titre !== undefined) db.prepare('UPDATE seances SET titre = ? WHERE id = ?').run(titre, ligne.id);

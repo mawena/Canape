@@ -8,7 +8,7 @@ import { Upload } from 'tus-js-client';
 import type { Film } from '@canape/partage';
 import { importerFilmsCli } from '../../src/modules/mediatheque/cli.ts';
 import type { Mediatheque } from '../../src/modules/mediatheque/mediatheque.ts';
-import { creerAppTest, creerUtilisateur, get, patch, post, requete, supprimer, ORIGINE_TEST, type AppTest, type UtilisateurTest } from '../aides.ts';
+import { creerAppTest, creerUtilisateur, faireConnaitre, get, patch, post, requete, supprimer, ORIGINE_TEST, type AppTest, type UtilisateurTest } from '../aides.ts';
 
 const fixture = (n: string) => fileURLToPath(new URL(`./fixtures/${n}`, import.meta.url));
 const med = (t: AppTest) => t.app.mediatheque as unknown as Mediatheque;
@@ -204,6 +204,7 @@ describe('médiathèque : routes, droits, sous-titres, suppression', () => {
   });
 
   test('partage : l’ami voit le film mais ne peut pas le modifier ; vues de la galerie', async () => {
+    await faireConnaitre(t.app, proprio, ami);
     const r = await patch(t.app, `/api/films/${id}`, { visibilite: 'partage', partages: [ami.id] }, proprio);
     assert.deepEqual((r.json() as Film).partages, [ami.id]);
     const vu = await get(t.app, `/api/films/${id}`, ami);

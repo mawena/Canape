@@ -1,5 +1,5 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import { COOKIE_SESSION, type Role, type Utilisateur } from '@canape/partage';
+import { COOKIE_SESSION, type OrigineCompte, type Role, type Utilisateur } from '@canape/partage';
 import type { Config } from '../config.ts';
 import type { Base } from '../db/index.ts';
 import { interdit, nonConnecte } from './erreurs.ts';
@@ -22,6 +22,8 @@ export interface LigneUtilisateur {
   identifiant: string;
   role: Role;
   peut_televerser: number;
+  peut_torrent: number;
+  origine: OrigineCompte;
   quota_octets: number | null;
   actif: number;
   couleur: string | null;
@@ -37,6 +39,8 @@ export function versUtilisateur(l: LigneUtilisateur): Utilisateur {
     identifiant: l.identifiant,
     role: l.role,
     peutTeleverser: l.peut_televerser === 1,
+    peutTorrent: l.peut_torrent === 1,
+    origine: l.origine,
     quotaOctets: l.quota_octets,
     couleur: l.couleur,
     creeLe: l.cree_le,

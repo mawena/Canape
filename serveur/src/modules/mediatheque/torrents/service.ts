@@ -200,7 +200,14 @@ export class Torrents {
   }
 
   peutAjouter(u: UtilisateurConnecte): boolean {
-    return this.actif && (u.role === 'admin' || u.peutTeleverser);
+    return this.actif && (u.role === 'admin' || (u.peutTeleverser && u.peutTorrent));
+  }
+
+  /** 403 si le compte ne peut pas ajouter de torrent (message distinct quand seul `peut_torrent` manque). */
+  exigerDroit(u: UtilisateurConnecte): void {
+    if (this.peutAjouter(u)) return;
+    if (u.peutTeleverser && !u.peutTorrent) throw interdit("L'ajout par torrent n'est pas ouvert pour ton compte.");
+    throw interdit("Tu n'as pas le droit d'ajouter des films.");
   }
 
   /** Ligne visible par l'utilisateur (la sienne ; l'admin les voit toutes), sinon 404. */
@@ -251,7 +258,7 @@ export class Torrents {
 
   async ajouter(u: UtilisateurConnecte, source: SourceAjout): Promise<Telechargement> {
     if (!this.actif) throw interdit('Les torrents sont désactivés sur ce serveur.');
-    if (!this.peutAjouter(u)) throw interdit("Tu n'as pas le droit d'ajouter des films.");
+    this.exigerDroit(u);
     const doublon = this.db.prepare(`SELECT 1 FROM telechargements WHERE info_hash = ? AND (etat IN (${EN_COURS.map(() => '?').join(',')}) OR en_partage = 1)`)
       .get(source.infoHash, ...EN_COURS);
     if (doublon) throw new ErreurHttp(409, 'conflit', 'Ce torrent est déjà en cours de téléchargement.');

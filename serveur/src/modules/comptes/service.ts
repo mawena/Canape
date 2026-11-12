@@ -80,10 +80,19 @@ const entierPositif: Validateur = (v) => typeof v === 'number' && Number.isInteg
 export const REGLAGES_VALIDES: Record<keyof Reglages, Validateur> = {
   preparationAuto: (v) => typeof v === 'boolean',
   quotaDefautOctets: entierPositif,
+  inscriptionsOuvertes: (v) => typeof v === 'boolean',
+  quotaInscriptionOctets: entierPositif,
+  torrentsInscrits: (v) => typeof v === 'boolean',
+  maxComptesInscrits: (v) => entierPositif(v) && (v as number) <= 1_000_000,
 };
 
+const GIGA = 1024 ** 3;
+
 export function reglagesParDefaut(config: Config): Reglages {
-  return { preparationAuto: config.preparationAuto, quotaDefautOctets: config.quotaDefaut };
+  return {
+    preparationAuto: config.preparationAuto, quotaDefautOctets: config.quotaDefaut,
+    inscriptionsOuvertes: true, quotaInscriptionOctets: 20 * GIGA, torrentsInscrits: false, maxComptesInscrits: 100,
+  };
 }
 
 /** Tous les réglages : valeurs enregistrées, sinon celles de la configuration. */

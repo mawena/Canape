@@ -2,6 +2,8 @@
 
 export type Role = 'admin' | 'viewer';
 
+export type OrigineCompte = 'installation' | 'invitation' | 'inscription';
+
 /** Compte complet, tel que le voit son propriétaire (et l'admin). Jamais de mot de passe. */
 export interface Utilisateur {
   id: number;
@@ -9,6 +11,10 @@ export interface Utilisateur {
   identifiant: string;
   role: Role;
   peutTeleverser: boolean;
+  /** Peut ajouter des films par torrent (en plus de `peutTeleverser`). */
+  peutTorrent: boolean;
+  /** Comment le compte est né : premier admin, invitation, ou inscription libre (`/inscription`). */
+  origine: OrigineCompte;
   /** Quota en octets ; `null` = illimité. */
   quotaOctets: number | null;
   couleur: string | null;
@@ -28,7 +34,34 @@ export interface EtatApi {
   version: string;
   utilisateur: Utilisateur | null;
   installationRequise: boolean;
+  /** Les inscriptions libres sont ouvertes (lien « Créer un compte » sur la page de connexion). */
+  inscriptionOuverte: boolean;
 }
+
+/** `GET /api/inscription` (libre) */
+export interface EtatInscription {
+  ouverte: boolean;
+  /** Pourquoi c'est fermé, en français (`null` si ouvert) : fermées par l'admin, ou complètes. */
+  raison: string | null;
+  /** Jeton anti-robot signé et horodaté, à renvoyer avec le formulaire (valable de 3 s à 2 h après l'avoir reçu). */
+  jeton: string | null;
+}
+
+/** `POST /api/inscription` (libre) → 201 + cookie de session + `Utilisateur`. */
+export interface CorpsInscription {
+  prenom: string;
+  identifiant: string;
+  motDePasse: string;
+  couleur?: string;
+  /** Case « J'accepte les règles d'usage » (`/regles`) : obligatoire. */
+  accepteRegles: boolean;
+  jeton: string;
+  /** Champ piège invisible pour les robots : doit rester vide. */
+  site?: string;
+}
+
+/** Longueur minimale d'un mot de passe choisi à l'inscription. */
+export const MOT_DE_PASSE_MIN_INSCRIPTION = 10;
 
 /** `POST /api/connexion` */
 export interface CorpsConnexion {
@@ -106,6 +139,14 @@ export interface Reglages {
   preparationAuto: boolean;
   /** Quota (octets) donné à un nouveau compte viewer. */
   quotaDefautOctets: number;
+  /** Inscriptions libres ouvertes (`/inscription`). */
+  inscriptionsOuvertes: boolean;
+  /** Quota (octets) d'un compte né d'une inscription libre. */
+  quotaInscriptionOctets: number;
+  /** Un compte né d'une inscription libre peut ajouter des films par torrent. */
+  torrentsInscrits: boolean;
+  /** Nombre maximal de comptes nés d'une inscription libre (au-delà : « Les inscriptions sont complètes »). */
+  maxComptesInscrits: number;
 }
 
 /** Ligne de `GET /api/admin/invitations`. */

@@ -1,5 +1,5 @@
 // Règles de navigation de l'interface : quelles routes gèrent elles-mêmes la connexion, laquelle est la salle.
-export const ROUTES_LIBRES = [/^\/connexion(\/|$)/, /^\/invitation(\/|$)/, /^\/rejoindre(\/|$)/];
+export const ROUTES_LIBRES = [/^\/connexion(\/|$)/, /^\/invitation(\/|$)/, /^\/rejoindre(\/|$)/, /^\/inscription(\/|$)/, /^\/regles(\/|$)/];
 
 /** Routes qui gèrent elles-mêmes l'accès (connexion, invitation, lien de séance) : pas de garde, pas de navigation. */
 export function estRouteLibre(chemin: string): boolean {
