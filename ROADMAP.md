@@ -41,12 +41,12 @@ passent en même temps. Conception : [docs/CONCEPTION.md](docs/CONCEPTION.md).
 
 Canapé est une application web déployée sur un serveur à soi, derrière nginx : pas de paquet Ubuntu.
 
-- [ ] Retrait du paquet Debian, du dépôt APT, du site et de leurs scripts
-- [ ] Unité systemd durcie et fichier de réglages d'exemple (`deploiement/`)
-- [ ] Configuration nginx : HTTPS (Let's Encrypt), WebSocket, envoi des films
-- [ ] Script de déploiement depuis le poste (`deploiement/deployer.sh`)
-- [ ] README : déploiement, nginx, HTTPS, TURN, configuration, utilisation, développement
-- [ ] Mise en ligne sur le serveur
+- [x] Retrait du paquet Debian, du dépôt APT, du site et de leurs scripts
+- [x] Unité systemd durcie et fichier de réglages d'exemple (`deploiement/`)
+- [x] Configuration nginx : HTTPS (Let's Encrypt), WebSocket, envoi des films
+- [x] Script de déploiement depuis le poste (`deploiement/deployer.sh`)
+- [x] README : déploiement, nginx, HTTPS, TURN, configuration, utilisation, développement
+- [ ] Mise en ligne sur le VPS, à l'adresse https://canape.mawena.cloud (déploiement fait par l'utilisateur)
 
 ## Phase 6 — Release
 

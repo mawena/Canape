@@ -1,9 +1,0 @@
-Dépôt APT de Canapé : https://mawena.github.io/Canape/apt (branche gh-pages).
-
-canape.gpg      clé publique de signature (format binaire, sans armure)
-canape.sources  source deb822 installée dans /etc/apt/sources.list.d/
-
-Clé de signature : « Canapé APT (mawena) <57989130+mawena@users.noreply.github.com> »
-Empreinte : 1815 E2DB B0A8 04AC 536A  745B 7CE1 26A8 2EFB F1C9
-ed25519, sans phrase de passe, créée le 11/11/2026, valable 3 ans.
-Publication : scripts/publier-apt.sh dist/canape_<version>_all.deb (ou make apt).

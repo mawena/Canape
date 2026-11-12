@@ -1,3 +1,0 @@
-debian/canape.conf etc/canape
-data/apt/canape.sources etc/apt/sources.list.d
-data/apt/canape.gpg usr/share/keyrings
