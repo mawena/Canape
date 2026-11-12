@@ -1,4 +1,5 @@
 // Téléversement tus 1.0 sur /api/televersement, branché sur Fastify (@tus/server + @tus/file-store).
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { readdir, rm, stat } from 'node:fs/promises';
 import path from 'node:path';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
@@ -10,7 +11,8 @@ import { extensionVideoPlausible } from './noms.ts';
 import type { Mediatheque } from './mediatheque.ts';
 
 const PREFIXE = '/api/televersement';
-const EN_TETE_UTILISATEUR = 'x-canape-utilisateur';
+/** Utilisateur de la requête tus en cours (lu par les hooks de @tus/server, qui s'exécutent dans le même contexte). */
+const contexte = new AsyncLocalStorage<number>();
 const INACTIVITE_MS = 24 * 3600_000;
 
 /** Décode l'en-tête `Upload-Metadata` (`clé base64,clé base64`). */
@@ -48,8 +50,8 @@ export function installerTeleversement(app: FastifyInstance, med: Mediatheque): 
     relativeLocation: true,
     maxSize: config.televersementMax,
     namingFunction: () => idBase32(16),
-    async onUploadCreate(req, upload) {
-      const utilisateurId = Number(req.headers.get(EN_TETE_UTILISATEUR));
+    async onUploadCreate(_req, upload) {
+      const utilisateurId = contexte.getStore() ?? 0;
       if (!Number.isInteger(utilisateurId) || utilisateurId <= 0) throw { status_code: 401, body: 'Connexion requise.\n' };
       db.prepare('INSERT INTO televersements (id, utilisateur_id, nom, taille, cree_le) VALUES (?, ?, ?, ?, ?)')
         .run(upload.id, utilisateurId, upload.metadata?.['filename'] ?? '', upload.size ?? 0, maintenantIso());
@@ -114,9 +116,8 @@ export function installerTeleversement(app: FastifyInstance, med: Mediatheque): 
         reply.raw.once('close', () => { db.prepare('DELETE FROM televersements WHERE id = ?').run(id); });
       }
     }
-    req.raw.headers[EN_TETE_UTILISATEUR] = String(u.id);
     reply.hijack();
-    await tus.handle(req.raw, reply.raw);
+    await contexte.run(u.id, () => tus.handle(req.raw, reply.raw));
   };
 
   for (const route of [PREFIXE, `${PREFIXE}/*`]) {

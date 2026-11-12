@@ -61,8 +61,9 @@ export async function extraireImages(
         `[f]format=yuvj420p[o1];[a]crop=w='min(iw,ih*2/3)':h=ih,scale=600:900,format=yuvj420p[o2]`;
       const r = await executer(
         'ffmpeg',
-        ['-v', 'error', '-y', '-ss', meilleur.t.toFixed(3), '-i', fichier, '-an', '-sn', '-frames:v', '1',
-          '-filter_complex', graphe, '-map', '[o1]', '-q:v', '3', fond, '-map', '[o2]', '-q:v', '3', affiche],
+        ['-v', 'error', '-y', '-ss', meilleur.t.toFixed(3), '-i', fichier, '-an', '-sn', '-filter_complex', graphe,
+          '-map', '[o1]', '-frames:v', '1', '-update', '1', '-q:v', '3', fond,
+          '-map', '[o2]', '-frames:v', '1', '-update', '1', '-q:v', '3', affiche],
         { nice },
       );
       if (r.code === 0 && (await stat(affiche).catch(() => null)) && (await stat(fond).catch(() => null))) {
