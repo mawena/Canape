@@ -46,7 +46,7 @@ Canapé est une application web déployée sur un serveur à soi, derrière ngin
 - [x] Configuration nginx : HTTPS (Let's Encrypt), WebSocket, envoi des films
 - [x] Script de déploiement depuis le poste (`deploiement/deployer.sh`)
 - [x] README : déploiement, nginx, HTTPS, TURN, configuration, utilisation, développement
-- [ ] Mise en ligne sur le VPS, à l'adresse https://canape.mawena.cloud (déploiement fait par l'utilisateur)
+- [x] Mise en ligne sur le VPS, à l'adresse https://canape.mawena.cloud (déploiement fait par l'utilisateur)
 
 ## Phase 6 — Release
 
