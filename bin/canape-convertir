@@ -77,6 +77,11 @@ for film in "${films[@]}"; do
     [ -n "${index:-}" ] || continue
     case "$codec" in subrip|srt|ass|ssa|mov_text|webvtt|text) ;; *) continue ;; esac
     langue="${langue:-}"; [ "$langue" = "und" ] && langue=""
+    # ffmpeg donne des codes ISO 639-2 (fra, eng…) ; le serveur et le navigateur attendent 639-1 (fr, en…)
+    case "${langue,,}" in
+      fra|fre) langue=fr ;; eng) langue=en ;; spa) langue=es ;; deu|ger) langue=de ;; ita) langue=it ;;
+      por) langue=pt ;; nld|dut) langue=nl ;; *) langue="${langue,,}" ;;
+    esac
     suffixe="${langue:+.$langue}"
     vtt="$dossier/$base$suffixe.vtt"
     if [ -e "$vtt" ] && [ "$forcer" -ne 1 ]; then continue; fi
