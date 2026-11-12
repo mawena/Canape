@@ -38,7 +38,7 @@
 
 <div
   class="vignette" class:parle={personne.parle} class:petite class:grande class:rangee={enRangee} class:sans-image={sansImage}
-  data-test="vignette" data-cid={personne.cid} data-parle={personne.parle} data-moi={personne.soi}
+  data-test="vignette" data-cid={personne.cid} data-parle={personne.parle} data-moi={personne.soi} data-pair={personne.pair}
   role="group" aria-label={personne.parle ? `${personne.utilisateur.prenom} parle` : nom}
   ondblclick={surGrande}
 >

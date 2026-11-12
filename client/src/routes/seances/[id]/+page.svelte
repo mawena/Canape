@@ -6,7 +6,7 @@
   - Commandes : `commandes`, `lecture`, `lancer-ensemble`, `reculer`, `avancer`, `barre-temps`, `volumes`, `vol-film`, `vol-voix`,
     `vol-personne`, `baisse-film`, `langue-st`, `menu-langue`, `langue-<index>`, `st-aucun`, `st-<cle>`, `micro`, `camera`,
     `bouton-chat`, `je-reviens`, `plein-ecran`, `reaction-1` à `reaction-8`
-  - Vignettes : `vignettes`, `vignette` (attributs `data-cid`, `data-parle`, `data-moi`), `menu-vignette`, `afficher-cameras`
+  - Vignettes : `vignettes`, `vignette` (attributs `data-cid`, `data-parle`, `data-moi`, `data-pair` : new|connecting|connected…), `menu-vignette`, `afficher-cameras`
   - Chat : `chat`, `saisie-chat`, `message` ; réactions flottantes : `reaction`
   - Voiles : `compte-a-rebours`, `attente`, `ne-plus-attendre`, `reprise`, `reprendre-position`, `depuis-le-debut`,
     `lecture-bloquee`, `reprendre-ici`, `erreur-lecture`, `sans-film`, `fin-seance`, `quitter-fin`
