@@ -150,16 +150,16 @@
 </main>
 
 <style>
-  .sas { min-height: 100dvh; display: grid; place-items: center; padding: 16px; background: var(--fond, #14111a); color: var(--texte, #f4eee7); }
-  .carte { width: min(520px, 100%); background: var(--s1, #1c1824); border-radius: 22px; padding: 24px; display: grid; gap: 14px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5); }
+  .sas { min-height: 100dvh; display: grid; place-items: center; padding: 16px; background: var(--fond, #0d0c12); color: var(--texte, #f7f3ee); }
+  .carte { width: min(520px, 100%); background: var(--s1, #15141c); border-radius: 22px; padding: 24px; display: grid; gap: 14px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5); }
   h1 { font-family: 'Instrument Serif', var(--titre, Georgia, serif); font-size: 2rem; font-weight: 400; margin: 0; }
   .sous { margin: -8px 0 0; color: var(--doux, #b9afc4); }
   .apercu { position: relative; aspect-ratio: 4 / 3; border-radius: 14px; overflow: hidden; background: var(--s3, #312a3d); display: grid; place-items: center; }
   .apercu video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
   .apercu.sans-image video { visibility: hidden; }
-  .initiale { font-family: 'Instrument Serif', Georgia, serif; font-size: 3rem; width: 96px; height: 96px; border-radius: 50%; background: var(--lampe, #f4a85b); color: #16101c; display: grid; place-items: center; }
+  .initiale { font-family: 'Instrument Serif', Georgia, serif; font-size: 3rem; width: 96px; height: 96px; border-radius: 50%; background: var(--lampe, #ffb347); color: #16101c; display: grid; place-items: center; }
   .boutons { display: flex; align-items: center; gap: 12px; }
-  .rond { width: 44px; height: 44px; border-radius: 50%; border: 0; display: grid; place-items: center; background: var(--s3, #312a3d); color: var(--texte, #f4eee7); }
+  .rond { width: 44px; height: 44px; border-radius: 50%; border: 0; display: grid; place-items: center; background: var(--s3, #312a3d); color: var(--texte, #f7f3ee); }
   .rond.coupe { background: rgba(255, 127, 112, 0.16); color: var(--mal, #ff7f70); }
   .rond:disabled { opacity: 0.45; }
   .vu { flex: 1; height: 8px; border-radius: 4px; background: var(--s3, #312a3d); overflow: hidden; }
@@ -167,8 +167,8 @@
   .info { margin: 0; padding: 10px 12px; border-radius: 10px; background: rgba(255, 209, 102, 0.12); color: var(--alerte, #ffd166); font-size: 0.9rem; }
   .champs { display: grid; gap: 10px; grid-template-columns: 1fr 1fr; }
   label { display: grid; gap: 4px; font-size: 0.85rem; color: var(--doux, #b9afc4); }
-  select { background: var(--s2, #262031); border: 1px solid var(--bord-champ, #857a95); border-radius: 10px; padding: 8px; color: var(--texte, #f4eee7); min-width: 0; }
-  .casque { display: flex; align-items: center; gap: 8px; color: var(--texte, #f4eee7); font-size: 0.95rem; }
+  select { background: var(--s2, #262031); border: 1px solid var(--bord-champ, #857a95); border-radius: 10px; padding: 8px; color: var(--texte, #f7f3ee); min-width: 0; }
+  .casque { display: flex; align-items: center; gap: 8px; color: var(--texte, #f7f3ee); font-size: 0.95rem; }
   .conseil { margin: -8px 0 0; font-size: 0.85rem; color: var(--discret, #9a90a7); }
   .actions { display: flex; justify-content: space-between; gap: 12px; margin-top: 4px; }
   @media (max-width: 480px) { .champs { grid-template-columns: 1fr; } }

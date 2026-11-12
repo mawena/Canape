@@ -79,17 +79,17 @@
 {/if}
 
 <style>
-  .voile { position: absolute; inset: 0; z-index: 4; display: grid; place-content: center; justify-items: center; gap: 10px; text-align: center; padding: 24px; background: rgba(20, 17, 26, 0.55); color: #fff; }
-  .voile.carte { inset: auto; left: 50%; top: 50%; transform: translate(-50%, -50%); background: var(--s1, #1c1824); border-radius: 22px; padding: 24px 28px; z-index: 7; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6); max-width: min(440px, 90vw); }
-  .voile.compte { background: rgba(8, 6, 12, 0.4); backdrop-filter: blur(2px); z-index: 7; }
-  .voile.fin { background: rgba(20, 17, 26, 0.88); z-index: 8; }
+  .voile { position: absolute; inset: 0; z-index: 4; display: grid; place-content: center; justify-items: center; gap: 10px; text-align: center; padding: 24px; background: rgba(13, 12, 18, 0.55); color: #fff; }
+  .voile.carte { inset: auto; left: 50%; top: 50%; transform: translate(-50%, -50%); background: var(--s1, #15141c); border-radius: 22px; padding: 24px 28px; z-index: 7; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6); max-width: min(440px, 90vw); }
+  .voile.compte { background: rgba(6, 5, 10, 0.4); backdrop-filter: blur(2px); z-index: 7; }
+  .voile.fin { background: rgba(13, 12, 18, 0.88); z-index: 8; }
   h2, .grand { font: 400 1.7rem 'Instrument Serif', Georgia, serif; margin: 0; }
   .voile.fin h2 { font-size: 3.5rem; }
   .chiffre { font: 400 104px/1 'Instrument Serif', Georgia, serif; margin: 0; animation: fondu 200ms; }
   .auteur, .petit { margin: 0; color: var(--doux, #b9afc4); }
   p { margin: 0; }
   .actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 8px; }
-  .anneau { width: 56px; height: 56px; border-radius: 50%; border: 4px solid rgba(255, 255, 255, 0.15); border-top-color: var(--lampe, #f4a85b); animation: tour 1.1s linear infinite; }
+  .anneau { width: 56px; height: 56px; border-radius: 50%; border: 4px solid rgba(255, 255, 255, 0.15); border-top-color: var(--lampe, #ffb347); animation: tour 1.1s linear infinite; }
   .voile.attente { pointer-events: none; }
   .voile.attente :global(button) { pointer-events: auto; }
   @keyframes tour { to { transform: rotate(360deg); } }

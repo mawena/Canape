@@ -32,7 +32,7 @@
 
   const connexion = $derived(!personne.soi && (personne.pair === 'new' || personne.pair === 'connecting'));
   const sansImage = $derived(!personne.camera || personne.imagePerdue || !personne.flux);
-  const couleur = $derived(personne.utilisateur.couleur ?? '#f4a85b');
+  const couleur = $derived(personne.utilisateur.couleur ?? '#ffb347');
   const nom = $derived(personne.soi ? `${personne.utilisateur.prenom} (moi)` : personne.utilisateur.prenom);
 </script>
 
@@ -92,17 +92,17 @@
   .sans-image video { visibility: hidden; }
   .initiale { position: absolute; inset: 0; margin: auto; width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; font: 400 2rem 'Instrument Serif', Georgia, serif; color: #16101c; }
   .rangee .initiale, .petite .initiale { width: 40px; height: 40px; font-size: 1.4rem; }
-  .anneau { position: absolute; inset: 0; margin: auto; width: 68px; height: 68px; border-radius: 50%; border: 3px solid transparent; border-top-color: var(--lampe, #f4a85b); animation: tour 1.1s linear infinite; }
+  .anneau { position: absolute; inset: 0; margin: auto; width: 68px; height: 68px; border-radius: 50%; border: 3px solid transparent; border-top-color: var(--lampe, #ffb347); animation: tour 1.1s linear infinite; }
   @keyframes tour { to { transform: rotate(360deg); } }
-  .puce { position: absolute; top: 6px; left: 6px; display: inline-flex; gap: 4px; align-items: center; padding: 2px 8px; border-radius: 999px; font-size: 11px; background: rgba(20, 17, 26, 0.8); color: var(--alerte, #ffd166); }
+  .puce { position: absolute; top: 6px; left: 6px; display: inline-flex; gap: 4px; align-items: center; padding: 2px 8px; border-radius: 999px; font-size: 11px; background: rgba(13, 12, 18, 0.8); color: var(--alerte, #ffd166); }
   .pied { position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: center; gap: 6px; padding: 14px 8px 5px; background: linear-gradient(transparent, rgba(0, 0, 0, 0.75)); color: #fff; font-size: 12px; font-weight: 600; }
   .parle .nom { color: var(--ok, #6fd9b1); }
   .pied :global(.rouge) { color: var(--mal, #ff7f70); }
   .nom { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
-  .plus { position: absolute; top: 4px; right: 4px; width: 28px; height: 28px; border-radius: 50%; border: 0; background: rgba(20, 17, 26, 0.7); color: #fff; display: grid; place-items: center; opacity: 0; transition: opacity 160ms; }
+  .plus { position: absolute; top: 4px; right: 4px; width: 28px; height: 28px; border-radius: 50%; border: 0; background: rgba(13, 12, 18, 0.7); color: #fff; display: grid; place-items: center; opacity: 0; transition: opacity 160ms; }
   .vignette:hover .plus, .plus:focus-visible, .plus[aria-expanded='true'] { opacity: 1; }
   .menu { position: absolute; z-index: 5; top: 34px; right: 4px; display: grid; min-width: 220px; padding: 6px; border-radius: 12px; background: var(--s2, #262031); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6); }
-  .menu button { background: none; border: 0; color: var(--texte, #f4eee7); text-align: left; padding: 8px 10px; border-radius: 8px; font-size: 0.9rem; }
+  .menu button { background: none; border: 0; color: var(--texte, #f7f3ee); text-align: left; padding: 8px 10px; border-radius: 8px; font-size: 0.9rem; }
   .menu button:hover, .menu button:focus-visible { background: var(--s3, #312a3d); }
   .vol { display: grid; gap: 4px; padding: 6px 10px; font-size: 0.8rem; color: var(--doux, #b9afc4); }
   @media (prefers-reduced-motion: reduce) { .anneau { animation: none; } }

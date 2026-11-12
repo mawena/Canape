@@ -53,8 +53,8 @@
 
 <style>
   dialog {
-    background: var(--s2); color: var(--texte); border: 1px solid var(--bord-champ); border-radius: var(--r-l);
-    padding: var(--e-6); width: min(440px, calc(100vw - 32px)); max-height: calc(100dvh - 48px);
+    background: var(--s2); color: var(--texte); border: 1px solid var(--bord-vif); border-radius: var(--r-xl);
+    padding: var(--e-7) var(--e-7) var(--e-6); width: min(440px, calc(100vw - 32px)); max-height: calc(100dvh - 48px);
     box-shadow: var(--ombre-4); overflow: auto; margin: auto;
   }
   dialog.large { width: min(640px, calc(100vw - 32px)); }
@@ -62,7 +62,7 @@
   dialog::backdrop { background: var(--voile); }
   .poignee { display: none; }
   header { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--e-3); margin-bottom: var(--e-2); }
-  h2 { font: 400 1.8rem / 1.1 var(--titre); }
+  h2 { font: 700 1.375rem / 1.25 var(--texte-police); letter-spacing: -0.02em; }
   .x { display: grid; place-items: center; width: 36px; height: 36px; margin: -4px -8px 0 0; background: none; border: 0; border-radius: 50%; color: var(--doux); flex: none; }
   @media (hover: hover) { .x:hover { color: var(--texte); background: var(--s3); } }
   .corps { display: grid; gap: var(--e-3); color: var(--doux); }
@@ -71,7 +71,7 @@
 
   @media (max-width: 640px) {
     dialog {
-      width: 100%; max-width: 100%; margin: auto 0 0; border-radius: var(--r-l) var(--r-l) 0 0; border-bottom: 0;
+      width: 100%; max-width: 100%; margin: auto 0 0; border-radius: var(--r-xl) var(--r-xl) 0 0; border-bottom: 0;
       padding-bottom: calc(var(--e-6) + env(safe-area-inset-bottom));
     }
     dialog[open] { animation: monte var(--d-2) var(--ease); }

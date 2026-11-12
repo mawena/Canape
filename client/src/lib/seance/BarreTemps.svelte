@@ -65,6 +65,6 @@
   .zone:hover .rail, .zone:focus-visible .rail { height: 10px; }
   .tampon, .lu { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 3px; }
   .tampon { background: rgba(255, 255, 255, 0.28); }
-  .lu { background: var(--lampe, #f4a85b); }
-  .poignee { position: absolute; top: 50%; width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%; background: var(--lampe-vive, #ffbf7d); box-shadow: 0 0 0 5px rgba(244, 168, 91, 0.25); }
+  .lu { background: var(--lampe, #ffb347); }
+  .poignee { position: absolute; top: 50%; width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%; background: var(--lampe-vive, #ffbf7d); box-shadow: 0 0 0 5px rgba(255, 179, 71, 0.25); }
 </style>

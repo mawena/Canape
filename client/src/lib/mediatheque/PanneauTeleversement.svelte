@@ -67,12 +67,12 @@
 <input bind:this={selecteur} type="file" accept="video/*,.mkv,.mp4,.m4v,.mov,.avi,.webm,.ts,.m2ts" hidden onchange={choisir} />
 
 <style>
-  .panneau { background: var(--s1, #1c1824); border: 1px solid var(--bord, #3d3549); border-radius: 14px; padding: 8px 14px; }
+  .panneau { background: var(--s1, #15141c); border: 1px solid var(--bord, #3d3549); border-radius: 14px; padding: 8px 14px; }
   ul { list-style: none; margin: 0; padding: 0; display: grid; }
   .envoi { display: grid; gap: 8px; padding: 12px 0; }
   .envoi + .envoi { border-top: 1px solid var(--bord, #3d3549); }
   .ligne { display: flex; align-items: center; gap: 10px; }
-  .icone { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 10px; background: var(--s2, #262031); color: var(--lampe, #f4a85b); }
+  .icone { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 10px; background: var(--s2, #262031); color: var(--lampe, #ffb347); }
   .fini .icone { color: var(--ok, #6fd9b1); }
   .erreur .icone { color: var(--mal, #ff7f70); }
   .erreur { outline: 1px solid rgba(255, 127, 112, 0.6); outline-offset: 4px; border-radius: 10px; }

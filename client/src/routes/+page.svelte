@@ -229,7 +229,7 @@
   .hero.chargement { align-items: start; }
   .lignes { display: grid; gap: 14px; }
   .affiche-hero { filter: drop-shadow(0 0 60px color-mix(in srgb, var(--lampe) 30%, transparent)); }
-  .affiche-hero :global(.affiche) { box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 90px -10px rgba(244, 168, 91, 0.5); }
+  .affiche-hero :global(.affiche) { box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 90px -10px rgba(255, 179, 71, 0.5); }
   .contenu { display: grid; gap: var(--e-3); min-width: 0; justify-items: start; }
   .puces { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
   .compte { font-weight: 600; color: var(--lampe); font-size: 16px; }

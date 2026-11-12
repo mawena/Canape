@@ -52,8 +52,8 @@
   input::-moz-range-progress { height: 6px; border-radius: 999px; background: var(--lampe); }
   input::-webkit-slider-thumb {
     appearance: none; width: 20px; height: 20px; margin-top: -7px; border-radius: 50%; border: 0;
-    background: var(--lampe-vive); box-shadow: 0 0 0 5px rgba(244, 168, 91, 0.25);
+    background: var(--lampe-vive); box-shadow: 0 0 0 5px rgba(255, 179, 71, 0.25);
   }
-  input::-moz-range-thumb { width: 20px; height: 20px; border-radius: 50%; border: 0; background: var(--lampe-vive); box-shadow: 0 0 0 5px rgba(244, 168, 91, 0.25); }
+  input::-moz-range-thumb { width: 20px; height: 20px; border-radius: 50%; border: 0; background: var(--lampe-vive); box-shadow: 0 0 0 5px rgba(255, 179, 71, 0.25); }
   input:focus-visible { outline: 3px solid var(--lampe-vive); outline-offset: 0; border-radius: 999px; }
 </style>

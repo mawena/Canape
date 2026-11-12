@@ -54,20 +54,20 @@
 </aside>
 
 <style>
-  .chat { position: absolute; z-index: 6; bottom: 120px; top: 70px; width: 300px; display: flex; flex-direction: column; border-radius: 22px; background: rgba(28, 24, 36, 0.82); backdrop-filter: blur(16px); color: var(--texte, #f4eee7); overflow: hidden; }
+  .chat { position: absolute; z-index: 6; bottom: 120px; top: 70px; width: 300px; display: flex; flex-direction: column; border-radius: 22px; background: rgba(28, 24, 36, 0.82); backdrop-filter: blur(16px); color: var(--texte, #f7f3ee); overflow: hidden; }
   .chat.gauche { left: 16px; }
   .chat.droite { right: 16px; }
   header { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px 4px; }
   h2 { font: 400 1.25rem 'Instrument Serif', Georgia, serif; margin: 0; }
   .x { background: none; border: 0; color: var(--doux, #b9afc4); display: grid; padding: 4px; }
   .liste { flex: 1; overflow-y: auto; padding: 8px 12px; display: flex; flex-direction: column; gap: 4px; }
-  .auteur { font-size: 12px; font-weight: 600; color: var(--rose, #e892b0); margin-top: 6px; }
+  .auteur { font-size: 12px; font-weight: 600; color: var(--rose, #ff8fb4); margin-top: 6px; }
   .bulle { margin: 0; padding: 8px 12px; background: var(--s3, #312a3d); border-radius: 4px 16px 16px 16px; max-width: 85%; align-self: flex-start; overflow-wrap: anywhere; white-space: pre-wrap; font-size: 0.92rem; }
-  .bulle.soi { align-self: flex-end; background: var(--lampe-fond, rgba(244, 168, 91, 0.14)); border-radius: 16px 4px 16px 16px; }
+  .bulle.soi { align-self: flex-end; background: var(--lampe-fond, rgba(255, 179, 71, 0.14)); border-radius: 16px 4px 16px 16px; }
   .systeme { margin: 6px 0; text-align: center; color: var(--discret, #9a90a7); font-size: 13px; }
   form { position: relative; display: flex; gap: 6px; padding: 8px 10px 12px; align-items: flex-end; }
   textarea { flex: 1; resize: none; background: var(--s2, #262031); border: 1px solid var(--bord-champ, #857a95); border-radius: 20px; padding: 9px 14px; color: inherit; max-height: 96px; }
-  form button { width: 38px; height: 38px; border-radius: 50%; border: 0; background: var(--lampe, #f4a85b); color: var(--lampe-sur, #1d1208); display: grid; place-items: center; }
+  form button { width: 38px; height: 38px; border-radius: 50%; border: 0; background: var(--lampe, #ffb347); color: var(--lampe-sur, #1a1006); display: grid; place-items: center; }
   form button:disabled { opacity: 0.4; }
   .compteur { position: absolute; right: 56px; top: -4px; font-size: 11px; color: var(--alerte, #ffd166); }
   @media (max-width: 1024px) {

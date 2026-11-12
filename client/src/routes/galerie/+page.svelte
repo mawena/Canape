@@ -198,10 +198,10 @@
   .entete { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
   h1 { font-family: var(--titre, 'Instrument Serif', Georgia, serif); font-size: 2.4rem; margin: 0; font-weight: 400; }
   .outils { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
-  .onglets { display: flex; gap: 4px; background: var(--s1, #1c1824); border: 1px solid var(--bord, #3d3549); border-radius: 999px; padding: 3px; overflow-x: auto; max-width: 100%; }
+  .onglets { display: flex; gap: 4px; background: var(--s1, #15141c); border: 1px solid var(--bord, #3d3549); border-radius: 999px; padding: 3px; overflow-x: auto; max-width: 100%; }
   .onglets button { background: none; border: 0; border-radius: 999px; padding: 7px 16px; height: 36px; color: var(--doux, #b9afc4); white-space: nowrap; }
-  .onglets button.actif { background: var(--s3, #312a3d); color: var(--texte, #f4eee7); }
-  .recherche, select { background: var(--s2, #262031); border: 1px solid var(--bord-champ, #857a95); border-radius: 12px; padding: 9px 12px; color: var(--texte, #f4eee7); height: 42px; }
+  .onglets button.actif { background: var(--s3, #312a3d); color: var(--texte, #f7f3ee); }
+  .recherche, select { background: var(--s2, #262031); border: 1px solid var(--bord-champ, #857a95); border-radius: 12px; padding: 9px 12px; color: var(--texte, #f7f3ee); height: 42px; }
   .recherche { flex: 1; min-width: 180px; }
   .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
   .erreur { color: var(--mal, #ff7f70); }
@@ -211,6 +211,6 @@
   .option > :global(svg) { color: var(--lampe); flex: none; }
   .option span { display: grid; gap: 2px; }
   .option .t-petit { color: var(--doux); }
-  .voile { position: fixed; inset: 0; z-index: 50; background: rgba(8, 6, 12, 0.7); display: grid; place-items: center; pointer-events: none; }
-  .voile p { margin: 0; padding: 48px 72px; border: 2px dashed var(--lampe, #f4a85b); background: var(--lampe-fond, rgba(244, 168, 91, 0.14)); border-radius: 22px; font-family: var(--titre, 'Instrument Serif', Georgia, serif); font-size: 1.9rem; }
+  .voile { position: fixed; inset: 0; z-index: 50; background: rgba(6, 5, 10, 0.7); display: grid; place-items: center; pointer-events: none; }
+  .voile p { margin: 0; padding: 48px 72px; border: 2px dashed var(--lampe, #ffb347); background: var(--lampe-fond, rgba(255, 179, 71, 0.14)); border-radius: 22px; font-family: var(--titre, 'Instrument Serif', Georgia, serif); font-size: 1.9rem; }
 </style>

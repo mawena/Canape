@@ -167,7 +167,7 @@
   form, section { display: grid; gap: 12px; }
   .films, .comptes { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; max-height: 280px; overflow-y: auto; }
   .film { display: block; padding: 10px 14px; border-radius: 12px; background: var(--s2, #262031); cursor: pointer; border: 1px solid transparent; }
-  .film.choisi { border-color: var(--lampe, #f4a85b); background: var(--lampe-fond, rgba(244, 168, 91, 0.14)); }
+  .film.choisi { border-color: var(--lampe, #ffb347); background: var(--lampe-fond, rgba(255, 179, 71, 0.14)); }
   .film input { position: absolute; opacity: 0; }
   .film:focus-within { outline: 2px solid var(--lampe-vive, #ffbf7d); }
   .case { display: flex; gap: 10px; align-items: center; }

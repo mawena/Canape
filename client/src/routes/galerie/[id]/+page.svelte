@@ -168,7 +168,7 @@
     <div class="fond" aria-hidden="true">
       {#if f.aFond}<img src={urlImage(f, 'fond')} alt="" />{/if}
     </div>
-    <article class="fiche" style:--lueur={f.couleur ?? '#f4a85b'}>
+    <article class="fiche" style:--lueur={f.couleur ?? '#ffb347'}>
       <div class="affiche-bloc">
         <div class="affiche">
           {#if f.aAffiche}<img src={urlImage(f, 'affiche')} alt={`Affiche de ${f.titre}`} />{:else}<span>{f.titre}</span>{/if}
@@ -327,12 +327,12 @@
   .fiche { display: grid; gap: 28px; margin-top: 12px; }
   @media (min-width: 760px) { .fiche { grid-template-columns: 280px minmax(0, 1fr); } }
   .affiche-bloc { display: grid; justify-items: center; align-content: start; }
-  .affiche { width: min(280px, 60vw); aspect-ratio: 2 / 3; border-radius: 10px; overflow: hidden; background: var(--s2, #262031); box-shadow: 0 24px 60px color-mix(in srgb, var(--lueur) 35%, transparent), 0 6px 18px rgba(8, 6, 12, 0.5); display: grid; place-items: end start; }
+  .affiche { width: min(280px, 60vw); aspect-ratio: 2 / 3; border-radius: 10px; overflow: hidden; background: var(--s2, #262031); box-shadow: 0 24px 60px color-mix(in srgb, var(--lueur) 35%, transparent), 0 6px 18px rgba(6, 5, 10, 0.5); display: grid; place-items: end start; }
   .affiche img { width: 100%; height: 100%; object-fit: cover; }
   .affiche span { padding: 16px; font-family: var(--titre, 'Instrument Serif', Georgia, serif); font-size: 1.6rem; }
   h1 { font-family: var(--titre, 'Instrument Serif', Georgia, serif); font-size: clamp(2rem, 5vw, 3rem); line-height: 1.05; margin: 0; font-weight: 400; }
   .sous-titre { color: var(--doux, #b9afc4); margin: 6px 0 14px; }
-  .resume { max-width: 65ch; color: var(--texte, #f4eee7); line-height: 1.55; }
+  .resume { max-width: 65ch; color: var(--texte, #f7f3ee); line-height: 1.55; }
   .puces { list-style: none; padding: 0; margin: 14px 0; display: flex; flex-wrap: wrap; gap: 8px; }
   .puce { display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 0 12px; border-radius: 999px; background: var(--s2, #262031); font-size: 0.8125rem; margin: 0; }
   .puce.alerte { color: var(--alerte, #ffd166); }
@@ -345,7 +345,7 @@
   .discret { color: var(--discret, #9a90a7); }
   dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; }
   dt { color: var(--discret, #9a90a7); } dd { margin: 0; overflow-wrap: anywhere; }
-  .lien { background: none; border: 0; color: var(--lampe, #f4a85b); text-decoration: underline; padding: 0 4px; }
+  .lien { background: none; border: 0; color: var(--lampe, #ffb347); text-decoration: underline; padding: 0 4px; }
   fieldset { border: 0; padding: 0; margin: 12px 0; display: grid; gap: 8px; }
   .radio { display: inline-flex; gap: 8px; align-items: center; }
   .comptes { margin: 8px 0 12px 4px; }
@@ -353,11 +353,11 @@
   .erreur { color: var(--mal, #ff7f70); }
   .formulaire { display: grid; gap: 14px; }
   .zone { display: grid; gap: 6px; font-size: 0.85rem; color: var(--doux, #b9afc4); }
-  textarea, .recherche { background: var(--s2, #262031); border: 1px solid var(--bord-champ, #857a95); border-radius: 10px; padding: 10px 12px; color: var(--texte, #f4eee7); font: inherit; width: 100%; }
+  textarea, .recherche { background: var(--s2, #262031); border: 1px solid var(--bord-champ, #857a95); border-radius: 10px; padding: 10px 12px; color: var(--texte, #f7f3ee); font: inherit; width: 100%; }
   .rangee { display: flex; gap: 8px; }
   .candidats { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 6px; max-height: 220px; overflow: auto; }
-  .candidats button { width: 100%; text-align: left; background: var(--s1, #1c1824); border: 1px solid var(--bord, #3d3549); border-radius: 10px; padding: 8px 10px; display: grid; gap: 2px; }
-  .candidats button:hover { border-color: var(--lampe, #f4a85b); }
+  .candidats button { width: 100%; text-align: left; background: var(--s1, #15141c); border: 1px solid var(--bord, #3d3549); border-radius: 10px; padding: 8px 10px; display: grid; gap: 2px; }
+  .candidats button:hover { border-color: var(--lampe, #ffb347); }
   .candidats small { color: var(--discret, #9a90a7); }
   .boutons { display: flex; justify-content: flex-end; gap: 8px; }
 </style>

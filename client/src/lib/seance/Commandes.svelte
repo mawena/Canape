@@ -140,32 +140,32 @@
 </div>
 
 <style>
-  .commandes { display: grid; gap: 4px; padding: 40px 24px 16px; background: linear-gradient(transparent, rgba(8, 6, 12, 0.9)); color: #fff; }
+  .commandes { display: grid; gap: 4px; padding: 40px 24px 16px; background: linear-gradient(transparent, rgba(6, 5, 10, 0.9)); color: #fff; }
   .rangee { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
   .groupe { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
   button { color: inherit; font: inherit; }
   .rond, .lecture, .emoji { position: relative; border: 0; background: transparent; display: grid; place-items: center; border-radius: 50%; transition: background 120ms; }
   .rond { width: 44px; height: 44px; }
   .rond:hover:not(:disabled), .emoji:hover { background: rgba(255, 255, 255, 0.12); }
-  .rond.actif { background: var(--lampe-fond, rgba(244, 168, 91, 0.14)); color: var(--lampe, #f4a85b); }
+  .rond.actif { background: var(--lampe-fond, rgba(255, 179, 71, 0.14)); color: var(--lampe, #ffb347); }
   .rond.coupe { background: rgba(255, 127, 112, 0.16); color: var(--mal, #ff7f70); }
   .rond:disabled, .lecture:disabled { opacity: 0.4; cursor: not-allowed; }
-  .lecture { width: 52px; height: 52px; background: var(--texte, #f4eee7); color: var(--fond, #14111a); }
-  .texte { display: inline-flex; gap: 6px; align-items: center; border: 0; padding: 8px 14px; border-radius: 999px; background: var(--lampe-fond, rgba(244, 168, 91, 0.14)); color: var(--lampe, #f4a85b); font-weight: 600; }
-  .puce { display: inline-flex; gap: 4px; align-items: center; padding: 3px 10px; border-radius: 999px; background: rgba(20, 17, 26, 0.7); font-size: 12px; color: var(--alerte, #ffd166); }
-  .reactions { background: rgba(20, 17, 26, 0.7); border-radius: 999px; padding: 2px 6px; gap: 0; }
+  .lecture { width: 52px; height: 52px; background: var(--texte, #f7f3ee); color: var(--fond, #0d0c12); }
+  .texte { display: inline-flex; gap: 6px; align-items: center; border: 0; padding: 8px 14px; border-radius: 999px; background: var(--lampe-fond, rgba(255, 179, 71, 0.14)); color: var(--lampe, #ffb347); font-weight: 600; }
+  .puce { display: inline-flex; gap: 4px; align-items: center; padding: 3px 10px; border-radius: 999px; background: rgba(13, 12, 18, 0.7); font-size: 12px; color: var(--alerte, #ffd166); }
+  .reactions { background: rgba(13, 12, 18, 0.7); border-radius: 999px; padding: 2px 6px; gap: 0; }
   .emoji { width: 40px; height: 40px; font-size: 20px; }
-  .pastille { position: absolute; top: 8px; right: 8px; width: 10px; height: 10px; border-radius: 50%; background: var(--lampe, #f4a85b); }
+  .pastille { position: absolute; top: 8px; right: 8px; width: 10px; height: 10px; border-radius: 50%; background: var(--lampe, #ffb347); }
   .menu-ancre { position: relative; }
   .popover { position: absolute; bottom: 52px; left: 0; z-index: 8; min-width: 260px; display: grid; gap: 10px; padding: 12px 14px; border-radius: 14px; background: var(--s2, #262031); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6); }
   .popover label { display: grid; gap: 4px; font-size: 0.85rem; color: var(--doux, #b9afc4); }
-  .popover label.case { display: flex; gap: 8px; align-items: center; color: var(--texte, #f4eee7); }
+  .popover label.case { display: flex; gap: 8px; align-items: center; color: var(--texte, #f7f3ee); }
   .popover select { background: var(--s3, #312a3d); border: 1px solid var(--bord-champ, #857a95); color: inherit; border-radius: 8px; padding: 6px; }
   fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 6px; }
   legend { font-size: 0.8rem; color: var(--discret, #9a90a7); margin-bottom: 4px; }
   .vide { margin: 0; color: var(--discret, #9a90a7); font-size: 0.85rem; }
   @media (max-width: 640px) {
-    .commandes { padding: 8px 12px 12px; background: var(--s1, #1c1824); }
+    .commandes { padding: 8px 12px 12px; background: var(--s1, #15141c); }
     .rond { width: 48px; height: 48px; }
     .reactions { width: 100%; justify-content: space-between; order: 3; }
     .emoji { width: 38px; height: 38px; }

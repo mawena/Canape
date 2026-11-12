@@ -64,7 +64,7 @@
 <style>
   main { min-height: 100%; display: grid; place-content: center; justify-items: center; gap: var(--espace-3); padding: var(--espace-5) var(--espace-4); }
   h1 { color: var(--or); text-align: center; }
-  .accroche { color: var(--doux); font-family: var(--titre); font-style: italic; margin: 0 0 var(--espace-3); text-align: center; }
+  .accroche { color: var(--doux); font-family: var(--titre); margin: 0 0 var(--espace-3); text-align: center; }
   main :global(.carte) { width: min(400px, calc(100vw - 2 * var(--espace-4))); }
   form { display: grid; gap: var(--espace-3); }
   .voir { color: var(--doux); font-size: 0.9rem; display: flex; gap: var(--espace-2); align-items: center; }

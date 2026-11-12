@@ -76,7 +76,7 @@
   h1 { font: 400 2.2rem 'Instrument Serif', var(--titre, Georgia, serif); margin: 0; }
   .onglets { display: flex; gap: 4px; }
   .onglets button { background: none; border: 0; padding: 8px 14px; border-radius: 999px; color: var(--doux, #b9afc4); }
-  .onglets button[aria-selected='true'] { background: var(--lampe-fond, rgba(244, 168, 91, 0.14)); color: var(--lampe, #f4a85b); }
+  .onglets button[aria-selected='true'] { background: var(--lampe-fond, rgba(255, 179, 71, 0.14)); color: var(--lampe, #ffb347); }
   ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
   .ligne { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
   .infos { flex: 1; display: grid; min-width: 180px; }
