@@ -78,7 +78,8 @@ export async function connecter(contexte: BrowserContext, s: ServeurCanape, comp
 }
 
 /** Téléverse un fichier par tus (un seul morceau) pour le compte du contexte ; rend l'identifiant du film. */
-export async function televerser(s: ServeurCanape, requete: APIRequestContext, nom: string, nomEnvoye = nom): Promise<number> {
+export async function televerser(s: ServeurCanape, requete: APIRequestContext, nom: string, nomEnvoye = nom): Promise<string> {
+  const avant = ((await (await requete.get(`${s.url}/api/films?vue=miens`)).json()) as Array<{ id: string }>).map((f) => f.id);
   const chemin = cheminMedia(nom);
   const octets = readFileSync(chemin);
   const b64 = Buffer.from(nomEnvoye).toString('base64');
@@ -94,18 +95,18 @@ export async function televerser(s: ServeurCanape, requete: APIRequestContext, n
     data: octets,
   });
   expect(envoi.status(), await envoi.text()).toBeLessThan(300);
-  return await attendreFilmPret(s, requete);
+  return await attendreFilmPret(s, requete, avant);
 }
 
-/** Attend que le film le plus récent de l'utilisateur soit prêt ; rend son identifiant. */
-export async function attendreFilmPret(s: ServeurCanape, requete: APIRequestContext): Promise<number> {
-  let id = 0;
+/** Attend qu'un film absent de `avant` soit prêt ; rend son identifiant. */
+export async function attendreFilmPret(s: ServeurCanape, requete: APIRequestContext, avant: string[]): Promise<string> {
+  let id = '';
   await expect.poll(async () => {
     const r = await requete.get(`${s.url}/api/films?vue=miens`);
-    const films = (await r.json()) as Array<{ id: number; etat: string }>;
-    const f = films.reduce<{ id: number; etat: string } | undefined>((m, x) => (!m || x.id > m.id ? x : m), undefined);
+    const films = (await r.json()) as Array<{ id: string; etat: string }>;
+    const f = films.find((x) => !avant.includes(x.id));
     if (f?.etat === 'erreur') throw new Error('Le film est passé en erreur.');
-    id = f?.id ?? 0;
+    id = f?.id ?? '';
     return f?.etat;
   }, { timeout: 60_000, intervals: [500] }).toBe('pret');
   return id;
