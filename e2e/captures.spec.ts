@@ -59,6 +59,11 @@ test('captures des écrans principaux', async ({ ouvrir, monde }, info) => {
   await photo('/admin', 'admin');
   await photo('/admin/utilisateurs', 'admin-comptes');
   await photo('/admin/invitations', 'admin-invitations');
+  await photo('/admin/lecture', 'admin-conversions');
+  await photo(`/galerie/${premier}`, 'fiche-lecteur', async () => {
+    await page.getByRole('button', { name: 'Regarder seul' }).click();
+    await page.locator('[data-test="lecteur-seul"] video').evaluate((v: HTMLVideoElement) => { v.muted = true; v.currentTime = 6; return v.play(); });
+  });
 
   // Salle à deux : sas, puis la salle avec les deux vignettes et un échange de messages.
   await page.goto(`/seances/${seanceId}`);
@@ -82,6 +87,9 @@ test('captures des écrans principaux', async ({ ouvrir, monde }, info) => {
     await page.getByRole('button', { name: /Fermer/ }).first().click().catch(() => page.getByTestId('bouton-chat').click({ force: true }));
   }
   await page.getByTestId('reaction-1').click();
+  await page.getByTestId('lecture').click();
+  await expect(b.page.getByTestId('salle')).toHaveAttribute('data-lecture', 'true');
+  await expect.poll(() => b.page.getByTestId('film').evaluate((v: HTMLVideoElement) => v.currentTime), { timeout: 20_000 }).toBeGreaterThan(3);
   await page.waitForTimeout(900);
   await page.screenshot({ path: path.join(sortie, `${nom}-salle.png`) });
   await b.page.screenshot({ path: path.join(sortie, `${nom}-salle-viewer.png`) });
