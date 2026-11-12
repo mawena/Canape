@@ -301,3 +301,277 @@ veryfast**. Un décodage par saut d'images (`-skip_frame` / `-vf select`) est im
 - Dolby Vision profil 5 vert/violet : https://forum.jellyfin.org/t-dolby-vision-p5-is-pink-green-and-tone-mapping-won-t-work
 - ffmpeg, filtre `tonemap` / `zscale` : https://ffmpeg.org/ffmpeg-filters.html#tonemap ; https://ffmpeg.org/ffmpeg-filters.html#zscale
 - ffmpeg, muxer hls : https://ffmpeg.org/ffmpeg-formats.html#hls-2
+
+---
+
+## 2. Synchronisation (Syncplay, Jellyfin SyncPlay, Teleparty, 0.1)
+
+### 2.1 Ce que font les autres **[mémoire / doc : non rejoué]**
+
+- **Syncplay** : état de salle côté serveur (position, pause) ; chaque client envoie sa position environ chaque
+  seconde avec le temps d'aller-retour ; la position des autres est **compensée de la latence** (RTT/2) ; **ralentissement**
+  (×0,95) quand on est en avance d'environ 1,5 s (« slow down threshold »), **retour/avance par saut** au-delà de
+  ~4 s (« rewind threshold ») ; **attente des retardataires** : le serveur met en pause pour tous tant qu'un
+  participant n'est pas « prêt » (fichier chargé). Pas de temps de calendrier : tout est relatif à la salle.
+- **Jellyfin SyncPlay** : l'horloge serveur est estimée par un échange de type NTP (plusieurs mesures, on garde celle à
+  plus faible RTT) ; les ordres de lecture/pause/saut sont **planifiés à un instant serveur futur** (`When`), pour que
+  tous les clients agissent ensemble ; correction de dérive par **vitesse** (« SpeedToSync », entre ~60 ms et ~3 s d'écart,
+  durée ~1 s) puis par **saut** (« SkipToSync » au-delà de ~400 ms si activé), décalage manuel (`extraTimeOffset`) ;
+  état « buffering » : chaque client signale qu'il charge, le groupe attend les autres (`WaitingForReady`).
+- **Teleparty** : sans correction fine : lecture/pause/saut diffusés ; resynchronisation par saut quand l'écart dépasse
+  un seuil (quelques secondes) ; pas d'horloge partagée. C'est le moins précis, à ne pas imiter.
+
+### 2.2 Ce que la 0.1 fait déjà bien (à garder tel quel)
+
+`git show v0.1.0:docs/PROTOCOLE.md` : position **à un instant serveur** (`position`, `instant`, `version`) ; horloge par
+`ping`/`pong`, meilleur des 10 derniers par plus petit RTT ; rattrapage par **saut > 1 s**, par **vitesse 1,05/0,95
+entre 0,3 et 1 s** jusqu'à < 0,1 s ; attente mutuelle (`tampon`) ; **aucun écho** d'événement (appliquer un état reçu
+n'envoie rien). C'est l'équivalent de SyncPlay + SpeedToSync : à reprendre.
+
+### 2.3 Ce qu'il faut améliorer avec HLS à la volée
+
+1. **Saut et segment lent** : un saut sur une position non tamponnée coûte 2 à 15 s (relance de ffmpeg). Règle de
+   rattrapage en mode `hls` : saut seulement si la cible est **déjà dans `video.buffered`** ou si l'écart dépasse 4 s ;
+   sinon vitesse seulement. Les seuils 0,3 / 1 s de la 0.1 restent bons en mode direct.
+2. **Un `aller` / reprise / changement de piste devient une barrière** : le serveur met `etat.attente` = tous les
+   `cid` et repasse en lecture quand chacun a envoyé `tampon {enCours:false}` **après** `seeked` + `canplay`
+   (`readyState >= 3` et `buffered` couvre ≥ 2 s devant). **Délai maximal** (ex. 20 s) : au-delà, le retardataire est
+   marqué « en retard », le salon repart sans lui et il rattrape par saut (sinon un client bloqué fige tout le monde).
+3. **Reprise planifiée** (compte à rebours et fin d'attente) : le serveur diffuse `lecture` avec `instant = maintenant + 1 s`
+   (ou +3 s pour le compte à rebours) ; chaque client **démarre à `instant` converti en heure locale** par l'estimation
+   d'horloge (c'est le principe de `When` de Jellyfin) : les lancements sont alors simultanés à ~50 ms.
+4. **Pré-chargement avant la reprise** : `video.play()` est appelé quand la barrière est levée, pas avant ; hls.js a déjà
+   chargé les segments pendant l'attente (`maxBufferLength` ≥ 30 s).
+5. **Ne jamais corriger pendant un chargement** : ignorer le rattrapage si `video.readyState < 3`, pendant `seeking`,
+   ou 2 s après un saut (sinon boucle saut → chargement → saut).
+6. **Position précise** : lire `requestVideoFrameCallback` (`metadata.mediaTime`) plutôt que `currentTime` pour
+   comparer à l'attendu quand c'est disponible (Chrome, Safari ; Firefox ≥ 132 **[mémoire]**), `currentTime` sinon.
+7. **Rythme des messages** : `lecture`/`pause`/`aller` immédiats ; `progression` toutes les 10 s ; la dérive est
+   corrigée **localement** (chaque client compare à l'état serveur), **pas** par échange de positions entre clients
+   (le serveur n'a besoin que de l'état et des `tampon`).
+8. **Hôte** : tout participant peut commander (0.1) ; un ordre porte la `version` vue : le serveur écarte un ordre
+   fondé sur une version périmée de plus de 300 ms (évite deux « pause/lecture » croisés), au prix d'un refus
+   silencieux : renvoyer l'état courant.
+9. **Rafale de commandes pendant la barrière** (quelqu'un clique 10 fois sur la barre) : fusionner côté client
+   (debounce 250 ms) avant d'envoyer `aller`.
+
+Sources : https://github.com/Syncplay/syncplay (protocole, `syncplay/constants.py` : seuils) ;
+https://github.com/jellyfin/jellyfin-web/tree/master/src/plugins/syncPlay (`core/Manager.js`, `core/PlaybackCore.js`,
+`core/TimeSyncCore.js`) ; 0.1 : `git show v0.1.0:docs/PROTOCOLE.md`.
+
+---
+
+## 3. tus avec Fastify 5 (`@tus/server` 2.4.7, `@tus/file-store` 2.1.2, `tus-js-client` 4.3.1)
+
+**[essai]** : script `recherche/tus/essai.mjs` (Fastify 5.12.8 + `@tus/server` + `tus-js-client`, Node 26.4) :
+envoi de 2,5 Mo accepté ; 4 Mo refusé **507** (hook `onUploadCreate`) ; 6 Mo refusé **413** (`maxSize`) ; sans cookie
+**401** (`onIncomingRequest`) ; `onUploadFinish` appelé avec `upload.metadata`.
+
+### 3.1 Intégration (testée)
+
+```ts
+const tus = new Server({
+  path: '/api/televersement',
+  datastore: new FileStore({ directory: cfg.televersements, expirationPeriodInMilliseconds: 24 * 3600_000 }),
+  maxSize: cfg.televersementMax,            // 413 automatique
+  respectForwardedHeaders: true,            // Location correcte derrière nginx (X-Forwarded-Proto/Host)
+  async onIncomingRequest(req, id) {        // req = objet Request web (req.headers.get('cookie'))
+    const user = await authentifier(req.headers.get('cookie'));   // 401 sinon
+    if (!user?.peutTeleverser) throw { status_code: user ? 403 : 401, body: 'refusé' };
+  },
+  async onUploadCreate(req, upload) {       // upload.size = taille déclarée (Upload-Length)
+    if (upload.size == null) throw { status_code: 400, body: 'taille requise' };   // refuse Upload-Defer-Length
+    if (quotaDepasse(user, upload.size)) throw { status_code: 507, body: 'quota dépassé' };
+    return { metadata: { ...upload.metadata, proprietaire: String(user.id) } };   // propriétaire = session, jamais le client
+  },
+  async onUploadFinish(req, upload) { await finaliser(upload); return {}; },      // déplacer, créer le film, analyser
+});
+app.addContentTypeParser('application/offset+octet-stream', (_req, _payload, done) => done(null));   // corps non lu par Fastify
+app.all('/api/televersement', (req, reply) => { reply.hijack(); tus.handle(req.raw, reply.raw); });
+app.all('/api/televersement/*', (req, reply) => { reply.hijack(); tus.handle(req.raw, reply.raw); });
+```
+- `reply.hijack()` est **indispensable** : sans lui Fastify tente de répondre une seconde fois.
+- Le corps `application/offset+octet-stream` doit passer par un analyseur qui **ne consomme pas** le flux (`done(null)`),
+  et `bodyLimit` de Fastify ne s'applique plus (le contrôle de taille est `maxSize` de tus).
+- Les hooks lèvent `{ status_code, body }` pour répondre un statut précis.
+- **Piège** : `onIncomingRequest` reçoit une `Request` web (pas `req.raw`), `req.headers.get(...)`. Pour récupérer
+  l'utilisateur dans `onUploadCreate`, **ne pas compter** sur le partage d'un objet entre hooks (non vérifié) : relire la
+  session à chaque hook (une requête SQLite, négligeable) ou la mettre en métadonnée côté serveur.
+- **Ne jamais faire confiance** à `filename` de `Upload-Metadata` pour un chemin : le nom du fichier final est
+  `<id>/original.<ext>` avec `ext` filtrée (liste blanche : mkv, mp4, m4v, mov, webm, avi, ts, wmv, flv, ogv, mpg).
+- **Fin d'envoi** : `onUploadFinish` s'exécute **avant** la réponse du dernier `PATCH` : y faire vite (déplacer le fichier
+  `rename` — même système de fichiers que `CANAPE_FILMS`, sinon copie lente — et lancer l'analyse ffprobe en tâche de
+  fond) ; l'événement `EVENTS.POST_FINISH` existe aussi pour le « après ».
+- **Quota « avec envois en cours »** : table `televersements` (contrat) : insérer en `onUploadCreate`, supprimer sur fin,
+  résiliation (`EVENTS.POST_TERMINATE`) ou expiration. La taille réservée = `upload.size` déclaré.
+- **Nettoyage des envois abandonnés** : `expirationPeriodInMilliseconds` sur le `FileStore` + appel périodique de
+  `tus.cleanUpExpiredUploads()` (toutes les heures, `setInterval(...).unref()`) ; l'extension « expiration » ne
+  concerne que les envois **incomplets** (test : 0 supprimé pour un envoi terminé) ; recouper avec la table
+  `televersements` et le dossier (fichiers `<id>` + `<id>.json`).
+- **Verrou** : le `locker` par défaut est en mémoire : suffisant, un seul processus.
+
+### 3.2 Client (`tus-js-client` 4.x) **[doc]**
+
+```ts
+new tus.Upload(file, {
+  endpoint: '/api/televersement',
+  chunkSize: 50 * 1024 * 1024,                                  // contrat : 50 Mo ; doit rester < client_max_body_size
+  retryDelays: [0, 1000, 3000, 5000, 10000, 20000, 30000],
+  onShouldRetry: (err) => { const s = err.originalResponse?.getStatus(); return !s || s >= 500 || s === 429 || s === 409; },
+  metadata: { filename: file.name, filetype: file.type },
+  removeFingerprintOnSuccess: true,
+});
+// reprise après rechargement de la page : empreinte (nom+taille+date+endpoint) gardée dans localStorage
+const precedents = await upload.findPreviousUploads();
+if (precedents.length) upload.resumeFromPreviousUpload(precedents[0]);
+upload.start();
+```
+- `onShouldRetry` : ne pas réessayer sur 401/403/413/507 (inutile) ; **un 404/410 à la reprise** = envoi expiré côté
+  serveur : relancer **sans** `resumeFromPreviousUpload` (`upload.start()` crée un nouvel envoi).
+- Pause/reprise de l'interface : `upload.abort()` (sans `true`, **sans** terminer l'envoi côté serveur) puis `start()`.
+- Cookies : même origine, `credentials` par défaut (`same-origin`) : aucun réglage ; pas de CORS.
+- `parallelUploads: 1` (un gros fichier) ; plusieurs fichiers : un `Upload` à la fois par file côté client.
+
+### 3.3 nginx devant **[doc / mémoire]**
+
+```nginx
+location /api/televersement {
+  client_max_body_size 64m;          # un PATCH = 50 Mo + en-têtes
+  proxy_request_buffering off;       # le corps part tout de suite au serveur, pas dans /var/lib/nginx
+  proxy_buffering off;
+  proxy_http_version 1.1;
+  proxy_read_timeout 300s; proxy_send_timeout 300s;
+  proxy_set_header Host $host; proxy_set_header X-Forwarded-Proto $scheme; proxy_set_header X-Forwarded-For $remote_addr;
+  proxy_pass http://127.0.0.1:8080;
+}
+```
+Sans `proxy_request_buffering off`, nginx écrit chaque morceau de 50 Mo sur disque avant de le transmettre
+(latence, pic d'E/S). **Piège** : le `Location` renvoyé par tus doit être en `https://` : d'où `respectForwardedHeaders` +
+`X-Forwarded-Proto` (ou `relativeLocation: true`, plus simple et indépendant du proxy).
+
+Sources : https://github.com/tus/tus-node-server/tree/main/packages/server ; https://tus.io/protocols/resumable-upload ;
+https://github.com/tus/tus-js-client/blob/main/docs/api.md
+
+---
+
+## 4. WebRTC : négociation, écho, qualité, TURN
+
+### 4.1 « Perfect negotiation » : le bug de la 0.1
+
+Lecture de `git show v0.1.0:public/js/appel.js` : deux `RTCPeerConnection` par paire, `polite = moi > id`, `faisOffre`
+posé pendant `setLocalDescription()`, `ignoreOffre = !polite && collision`. Le commentaire du code dit la cause : quand les deux
+pairs font une offre au même instant, la résolution (rollback implicite du côté poli par `setRemoteDescription(offer)`)
+**laisse parfois Chrome avec un transport ICE qui ne démarre jamais** (`connectionState` « new »). Contournement de la
+0.1 : `attendreOffre` (le nouvel arrivant n'offre pas, il laisse offrir ceux déjà là). **Recommandation 1.0** :
+
+1. **Initiateur déterministe, négociation parfaite en secours** : à l'arrivée de B, **c'est B qui est répondeur** ; les
+   présents A offrent (déjà la 0.1) ; après la première connexion, seules des renégociations (`restartIce`, ajout de
+   piste) peuvent entrer en collision : là seulement la règle polite/impolite s'applique.
+2. **Deux transceivers `sendrecv` créés d'avance** (audio et vidéo) et pistes posées par `replaceTrack` : **aucune
+   renégociation** quand la caméra ou le micro arrive/part (déjà la 0.1 : à garder). Ne pas utiliser `addTrack`/
+   `removeTrack` en cours d'appel.
+3. Code canonique (spec W3C « perfect negotiation ») : `makingOffer` positionné **avant** l'`await` et remis à
+   `false` dans `finally` ; `offerCollision = description.type === 'offer' && (makingOffer || pc.signalingState !== 'stable')` ;
+   le pair **poli** accepte (rollback implicite via `setRemoteDescription`), l'impoli ignore **et ignore aussi les
+   candidats ICE** de cette offre (`ignoreOffer`). Ne **jamais** appeler `setLocalDescription({type:'rollback'})` à la
+   main si `signalingState === 'stable'`.
+4. **File d'attente par paire** pour la signalisation (déjà la 0.1 : `p.file`) : traiter les messages un par un, sinon
+   `setRemoteDescription` en parallèle sur un même `pc` lève `InvalidStateError`.
+5. **Candidats ICE arrivés avant la description distante** : les mettre en file jusqu'au `setRemoteDescription` (ou
+   laisser `addIceCandidate` échouer silencieusement seulement si `ignoreOffer`).
+6. **Garde-fou anti-blocage** (la vraie leçon du bug « new ») : si `connectionState === 'new'` ou `iceConnectionState ===
+   'new'|'checking'` plus de **8 s** après le début, **démolir la paire et la recréer** (fermer, `new RTCPeerConnection`, l'initiateur
+   re-offre) ; compter 3 tentatives puis afficher « connexion impossible avec X ».
+7. `restartIce()` sur `failed` ; sur `disconnected` attendre 4 s (0.1 : bon).
+8. Le `signal {a, donnees}` du serveur doit préserver l'ordre par expéditeur (une seule file WebSocket : vrai).
+9. **Reconnexion WebSocket** : après coupure, les pairs existants continuent ; ne recréer que les nouveaux `cid`.
+
+### 4.2 Maillage à 2–8
+
+- Maillage : chaque pair envoie **n−1 flux**. À 8 : 7 flux montants par navigateur : viable seulement avec de petites
+  vignettes. **Stratégie** : limiter selon le nombre de pairs `n` (par `RTCRtpSender.setParameters`) :
+  | participants | vidéo (par flux sortant) | audio |
+  |---|---|---|
+  | 2–3 | 640×360 ≤ 15 i/s, `maxBitrate` 400 kb/s | Opus 32–40 kb/s |
+  | 4–5 | 320×180, 12 i/s, 150 kb/s | Opus 32 kb/s |
+  | 6–8 | 240×135, 10 i/s, 80 kb/s ; vidéo coupée par défaut sauf orateur | Opus 24 kb/s |
+- Réglage : `const p = sender.getParameters(); p.encodings[0].maxBitrate = 150_000; p.encodings[0].scaleResolutionDownBy = 2;
+  p.encodings[0].maxFramerate = 12; p.degradationPreference = 'maintain-framerate'; await sender.setParameters(p);`
+  (`getUserMedia` demande déjà `{width:{ideal:640}, height:{ideal:360}, frameRate:{ideal:15}}` ; `track.contentHint = 'motion'`).
+- **La bande passante appartient au film** (≈ 5–8 Mb/s en 1080p transcodé) : ne pas dépasser **~600 kb/s montant
+  au total** pour les caméras sur connexion modeste ; surveiller `getStats()` (`availableOutgoingBitrate`,
+  `qualityLimitationReason`) toutes les 5 s et descendre d'un palier si `qualityLimitationReason !== 'none'` ou si
+  `bufferedAmount`/`tampon` du film apparaît en même temps.
+- Pas de *simulcast* ni de SFU : inutile à ≤ 8 (au-delà : SFU hors périmètre).
+- Audio : `echoCancellation`, `noiseSuppression`, `autoGainControl` à `true` (par défaut) ; `channelCount: 1` ;
+  Opus `usedtx` et `useinbandfec` via `setCodecPreferences`/SDP : facultatif.
+
+### 4.3 Annulation d'écho quand le film sort d'un `<video>`
+
+État de la connaissance **[doc : fils de discussion WebRTC/W3C et blogs ; non rejoué : l'AEC ne se teste pas avec des
+périphériques simulés]** :
+- **Chrome** (Chromium) : l'AEC3 ne retire **que l'audio reçu par des `RTCPeerConnection`** ; le son d'un `<video>`
+  / `<audio>` ordinaire **n'est pas pris en compte** (bug Chromium 687574 ouvert de longue date). Une « AEC à l'échelle
+  du navigateur » (*Chrome-wide AEC*, capture de la sortie du système) est déployée par Chrome sur certaines
+  plateformes (surtout Windows et macOS), mais **pas garantie** (Linux, Android, ChromeOS non) et son activation dépend
+  d'un drapeau de fonctionnalité.
+- **Firefox** et **Safari** : l'AEC considère **tout l'audio sorti par le navigateur** (d'après les échanges du groupe
+  de travail WebRTC) : le film est mieux supprimé ; qualité non vérifiée.
+- Contrainte `echoCancellation` : la valeur `"all"` (vs `"remote-only"`) de `mediacapture-extensions` demande l'AEC sur
+  tout l'audio **lorsque la plateforme sait le faire** ; la demander est sans risque : `{ echoCancellation: { ideal: 'all' }}`
+  ou `true` en repli. **`restrictOwnAudio` et `suppressLocalAudioPlayback` ne concernent que `getDisplayMedia`**
+  (capture d'écran/onglet) et ne servent pas ici.
+- **Astuces connues** :
+  1. **Casque recommandé** : seule solution fiable ; l'interface propose un bandeau « mets un casque pour éviter l'écho »
+     à l'ouverture de la salle, et un bouton « haut-parleurs ».
+  2. **Passer le film par WebRTC en boucle locale** (Mozilla Hubs : deux `RTCPeerConnection` locales, le son du film
+     envoyé dans l'une et joué par un `<audio srcObject>` à la sortie de l'autre) : Chrome le traite alors comme du
+     « distant » et l'annule. Coût : **latence ajoutée ~30–80 ms** au son du film par rapport à l'image (désynchro
+     perceptible au-delà de ~45 ms d'avance du son), donc à n'activer que sur demande ; **non essayé ici** : à
+     prototyper **par le module salle** avant de s'engager.
+  3. **WebAudio** (`createMediaElementSource` + `AudioContext` → sortie) : **ne change pas** l'AEC de Chrome sauf *Chrome-wide* ;
+     son intérêt est le **ducking** (baisser le film de ~10 dB pendant qu'un pair parle : `GainNode`, détecteur de voix
+     par `AnalyserNode` ou `audioLevel` de `getStats`), ce qui réduit aussi l'écho perçu.
+  4. **Pousser-pour-parler** ou **micro coupé par défaut** quand la lecture est en cours sur haut-parleurs.
+  5. Ne **jamais** capturer la sortie du film pour la renvoyer aux autres (chacun lit le film : un doublon serait un écho).
+- Recommandation : défaut = AEC navigateur + `echoCancellation: ideal 'all'` + bandeau casque + ducking WebAudio
+  facultatif ; piste 2 documentée comme amélioration.
+
+### 4.4 TURN avec coturn (`use-auth-secret`) **[doc]**
+
+`/etc/turnserver.conf` :
+```
+listening-port=3478
+tls-listening-port=5349
+fingerprint
+use-auth-secret
+static-auth-secret=<SECRET LONG ALÉATOIRE>      # = CANAPE_TURN_SECRET
+realm=canape.example.org
+total-quota=100
+stale-nonce=600
+no-multicast-peers
+min-port=49160
+max-port=49200
+no-cli
+no-tlsv1
+no-tlsv1_1
+denied-peer-ip=10.0.0.0-10.255.255.255
+denied-peer-ip=172.16.0.0-172.31.255.255
+denied-peer-ip=192.168.0.0-192.168.255.255
+denied-peer-ip=127.0.0.0-127.255.255.255
+# cert=/etc/letsencrypt/live/…/fullchain.pem  pkey=…/privkey.pem   (turns:)
+```
+Identifiants temporaires (serveur Canapé, `GET /api/ice`) :
+```ts
+const expire = Math.floor(Date.now() / 1000) + 3600;
+const username = `${expire}:${utilisateur.id}`;
+const credential = createHmac('sha1', secret).update(username).digest('base64');
+return { iceServers: [{ urls: stunUrls }, { urls: turnUrls, username, credential }] };   // turn:hote:3478?transport=udp, turn:hote:3478?transport=tcp, turns:hote:5349
+```
+Pièges : **`denied-peer-ip`** (empêche d'utiliser TURN pour atteindre le réseau interne du VPS ; CVE-2020-26262) ;
+ouvrir dans le pare-feu 3478 (UDP+TCP), 5349 et la plage `min-port…max-port` en UDP ; l'heure du serveur doit être
+juste ; `use-auth-secret` (pas `lt-cred-mech` avec utilisateurs fixes) ; `external-ip=` si le VPS est derrière un NAT (cas
+des clouds) ; ne **pas** mettre le secret côté client. Sources : https://github.com/coturn/coturn/blob/master/README.turnserver ;
+https://datatracker.ietf.org/doc/html/draft-uberti-behave-turn-rest-00 ; https://www.w3.org/TR/webrtc/#perfect-negotiation-example ;
+https://developer.chrome.com/blog/more-native-echo-cancellation/ ; https://github.com/webrtc/samples/issues/1243 ;
+https://webrtchacks.com/srcobject-intervention/
