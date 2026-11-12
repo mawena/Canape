@@ -151,4 +151,5 @@ le VPS pour tous les torrents. Contrat : [docs/CONCEPTION.md](docs/CONCEPTION.md
 - [x] Release 1.4.0 (version mineure : nouvelles fonctions compatibles, WebTorrent en secours sans Transmission)
 - [x] Mise en production de la 1.4.0 et installation de Transmission sur https://canape.mawena.cloud (torrent privé C411 vérifié par l'utilisateur)
 - [x] Correctif 1.4.1 : dossiers de téléchargement ouverts au groupe sans chmod setgid (refusé par `RestrictSUIDSGID` : « Permission denied » chez Transmission), `mettre-a-jour` garde `telechargements` en `2770`
-- [ ] Mise en production de la 1.4.1 et premier film privé téléchargé jusqu'au bout
+- [x] Mise en production de la 1.4.1 : le torrent privé C411 se télécharge (vérifié par l'utilisateur)
+- [ ] Premier film privé arrivé dans la galerie (lien physique, partage qui continue)
