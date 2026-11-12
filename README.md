@@ -1,8 +1,7 @@
 # Canapé
 
-**Site : <https://mawena.github.io/Canape/>**
-
-Canapé permet à deux personnes, chacune chez soi, de regarder un film ensemble en se voyant et en s'entendant.
+Regarder un film à deux, chacun chez soi, en se voyant et en s'entendant. Canapé est une application web que l'on
+déploie sur son propre serveur (un VPS), derrière nginx.
 
 ## À quoi ça sert
 
@@ -11,182 +10,248 @@ Avant Canapé, on lisait le film sur un PC et on le partageait par l'écran dans
 - l'image arrivait saccadée chez l'autre (l'écran est filmé, compressé puis renvoyé en direct) ;
 - Meet ne laisse passer qu'une source de son : soit le son du film, soit le micro, jamais les deux.
 
-Canapé n'a pas de partage d'écran. Le film est sur le serveur et chaque navigateur le lit lui-même, directement
-(HTTP avec requêtes `Range`) : l'image est aussi nette chez l'un que chez l'autre. La lecture est synchronisée
-(lecture, pause, déplacement, choix du film ; écart visé : moins de 0,5 s). Le son du film sort chez chacun, et
-les caméras et micros passent à côté, en WebRTC pair à pair : les vignettes des caméras s'affichent sur le film.
+Canapé n'a pas de partage d'écran. Le film est sur le serveur Node.js et chaque navigateur le lit lui-même,
+directement (HTTP avec requêtes `Range`) : l'image est aussi nette chez l'un que chez l'autre. La lecture est
+synchronisée par WebSocket (lecture, pause, déplacement, choix du film ; écart visé : moins de 0,5 s). Le son du film
+sort chez chacun, et les caméras et micros passent à côté, en WebRTC pair à pair : les vignettes des caméras
+s'affichent sur le film, et on peut régler le volume du film et celui des voix séparément.
 
 Un salon privé protégé par un mot de passe commun, pensé pour deux personnes (jusqu'à 4). Chrome, Firefox et Edge
 récents sur ordinateur ; utilisable sur téléphone.
 
-## Installation
+## Prérequis du serveur
 
-Sur Ubuntu 24.04 (et les distributions Debian équivalentes), Canapé s'installe par son dépôt APT signé, avec
-Node.js 18 ou plus.
-
-### En une ligne
-
-```sh
-curl -fsSL https://mawena.github.io/Canape/installer.sh | sh
-```
-
-Le script fait les trois étapes ci-dessous ; une fenêtre de mot de passe s'ouvre pour les droits administrateur.
-
-### Pas à pas
+- un VPS (Ubuntu ou Debian de préférence) où vous avez un accès SSH avec `sudo` ;
+- **Node.js 18 ou plus** et `npm` ;
+- **nginx** (c'est lui qui parle HTTPS au monde ; Node n'écoute qu'en local) ;
+- un **nom de domaine** dont l'enregistrement DNS (A, et AAAA si IPv6) pointe sur le serveur, et les ports 80 et 443
+  ouverts ;
+- `rsync` et `curl` sur le serveur ; **certbot** pour le certificat Let's Encrypt ;
+- `ffmpeg` (conseillé) : il fournit `ffprobe`, qui sert à savoir si un film passe dans les navigateurs, et
+  `canape-convertir`.
 
 ```sh
-# 1. la clé qui signe le dépôt
-sudo curl -fsSLo /usr/share/keyrings/canape.gpg https://mawena.github.io/Canape/apt/canape.gpg
-# 2. le dépôt
-sudo curl -fsSLo /etc/apt/sources.list.d/canape.sources https://mawena.github.io/Canape/apt/canape.sources
-# 3. l'installation
-sudo apt update && sudo apt install canape
+sudo apt install nginx rsync curl certbot python3-certbot-nginx ffmpeg
+sudo apt install nodejs npm      # si la version obtenue est inférieure à 18 : nodejs.org ou NodeSource
 ```
 
-Clé du dépôt : « Canapé APT (mawena) », empreinte `1815 E2DB B0A8 04AC 536A  745B 7CE1 26A8 2EFB F1C9`.
-Le service `canape` est activé et démarré à l'installation. `ffmpeg` est recommandé (voir plus bas).
+## Déploiement
 
-### Mise à jour
+### Avec le script `deployer.sh`
+
+Depuis votre poste, dans une copie du dépôt :
 
 ```sh
-sudo apt update && sudo apt upgrade
+deploiement/deployer.sh moi@mon-serveur.exemple.fr --domaine canape.exemple.fr
 ```
 
-### En dernier recours : le `.deb` des releases
+- `--essai` affiche tout ce qui serait fait (commandes et script exécuté sur le serveur) sans rien lancer ;
+- sans `--domaine`, nginx n'est pas touché ; `SSH_OPTS="-p 2222 -i ~/.ssh/vps"` passe des options à ssh.
 
-Téléchargez `canape_<version>_all.deb` et `SHA256SUMS` sur la page des
-[releases](https://github.com/mawena/Canape/releases/latest), vérifiez la somme (`sha256sum -c SHA256SUMS`), puis
-`sudo apt install ./canape_<version>_all.deb`. Le paquet ajoute lui-même le dépôt APT : les mises à jour suivantes
-passent par `apt upgrade`.
+Le script est **idempotent** : il envoie le code (`bin/`, `src/`, `public/`, `package*.json`, `deploiement/`) par
+`rsync` dans `/opt/canape`, fait `npm ci --omit=dev` sur le serveur et redémarre le service. Il vérifie
+`/api/etat` sur le serveur à la fin. La première fois, il :
 
-## Premiers pas
+1. vérifie Node.js 18+ (sinon il dit comment l'installer) ;
+2. crée l'utilisateur système `canape` et le dossier des films `/srv/canape/films` (inscriptible par le groupe
+   `canape`, setgid ; votre compte SSH est ajouté à ce groupe) ;
+3. crée `/etc/canape/canape.conf` depuis l'exemple, avec un **mot de passe lisible et un secret générés** : le mot
+   de passe est affiché une seule fois à la fin, et le fichier n'est **jamais réécrit** ensuite ;
+4. installe et active le service systemd `canape` ;
+5. avec `--domaine` : installe le site nginx, obtient le certificat avec certbot (s'il est installé, sinon il
+   explique quoi faire), passe `nginx -t` et recharge nginx.
 
-1. **Le mot de passe commun** est créé à l'installation, avec le secret des sessions, dans
-   `/etc/canape/secrets.conf` : `sudo cat /etc/canape/secrets.conf`. Pour le changer, modifiez
-   `CANAPE_MOT_DE_PASSE` (dans ce fichier ou dans `canape.conf`, qui l'emporte), puis
-   `sudo systemctl restart canape`. Ce fichier est lu avant `canape.conf`, qui n'est jamais réécrit par les mises à
-   jour.
-2. **Les films** se mettent dans `/var/lib/canape/films` (sous-dossiers permis ; `.mp4`, `.m4v`, `.webm`, `.mkv`,
-   `.mov`, `.ogv`). Le dossier appartient au groupe `canape` et est inscriptible par lui : ajoutez-vous-y pour
-   copier sans droits administrateur (`sudo adduser "$USER" canape`, puis reconnectez-vous). Une désinstallation, même
-   avec `purge`, ne supprime jamais les films.
-3. **Films « à convertir »** : si `ffprobe` est présent, le serveur lit les codecs et marque un film « lisible
-   partout » (vidéo H.264, VP8, VP9 ou AV1 ; son AAC, MP3, Opus ou Vorbis) ou « à convertir ». `canape-convertir
-   <film>` produit un MP4 H.264 + AAC (`+faststart`) à côté de l'original, et extrait les sous-titres texte
-   intégrés en `.vtt`. Il demande `ffmpeg` : `sudo apt install ffmpeg`.
-4. **Sous-titres** : un fichier `.srt` ou `.vtt` à côté du film, même nom de base, avec un code de langue
-   facultatif (`Film.mp4`, `Film.srt`, `Film.fr.srt`, `Film.en.vtt`).
-5. Ouvrez `http://localhost:8080`.
+Les commandes d'administration passent par `sudo` sur le serveur (le mot de passe sudo est demandé dans votre
+terminal).
 
-## HTTPS obligatoire pour la caméra
+### Pas à pas, à la main
 
-Le navigateur n'autorise la caméra et le micro que sur une page sûre : HTTPS, ou `http://localhost`. Pour que l'autre
-personne se connecte de chez elle, il faut donc HTTPS. Trois façons.
+Sur le serveur :
 
-**Caddy (le plus simple : il obtient et renouvelle le certificat tout seul)**
-
-```
-canape.exemple.fr {
-    reverse_proxy 127.0.0.1:8080
-}
+```sh
+# 1. l'utilisateur et les dossiers
+sudo useradd --system --user-group --home-dir /nonexistent --no-create-home --shell /usr/sbin/nologin canape
+sudo install -d -m 0755 /opt/canape
+sudo install -d -m 2775 -o root -g canape /srv/canape /srv/canape/films
+sudo install -d -m 0750 -o root -g canape /etc/canape
 ```
 
-**nginx**
+Depuis votre poste, envoyez le code, puis sur le serveur installez les dépendances :
 
-```nginx
-server {
-    listen 443 ssl;
-    server_name canape.exemple.fr;
-    ssl_certificate     /etc/letsencrypt/live/canape.exemple.fr/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/canape.exemple.fr/privkey.pem;
-    client_max_body_size 0;
-
-    location / {
-        proxy_pass http://127.0.0.1:8080;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;      # WebSocket (/ws)
-        proxy_set_header Connection "upgrade";
-        proxy_set_header Host $host;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_set_header X-Forwarded-For $remote_addr;
-        proxy_read_timeout 3600s;
-        proxy_buffering off;                          # films en flux, requêtes Range
-    }
-}
+```sh
+rsync -az --delete --relative bin src public package.json package-lock.json deploiement moi@mon-serveur:/tmp/canape/
+# sur le serveur :
+sudo rsync -a --delete /tmp/canape/ /opt/canape/
+cd /opt/canape && sudo npm ci --omit=dev
+sudo ln -sf /opt/canape/bin/canape-convertir /usr/local/bin/canape-convertir
 ```
 
-Avec un proxy, dans `/etc/canape/canape.conf` : `CANAPE_DERRIERE_PROXY=1` et `CANAPE_HOTE=127.0.0.1`.
+La configuration (remplissez le mot de passe et le secret : `openssl rand -hex 32` pour le secret) :
 
-**Certificat direct** (sans proxy) : dans `/etc/canape/canape.conf`, `CANAPE_TLS_CERT=` et `CANAPE_TLS_CLE=` avec les
-chemins du certificat et de la clé, lisibles par l'utilisateur `canape` (par exemple `CANAPE_PORT=443`, le service
-peut ouvrir ce port). Puis `sudo systemctl restart canape`.
+```sh
+sudo install -m 0640 -o root -g canape /opt/canape/deploiement/canape.conf.exemple /etc/canape/canape.conf
+sudoedit /etc/canape/canape.conf
+```
+
+Le service systemd (vérifiez que `ExecStart` pointe sur votre `node`, `command -v node`) :
+
+```sh
+sudo cp /opt/canape/deploiement/canape.service /etc/systemd/system/canape.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now canape
+curl http://127.0.0.1:8080/api/etat        # {"version":…,"connecte":false,"motDePasseRequis":true,…}
+```
+
+nginx : copiez `deploiement/nginx/canape.conf`, remplacez `canape.exemple.fr` par votre domaine. Le fichier
+référence le certificat Let's Encrypt, qui n'existe pas encore : obtenez-le d'abord.
+
+```sh
+# 1. un site HTTP minimal (le premier bloc « server » du fichier) pour que certbot valide le domaine
+sudo cp /opt/canape/deploiement/nginx/canape.conf /etc/nginx/sites-available/canape.conf   # à réduire au bloc du port 80
+sudo sed -i 's/canape\.exemple\.fr/canape.mondomaine.fr/g' /etc/nginx/sites-available/canape.conf
+sudo ln -s /etc/nginx/sites-available/canape.conf /etc/nginx/sites-enabled/
+# 2. le certificat (renouvelé tout seul par le minuteur de certbot)
+sudo certbot certonly --nginx -d canape.mondomaine.fr --deploy-hook "systemctl reload nginx"
+# 3. le fichier complet, puis
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+Ce que fait la configuration nginx : redirection du port 80 vers HTTPS (et `/.well-known/acme-challenge/` pour
+certbot), HTTP/2, `proxy_pass` vers `127.0.0.1:8080` avec `Host`, `X-Forwarded-For` et `X-Forwarded-Proto` ;
+`/ws` avec `Upgrade`/`Connection` et un délai de lecture de 6 heures (un film dure) ; `/films/` sans mise en mémoire
+tampon (`proxy_buffering off`, `proxy_request_buffering off`) pour les gros fichiers et les requêtes `Range`. Les
+en-têtes de sécurité (HSTS, `Permissions-Policy` avec caméra et micro pour `self`, CSP) sont envoyés par Canapé
+lui-même.
+
+Le service est durci (`ProtectSystem=strict`, `NoNewPrivileges`, filtre d'appels système…) et tourne sans aucun droit
+particulier. Le filtre `SystemCallFilter=@system-service @pkey` doit garder `@pkey` : sans lui, Node (V8) meurt au
+démarrage.
+
+Journal : `journalctl -u canape -f`.
+
+## Mise à jour
+
+Relancez le script : il renvoie le code, refait `npm ci --omit=dev` et redémarre le service, sans toucher à
+`/etc/canape/canape.conf` ni aux films.
+
+```sh
+git pull && deploiement/deployer.sh moi@mon-serveur.exemple.fr
+```
+
+## Ajouter des films
+
+Copiez les fichiers dans `/srv/canape/films` (sous-dossiers permis ; `.mp4`, `.m4v`, `.webm`, `.mkv`, `.mov`,
+`.ogv`). Il n'y a rien à redémarrer.
+
+```sh
+scp "Mon film.mp4" "Mon film.fr.srt" moi@mon-serveur.exemple.fr:/srv/canape/films/
+rsync -avP Films/ moi@mon-serveur.exemple.fr:/srv/canape/films/
+```
+
+(Votre compte doit être dans le groupe `canape`, ce que fait `deployer.sh` ; reconnectez-vous ensuite.)
+
+- **Sous-titres** : un fichier `.srt` ou `.vtt` à côté du film, même nom de base, avec un code de langue
+  facultatif (`Film.mp4`, `Film.srt`, `Film.fr.srt`, `Film.en.vtt`). Le `.srt` est converti en WebVTT à la volée.
+- **Films « à convertir »** : avec `ffprobe`, le serveur lit les codecs et marque un film « lisible partout » (vidéo
+  H.264, VP8, VP9 ou AV1 ; son AAC, MP3, Opus ou Vorbis) ou « à convertir ». Sur le serveur,
+  `canape-convertir <film>` produit un MP4 H.264 + AAC (`+faststart`) à côté de l'original et extrait les
+  sous-titres texte intégrés en `.vtt`. Sans `ffprobe`, la compatibilité est inconnue.
+
+## HTTPS est obligatoire
+
+Les navigateurs n'autorisent la caméra et le micro que sur une page sûre : HTTPS, ou `http://localhost`. Pour que
+l'autre personne se connecte de chez elle, il faut donc un vrai certificat : c'est le rôle de nginx et de Let's
+Encrypt. Sans HTTPS, la lecture synchronisée marche mais pas l'appel vidéo. Derrière nginx, laissez
+`CANAPE_DERRIERE_PROXY=1` : Canapé marque alors le cookie de session `Secure` et lit l'adresse du visiteur dans
+`X-Forwarded-For`.
 
 ## TURN : quand l'appel ne passe pas
 
-Les caméras se parlent directement d'un navigateur à l'autre. Derrière un réseau strict (entreprise, pare-feu,
-NAT symétrique), il faut un relais TURN. Installez `coturn` (`sudo apt install coturn`), activez-le avec
-`use-auth-secret` et un `static-auth-secret=<secret>` dans `/etc/turnserver.conf`, ouvrez le port 3478 (UDP et TCP),
-puis dans `/etc/canape/canape.conf` :
+Les caméras se parlent directement d'un navigateur à l'autre (WebRTC pair à pair, avec un serveur STUN public). Derrière
+un réseau strict (réseau d'entreprise, 4G très filtrée, NAT symétrique), la connexion directe échoue : il faut un
+relais TURN. Sur le serveur (ou un autre) :
+
+```sh
+sudo apt install coturn
+```
+
+`/etc/turnserver.conf` minimal :
+
+```
+listening-port=3478
+fingerprint
+use-auth-secret
+static-auth-secret=<un secret long, par exemple openssl rand -hex 32>
+realm=canape.exemple.fr
+total-quota=20
+no-multicast-peers
+no-cli
+```
+
+Activez-le (`TURNSERVER_ENABLED=1` dans `/etc/default/coturn` sur les versions qui le demandent), puis
+`sudo systemctl enable --now coturn`. Ouvrez le port **3478 en UDP et en TCP** et la plage de relais par défaut
+**49152-65535 en UDP** dans le pare-feu du serveur (ufw : `sudo ufw allow 3478 && sudo ufw allow 49152:65535/udp`).
+Pour traverser les pare-feu qui ne laissent passer que le web, coturn peut aussi écouter en TLS sur le port 5349
+(`tls-listening-port`, avec le certificat Let's Encrypt), à indiquer ensuite par une URL `turns:`.
+
+Dans `/etc/canape/canape.conf`, puis `sudo systemctl restart canape` :
 
 ```
 CANAPE_TURN_URLS=turn:canape.exemple.fr:3478
 CANAPE_TURN_SECRET=<le même secret>
 ```
 
-Canapé fabrique alors des identifiants TURN temporaires pour chaque navigateur. `CANAPE_ICE` remplace la liste des
-serveurs STUN/TURN donnée aux navigateurs (JSON).
+Canapé fabrique alors des identifiants TURN temporaires pour chaque navigateur. `CANAPE_ICE` remplace la liste
+des serveurs STUN/TURN donnée aux navigateurs (JSON).
 
 ## Configuration
 
-Le service lit `/etc/canape/secrets.conf` puis `/etc/canape/canape.conf` (format `CLÉ=valeur`, `#` pour un
-commentaire ; les variables d'environnement l'emportent sur un fichier lu par `--config`).
+Le service lit `/etc/canape/canape.conf` (format `CLÉ=valeur`, `#` pour un commentaire). Le modèle est
+`deploiement/canape.conf.exemple`. En dehors du service, `bin/canape --config <fichier>` (ou `CANAPE_CONFIG`) lit un
+fichier du même format ; les variables d'environnement l'emportent sur le fichier.
 
-| Variable | Défaut | Rôle |
-|---|---|---|
-| `CANAPE_HOTE` | `0.0.0.0` | adresse d'écoute |
-| `CANAPE_PORT` | `8080` | port d'écoute |
-| `CANAPE_FILMS` | `./films` (paquet : `/var/lib/canape/films`) | dossier des films (sous-dossiers permis) |
-| `CANAPE_MOT_DE_PASSE` | vide (paquet : créé dans `secrets.conf`) | mot de passe commun ; vide = accès libre, avec un avertissement au démarrage |
-| `CANAPE_SECRET` | aléatoire à chaque démarrage (paquet : créé dans `secrets.conf`) | signe les cookies de session (sinon les sessions tombent au redémarrage) |
-| `CANAPE_TLS_CERT`, `CANAPE_TLS_CLE` | vides | chemins du certificat et de la clé : HTTPS servi directement |
-| `CANAPE_DERRIERE_PROXY` | `0` | `1` = faire confiance à `X-Forwarded-Proto` / `X-Forwarded-For` (proxy HTTPS devant) |
-| `CANAPE_ICE` | `[{"urls":"stun:stun.l.google.com:19302"}]` | serveurs STUN/TURN donnés aux navigateurs (JSON) |
-| `CANAPE_TURN_URLS` | vide | URL TURN séparées par des virgules (ex. `turn:exemple.fr:3478`) |
-| `CANAPE_TURN_SECRET` | vide | secret partagé de coturn (`static-auth-secret`) : identifiants TURN temporaires |
+| Variable | Défaut | En production | Rôle |
+|---|---|---|---|
+| `CANAPE_HOTE` | `0.0.0.0` | `127.0.0.1` | adresse d'écoute |
+| `CANAPE_PORT` | `8080` | `8080` | port d'écoute |
+| `CANAPE_FILMS` | `./films` | `/srv/canape/films` | dossier des films (sous-dossiers permis) |
+| `CANAPE_MOT_DE_PASSE` | vide | généré par `deployer.sh` | mot de passe commun ; vide = accès libre, avec un avertissement au démarrage |
+| `CANAPE_SECRET` | aléatoire à chaque démarrage | généré par `deployer.sh` | signe les cookies de session (sinon les sessions tombent au redémarrage) |
+| `CANAPE_DERRIERE_PROXY` | `0` | `1` | `1` = faire confiance à `X-Forwarded-Proto` / `X-Forwarded-For` (proxy HTTPS devant) |
+| `CANAPE_TLS_CERT`, `CANAPE_TLS_CLE` | vides | vides | chemins du certificat et de la clé : HTTPS servi directement par Node (inutile derrière nginx) |
+| `CANAPE_ICE` | `[{"urls":"stun:stun.l.google.com:19302"}]` | défaut | serveurs STUN/TURN donnés aux navigateurs (JSON) |
+| `CANAPE_TURN_URLS` | vide | vide | URL TURN séparées par des virgules (ex. `turn:exemple.fr:3478`) |
+| `CANAPE_TURN_SECRET` | vide | vide | secret partagé de coturn (`static-auth-secret`) : identifiants TURN temporaires |
 
-Après une modification : `sudo systemctl restart canape`. Journal : `journalctl -u canape`. Test de santé :
-`curl http://localhost:8080/api/etat`.
+Après une modification : `sudo systemctl restart canape`. Test de santé : `curl http://127.0.0.1:8080/api/etat`.
 
 ## Utilisation
 
-1. Chacun ouvre l'adresse de Canapé dans son navigateur, entre le mot de passe commun et un prénom.
+1. Chacun ouvre l'adresse de Canapé dans son navigateur, entre son prénom et le mot de passe commun.
 2. « Entrer dans le salon » : ce premier geste autorise la lecture avec son (les navigateurs bloquent la lecture
    automatique). Acceptez la caméra et le micro. Si la lecture est quand même refusée, un bouton « Reprendre ici »
    s'affiche.
-3. L'un choisit le film : il se lance chez les deux.
+3. L'un choisit le film (« Quel film ce soir ? ») : il se lance chez les deux.
 4. Les commandes sont partagées : lecture, pause, déplacement dans le film et choix du film. Si un navigateur charge
-   plus d'une seconde, le salon se met en pause pour tous puis reprend quand tout le monde est prêt.
-5. Le volume du film et celui de la voix se règlent séparément ; boutons pour couper le micro et la caméra ;
-   plein écran avec les vignettes des caméras.
+   plus d'une seconde, le salon se met en pause pour tous (« … charge le film ») puis reprend quand tout le monde
+   est prêt (attente mutuelle). Si les lectures s'écartent, chaque navigateur rattrape tout seul.
+5. Le volume du film et celui des voix se règlent séparément ; boutons pour couper le micro et la caméra ; option
+   « Film plus bas quand on parle » ; sous-titres quand le film en a ; plein écran avec les vignettes des caméras
+   (elles se déplacent par glisser-déposer).
 6. **Un casque est conseillé** : sans casque, le son du film sort des enceintes et repart dans le micro (écho).
 
 ## Développement
 
 ```sh
 npm install
-CANAPE_FILMS=./films CANAPE_MOT_DE_PASSE=essai bin/canape    # http://localhost:8080
-npm test                                                     # tests node:test
+CANAPE_FILMS=films CANAPE_MOT_DE_PASSE=test bin/canape    # http://localhost:8080, à ouvrir dans deux navigateurs
+npm test                                                  # tests node:test
+npm run essai-navigateur                                  # essai de bout en bout dans Chrome headless
 ```
 
-Construire le paquet et le publier (voir `docs/CONCEPTION.md` pour le contrat commun) :
-
-```sh
-make deb      # dist/canape_<version>_all.deb, SHA256SUMS, tests et lintian
-make apt      # publie dist/*.deb dans le dépôt APT signé (branche gh-pages)
-```
-
-La construction demande `debhelper`, `nodejs`, `npm`, `lintian` ; la publication, la clé de signature du dépôt
-(empreinte dans `data/apt/LISEZMOI`).
+Une seule dépendance de production : `ws`. Pas d'étape de construction : le serveur est du Node.js CommonJS et
+l'interface du JavaScript natif. `docs/CONCEPTION.md` décrit le contrat (interface HTTP, synchronisation, appel
+vidéo, production).
 
 ## Structure du dépôt
 
@@ -196,12 +261,10 @@ bin/canape-convertir    convertit un film pour le navigateur (ffmpeg)
 src/                    modules du serveur (Node >= 18, CommonJS)
 public/                 interface web statique
 tests/                  tests node:test
-debian/                 paquet Debian (dont canape.service, canape.conf)
-scripts/                build-deb.sh, publier-apt.sh
-data/apt/               clé publique et source deb822 du dépôt APT
-site/                   page d'accueil GitHub Pages et installer.sh
-docs/CONCEPTION.md      conception et contrat commun
-Makefile                cibles deb, apt, test, clean
+outils/                 essai de bout en bout dans Chrome headless (npm run essai-navigateur)
+deploiement/            canape.service (systemd), canape.conf.exemple, nginx/canape.conf, deployer.sh
+docs/CONCEPTION.md      conception et contrat
+ROADMAP.md              feuille de route
 ```
 
 ## Licence
