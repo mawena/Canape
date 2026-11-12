@@ -30,7 +30,13 @@ test.describe('Installation et connexion', () => {
     await expect(page.getByText(/incorrect|invalide|ne correspond/i).first()).toBeVisible();
     await expect(page).toHaveURL(/\/connexion/);
 
-    // Bon mot de passe : retour à l'accueil.
+    // Bon mot de passe : retour à la page demandée (le compte), puis l'accueil sans page demandée.
+    await page.getByLabel('Mot de passe', { exact: true }).fill(MOT_DE_PASSE);
+    await page.getByRole('button', { name: 'Se connecter' }).click();
+    await expect(page).toHaveTitle(/Mon compte/);
+    await page.getByRole('button', { name: 'Se déconnecter' }).click();
+    await page.goto(`${s.url}/connexion`);
+    await page.getByLabel('Identifiant').fill('alix');
     await page.getByLabel('Mot de passe', { exact: true }).fill(MOT_DE_PASSE);
     await page.getByRole('button', { name: 'Se connecter' }).click();
     await expect(page).toHaveTitle(/Ce soir/);
