@@ -1,11 +1,83 @@
-# Design — Canapé 1.0
+# Design — Canapé (1.0, puis version 2)
 
 Direction artistique et produit de Canapé 1.0. Ce document est le contrat de l'agent « interface » : les valeurs
 (couleurs, tailles, durées) sont exactes et reprises telles quelles dans `docs/maquettes/canape.html`, qui est la
 référence visuelle (à ouvrir dans un navigateur). En cas d'écart entre les deux, c'est ce document qui l'emporte.
 
-Sommaire : 1 Positionnement · 2 Recherche · 3 Système de design · 4 Composants · 5 Écrans · 6 Ton et textes ·
+Sommaire : **Version 2 (phase 14)** · 1 Positionnement · 2 Recherche · 3 Système de design · 4 Composants · 5 Écrans · 6 Ton et textes ·
 7 Accessibilité et PWA · 8 Fonctions supplémentaires recommandées · 9 Sources.
+
+---
+
+## Version 2 (phase 14) : « la salle de cinéma privée, une lampe allumée »
+
+**Cette section l'emporte** sur les valeurs plus bas quand elles diffèrent (les §3.1 à 3.4 ont été mises à jour ; la maquette
+`docs/maquettes/canape.html` reste celle de la 1.0). Demande : une application plus attirante, plus professionnelle et plus
+facile à utiliser, couleurs comprises.
+
+**Constat.** La 1.0 avait la bonne idée (la lampe, la lueur, le film au centre) mais restait artisanale : surfaces violettes
+un peu ternes et toutes au même niveau, boutons en pastille, titres de cartes en serif qui se mélangeaient aux noms de films,
+pages sans hiérarchie (colonnes étroites, doubles marges), états vides sans guide. Recherche : les interfaces de streaming 2026
+(Apple TV, Netflix, Disney+) misent sur le calme visuel et une hiérarchie nette, des surfaces qui montent par paliers de
+luminosité plutôt que par ombres, du verre dépoli pour ce qui flotte sur l'image, une seule couleur d'action ; pour le sombre,
+éviter le noir pur et le blanc pur, viser 12 à 16 : 1 pour le texte principal, désaturer les accents.
+
+**Intention.** On passe du « salon la nuit » à une **salle de cinéma privée** : un noir d'encre presque neutre qui s'efface
+devant le film, une lampe ambre plus lumineuse qui guide l'œil vers la seule action possible, du verre sur ce qui flotte
+(barres, chat, voiles), des reflets fins qui donnent du volume. Le serif ne sert plus qu'aux **grands titres et aux affiches**
+(le nom d'un film, « Bonjour Alix »), l'interface passe tout entière en sans-serif.
+
+**Palette** (contrastes calculés par script, formule WCAG 2.x ; seuils AA : texte 4,5 : 1, UI et contours 3 : 1) :
+
+| Jeton | Valeur | Rôle | sur `--fond` | sur `--s1` | sur `--s2` | sur `--s3` |
+|---|---|---|---|---|---|---|
+| `--fond` | `#0d0c12` | page | n.a. | | | |
+| `--s1` | `#15141c` | cartes, barres | n.a. | | | |
+| `--s2` | `#1d1b26` | champs, menus, bulles | n.a. | | | |
+| `--s3` | `#282532` | survol, bulles reçues, onglet actif | n.a. | | | |
+| `--bord` / `--bord-vif` | `#2f2c3b` / `#3b3749` | séparateurs / carte en avant (décoratifs) | | | | |
+| `--bord-champ` | `#7d7790` | contour des champs et boutons | 4,6 | 4,3 | 4,0 | 3,5 |
+| `--texte` | `#f7f3ee` | texte principal | 17,6 | 16,5 | 15,4 | 13,6 |
+| `--doux` | `#c0bacb` | texte secondaire | 10,3 | 9,7 | 9,0 | 7,9 |
+| `--discret` | `#9f99ad` | légendes, aides | 7,1 | 6,6 | 6,2 | 5,4 |
+| `--lampe` | `#ffb347` | action, focus, progression | 10,9 | 10,3 | 9,5 | 8,4 |
+| `--lampe-vive` | `#ffc873` | survol, anneau de focus | 12,8 | | | |
+| `--lampe-sur` | `#1a1006` | texte sur la lampe | 10,5 sur `--lampe`, 12,3 sur `--lampe-vive` | | | |
+| `--rose` | `#ff8fb4` | l'autre personne | 9,1 | 8,6 | 8,0 | 7,0 |
+| `--ok` | `#5fdcae` | « ça va » | 11,4 | 10,7 | 10,0 | 8,8 |
+| `--alerte` | `#ffd166` | attention | 13,5 | 12,7 | 11,8 | 10,4 |
+| `--mal` | `#ff7b6e` | erreur, danger | 7,7 | 7,2 | 6,7 | 5,9 |
+| `--info` | `#7cc0ff` | information neutre (nouveau jeton) | 10,1 | 9,4 | 8,8 | 7,7 |
+
+Texte sombre sur fond coloré : `--mal-sur` `#2a0d0a` sur `--mal` 7,2 : 1 ; texte `#16101c` sur les six couleurs de présence
+(`#ffb347 #ff8fb4 #8fc7f0 #b4a2f0 #9ad9a0 #f0d27a`) : de 8,3 à 12,6 : 1. Le script de vérification n'est pas dans le dépôt
+(feuille de calcul à refaire : luminance relative, `(L1+0,05)/(L2+0,05)`).
+
+**Typographie.** *Figtree* (variable 300–900, OFL, hébergée dans `client/static/polices/`, latin et latin-ext, `font-display: swap`)
+pour toute l'interface : géométrique et chaleureuse, très lisible petite, chiffres nets, plus personnelle que Inter ou
+Geist, et sans le côté « tableau de bord ». *Instrument Serif* (romain seul, l'italique n'est plus embarqué) pour l'affiche,
+le titre de page (h1), les titres de film sur les affiches et les grands chiffres. Titres de section (h2) : Figtree 700,
+`-0,02em`. Hanken Grotesk et l'italique d'Instrument Serif sont retirés.
+
+**Rayons.** Champs et boutons 12 px (`--r-m`), cartes 20 (`--r-l`), grandes surfaces (modales, hero, tiroirs, chat) 28 (`--r-xl`),
+affiches 12, boutons « gros » 16, boutons « petits » 10 ; pastilles, badges et avatars restent ronds. Les boutons ne sont plus
+des pilules : plus net, plus « outil ».
+
+**Élévations.** Surface d'abord (`--fond` → `--s3`), puis un **reflet** d'1 px en haut de chaque surface (`--reflet`,
+`rgba(255,255,255,.055)`) et une ombre par plan (`--ombre-1` à `--ombre-4`). Le bouton principal porte un dégradé
+`--lampe-degrade` et un halo ambre (`--halo-lampe`) : c'est le seul élément lumineux de l'écran.
+
+**Verre.** Barre du haut, barre d'onglets du téléphone, chat, voiles et réactions : `--fond-verre` (`rgba(21,20,28,.78)`) +
+`--flou-verre` (`blur(20px) saturate(1.4)`).
+
+**Mouvement.** Inchangé (120 / 220 / 420 ms, `--ease`) avec un `--ressort` pour les retours d'action ; l'onglet actif de la
+barre est marqué par un filet lumineux (pas d'animation de page) ; tout passe à ~0 avec `prefers-reduced-motion`.
+
+**Ce qui change pour l'utilisateur.** Barre du haut en verre avec filet ambre sous la page courante, boutons rectangles à
+bords doux, onglets en segments, affiches avec filet de lumière, accueil guidé par les **premiers pas** (3 étapes qui se
+cochent seules, refermables), connexion et invitation « affiche de cinéma », séances avec pastille de date, création de
+séance en trois cartes numérotées (c'est une vraie suite), compte et administration alignés sur le kit, chat et voiles en
+verre, états vides avec une action. Aucun comportement n'a changé (API, synchro, magasins).
 
 ---
 
@@ -129,35 +201,35 @@ recommandations de §3.9 et §5.5.
 Canapé n'a **qu'un thème, sombre** (`color-scheme: dark`). Un thème clair n'apporte rien à un usage nocturne ;
 il pourra venir plus tard par les mêmes jetons.
 
-Tous les contrastes sont calculés (formule WCAG 2.x). Seuils : texte 4,5:1, texte large (≥ 24 px ou 19 px gras)
+Valeurs de la version 2 (ratios dans la section « Version 2 » ci-dessus ; les ratios de ce tableau sont ceux de la 1.0 et ne sont plus à jour). Tous les contrastes sont calculés (formule WCAG 2.x). Seuils : texte 4,5:1, texte large (≥ 24 px ou 19 px gras)
 3:1, composants d'interface et contours 3:1.
 
 | Jeton | Valeur | Rôle | Contraste sur `--fond` | sur `--s2` |
 |---|---|---|---|---|
-| `--fond` | `#14111a` | arrière-plan de l'application | n.a. | n.a. |
-| `--s1` | `#1c1824` | cartes, barres, tiroirs | n.a. | n.a. |
-| `--s2` | `#262031` | champs, menus, bulles | n.a. | n.a. |
-| `--s3` | `#312a3d` | survol, bulles reçues, rails | n.a. | n.a. |
-| `--bord` | `#3d3549` | séparateurs décoratifs seulement (jamais seul porteur d'une information) | 1,5:1 | n.a. |
-| `--bord-champ` | `#857a95` | contour des champs, boutons secondaires, zone de dépôt | 4,6:1 | 3,9:1 (3,4:1 sur `--s3`) |
-| `--texte` | `#f4eee7` | texte principal | 16,2:1 | 13,7:1 |
-| `--doux` | `#b9afc4` | texte secondaire | 8,9:1 | 7,5:1 |
-| `--discret` | `#9a90a7` | légendes, aides, désactivé lisible | 6,0:1 | 5,1:1 (4,5:1 sur `--s3`) |
-| `--lampe` | `#f4a85b` | action, focus, progression, lien | 9,4:1 | 7,9:1 |
-| `--lampe-vive` | `#ffbf7d` | survol de l'action, anneau de focus, poignée | 11,6:1 | 9,8:1 |
-| `--lampe-sur` | `#1d1208` | texte sur fond lampe | 9,3:1 sur `--lampe` | |
-| `--lampe-fond` | `rgba(244,168,91,.14)` | fond teinté (puces, bulles envoyées, zone de dépôt) | | |
-| `--ok` (veilleuse) | `#6fd9b1` | « ça va » : synchro, parle, prêt | 10,9:1 | 9,2:1 |
+| `--fond` | `#0d0c12` | arrière-plan de l'application | n.a. | n.a. |
+| `--s1` | `#15141c` | cartes, barres, tiroirs | n.a. | n.a. |
+| `--s2` | `#1d1b26` | champs, menus, bulles | n.a. | n.a. |
+| `--s3` | `#282532` | survol, bulles reçues, rails | n.a. | n.a. |
+| `--bord` | `#2f2c3b` | séparateurs décoratifs seulement (jamais seul porteur d'une information) | 1,5:1 | n.a. |
+| `--bord-champ` | `#7d7790` | contour des champs, boutons secondaires, zone de dépôt | 4,6:1 | 3,9:1 (3,4:1 sur `--s3`) |
+| `--texte` | `#f7f3ee` | texte principal | 16,2:1 | 13,7:1 |
+| `--doux` | `#c0bacb` | texte secondaire | 8,9:1 | 7,5:1 |
+| `--discret` | `#9f99ad` | légendes, aides, désactivé lisible | 6,0:1 | 5,1:1 (4,5:1 sur `--s3`) |
+| `--lampe` | `#ffb347` | action, focus, progression, lien | 9,4:1 | 7,9:1 |
+| `--lampe-vive` | `#ffc873` | survol de l'action, anneau de focus, poignée | 11,6:1 | 9,8:1 |
+| `--lampe-sur` | `#1a1006` | texte sur fond lampe | 9,3:1 sur `--lampe` | |
+| `--lampe-fond` | `rgba(255,179,71,.14)` | fond teinté (puces, bulles envoyées, zone de dépôt) | | |
+| `--ok` (veilleuse) | `#5fdcae` | « ça va » : synchro, parle, prêt | 10,9:1 | 9,2:1 |
 | `--alerte` | `#ffd166` | attention : connexion faible, préparation | 12,9:1 | 10,9:1 |
-| `--mal` | `#ff7f70` | erreur, micro coupé, danger | 7,6:1 | 6,4:1 |
-| `--rose` | `#e892b0` | l'autre personne (nom dans le chat, marque sur la barre de temps) | 8,2:1 | 6,9:1 |
+| `--mal` | `#ff7b6e` | erreur, micro coupé, danger | 7,6:1 | 6,4:1 |
+| `--rose` | `#ff8fb4` | l'autre personne (nom dans le chat, marque sur la barre de temps) | 8,2:1 | 6,9:1 |
 
 Règles d'emploi :
 - Le texte sur surface : `--texte`, `--doux` ou `--discret` seulement. Jamais de texte `--bord-champ`.
 - `--lampe` est la **seule** couleur de bouton principal. Un écran n'a qu'un bouton principal (deux au plus).
 - **Pas de noir pur** (`#000`) sauf dans l'image du film elle-même (letterbox).
 - Couleurs de présence (anneau et initiale des avatars, 6 teintes, texte `#16101c` dessus, tous ≥ 8:1) :
-  `#f4a85b` `#e892b0` `#8fc7f0` `#b4a2f0` `#9ad9a0` `#f0d27a`. Attribuées par l'ordre d'arrivée dans la séance
+  `#ffb347` `#ff8fb4` `#8fc7f0` `#b4a2f0` `#9ad9a0` `#f0d27a`. Attribuées par l'ordre d'arrivée dans la séance
   (la première personne a toujours la lampe, la deuxième le rose : le couple retrouve ses couleurs).
 - **Sur l'image du film** (commandes, légendes) : texte `#fff` sur dégradé noir `rgba(8,6,12,.9)` → transparent,
   minimum 4,5:1 même sur une image blanche ; vignettes à contour `rgba(255,255,255,.14)`.
@@ -172,11 +244,14 @@ Deux familles, sous licence SIL OFL 1.1, **hébergées sur le serveur de Canapé
 
 | Rôle | Police | Poids | Licence |
 |---|---|---|---|
-| Titres, noms de films, grands chiffres (compte à rebours) | **Instrument Serif** | 400 normal et italique (la police n'a qu'un poids) | OFL 1.1 |
-| Interface, corps de texte, chiffres | **Hanken Grotesk** (variable, axe `wght` 100–900) | 400, 500, 600 | OFL 1.1 |
+| Affiche, titre de page (h1), titres de film sur les affiches, grands chiffres (compte à rebours) | **Instrument Serif** | 400 romain (plus d'italique depuis la version 2) | OFL 1.1 |
+| Interface, titres de section, corps de texte, chiffres | **Figtree** (variable, axe `wght` 300–900) | 400 à 700 | OFL 1.1 |
+
+*Version 2 : Figtree remplace Figtree Grotesk (voir « Version 2 ») ; les adresses Fontsource ci-dessous valent pour Figtree
+(`@fontsource-variable/figtree@5.3.0`, `figtree-latin-wght-normal.woff2` et `figtree-latin-ext-wght-normal.woff2`) ; l'italique d'Instrument Serif n'est plus embarqué.*
 
 Pourquoi : Instrument Serif est un serif étroit, d'allure éditoriale (affiche, titre de film), qui fait ressortir les
-titres sans les alourdir et tient bien en grande taille. Hanken Grotesk est un sans-serif humaniste, chaleureux
+titres sans les alourdir et tient bien en grande taille. Figtree Grotesk est un sans-serif humaniste, chaleureux
 (courbes ouvertes), lisible aux petites tailles, avec des chiffres tabulaires. Les deux contiennent les caractères
 français (accents, cédille, œ). Ils évitent les choix par défaut du moment (Fraunces + terracotta, Inter partout).
 
@@ -193,7 +268,7 @@ https://cdn.jsdelivr.net/npm/@fontsource-variable/hanken-grotesk@5.2.8/files/han
 https://cdn.jsdelivr.net/npm/@fontsource-variable/hanken-grotesk@5.2.8/files/hanken-grotesk-latin-ext-wght-normal.woff2
 ```
 
-Taille : environ 21 Ko + 22 Ko (Instrument Serif latin) et 35 Ko (Hanken Grotesk latin). Les adresses ont été
+Taille : environ 21 Ko + 22 Ko (Instrument Serif latin) et 35 Ko (Figtree Grotesk latin). Les adresses ont été
 vérifiées (réponse 200) le 12/11/2026. Alternative plus propre : installer les paquets npm `@fontsource/instrument-serif`
 et `@fontsource-variable/hanken-grotesk` et laisser Vite copier les fichiers. Mettre les textes de licence OFL dans
 `client/static/polices/LICENCES.txt`.
@@ -202,12 +277,12 @@ et `@fontsource-variable/hanken-grotesk` et laisser Vite copier les fichiers. Me
 @font-face{font-family:"Instrument Serif";font-style:normal;font-weight:400;font-display:swap;
   src:url(/polices/instrument-serif-latin-400-normal.woff2) format("woff2");
   unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
-/* idem italique ; Hanken Grotesk : font-weight:100 900 */
+/* idem italique ; Figtree Grotesk : font-weight:100 900 */
 ```
 
 Repli : `--titre: "Instrument Serif","Iowan Old Style","Palatino Linotype",Georgia,serif` ;
-`--texte-police: "Hanken Grotesk",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif`. Précharger
-(`<link rel="preload" as="font" type="font/woff2" crossorigin>`) uniquement Instrument Serif normal et Hanken latin.
+`--texte-police: "Figtree Grotesk",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif`. Précharger
+(`<link rel="preload" as="font" type="font/woff2" crossorigin>`) uniquement Instrument Serif normal et Figtree latin.
 
 **Émojis des réactions** : ceux du système. Sur Linux sans police d'émojis, embarquer *Noto Color Emoji* (OFL) ;
 décision à prendre si besoin, l'apparence varie selon la plateforme et c'est acceptable.
@@ -219,17 +294,17 @@ dans les champs) :
 |---|---|---|---|
 | Affiche | Instrument Serif | 72 / 70 px (téléphone 44 / 44) | « Bonsoir Awa » |
 | Titre 1 | Instrument Serif | 56 / 56 (téléphone 36 / 38) | titre de page, de film |
-| Titre 2 | Instrument Serif | 36 / 40 (téléphone 28 / 32) | sections |
-| Titre 3 | Hanken 600 | 22 / 28 | titres de cartes, de dialogues |
-| Corps | Hanken 400 | 16 / 24 | texte courant (longueur de ligne ≤ 65 caractères) |
-| Corps fort | Hanken 600 | 16 / 24 | libellés, boutons (15 / 20 pour les boutons) |
-| Petit | Hanken 400 | 14 / 20 | métadonnées, aides |
-| Légende | Hanken 500 | 12 / 16 | étiquettes sur vignette (le minimum absolu) |
-| Chiffres | Hanken 600 `tabular-nums` | 14–24 | durées, compte à rebours, tailles de fichier |
+| Titre 2 | Figtree 700 | 24 / 29 (téléphone 20 / 24), `-0,02em` | sections |
+| Titre 3 | Figtree 650 | 18 / 23 | titres de cartes, de dialogues |
+| Corps | Figtree 400 | 16 / 24 | texte courant (longueur de ligne ≤ 65 caractères) |
+| Corps fort | Figtree 600 | 16 / 24 | libellés, boutons (15 / 20 pour les boutons) |
+| Petit | Figtree 400 | 14 / 20 | métadonnées, aides |
+| Légende | Figtree 500 | 12 / 16 | étiquettes sur vignette (le minimum absolu) |
+| Chiffres | Figtree 600 `tabular-nums` | 14–24 | durées, compte à rebours, tailles de fichier |
 
 Règles : sentence case partout (jamais de capitales de remplissage) ; espacement des lettres 0 sauf titres
 grands (`-0,01em`) ; pas de mot isolé en couleur ou en italique dans un titre ; les noms de films en Instrument
-Serif, les autres éléments en Hanken ; les titres français suivent la règle typographique (espace insécable avant
+Serif, les autres éléments en Figtree ; les titres français suivent la règle typographique (espace insécable avant
 `:`, `;`, `?`, `!` et « » : utiliser `&nbsp;` ou ` `).
 
 ### 3.3 Espacement, grille, rayons
@@ -240,9 +315,8 @@ Serif, les autres éléments en Hanken ; les titres français suivent la règle 
 - Téléphone : gouttière 16 px, rangées d'affiches défilantes (carte de 104–120 px) ; galerie en 2 colonnes (3 en
   tablette).
 - Points de rupture : 640 px (téléphone → tablette), 1024 px (tablette → ordinateur).
-- Rayons : `--r-s 8px` (menus, légende), `--r-m 14px` (champs, cartes de téléversement, vignettes caméra),
-  `--r-l 22px` (grandes cartes, modales, tiroir de chat), `--r-affiche 10px` (affiches), `--r-pill 999px` (boutons,
-  puces, onglets). Les formes douces sont voulues : un canapé n'a pas d'angle vif.
+- Rayons (version 2) : `--r-s 8px` (menus, légende), `--r-m 12px` (champs, boutons, onglets), `--r-l 20px` (cartes), `--r-xl 28px`
+  (modales, hero, tiroir de chat), `--r-affiche 12px` (affiches), `--r-pill 999px` (badges, puces, avatars).
 - Zones sûres : `padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
   env(safe-area-inset-left)` sur la barre d'onglets, la salle et les modales.
 
@@ -254,9 +328,9 @@ On élève d'abord par la **surface** (plus clair = plus proche), ensuite par l'
 |---|---|---|---|
 | 0 | `--fond` | aucune | page |
 | 1 | `--s1` | aucune, `1px solid --bord` | cartes, barres |
-| 2 | `--s2` | `0 10px 24px rgba(0,0,0,.4)` | affiches, menus |
-| 3 | `--s3` | `0 12px 32px rgba(0,0,0,.5)` | toasts, bulles |
-| 4 | `--s2` | `0 30px 80px rgba(0,0,0,.6)` | modales |
+| 2 | `--s2` | `--ombre-2` : `0 8px 20px rgba(0,0,0,.38)` + reflet | affiches, menus |
+| 3 | `--s3` | `--ombre-3` : `0 14px 36px rgba(0,0,0,.5)` + reflet | toasts, bulles |
+| 4 | `--s2` | `--ombre-4` : `0 32px 90px rgba(0,0,0,.62)` + reflet | modales, chat |
 
 Survol d'une affiche : monte de 4 px et ajoute `0 0 40px -6px var(--lueur)` (voir §3.8).
 
@@ -381,8 +455,8 @@ Ratio 2:3, rayon 10 px, ombre niveau 2.
   dégradé de pied `rgba(0,0,0,.55)` pour les badges et la barre de reprise.
 - **Sans affiche** : dégradé diagonal à partir d'une teinte dérivée du titre (`hsl(hash(titre) % 360, 38%, 30%)` →
   même teinte à 12 % de clarté), un voile noir en pied, **le titre en Instrument Serif 24 px blanc** (jusqu'à 3 lignes,
-  tronqué avec `…`), l'année en dessous en Hanken 12 px. Contraste du texte blanc ≥ 7:1 (la clarté plafonne à 30 %).
-- Sous l'affiche : titre (Hanken 600, 15 px, 2 lignes), « année · durée » (`--discret`, 14 px).
+  tronqué avec `…`), l'année en dessous en Figtree 12 px. Contraste du texte blanc ≥ 7:1 (la clarté plafonne à 30 %).
+- Sous l'affiche : titre (Figtree 600, 15 px, 2 lignes), « année · durée » (`--discret`, 14 px).
 - Badges (coin haut gauche, puces à fond `rgba(20,17,26,.8)`) : `Prêt` (vert, coche), `Préparation 62 %` (jaune),
   `Son non lisible` (rouge), `Partagé` (rose, icône `users`), `Nouveau`.
 - Barre de reprise : 5 px de lampe au pied de l'affiche, longueur = progression.
@@ -431,7 +505,7 @@ Barre sur dégradé `transparent → rgba(8,6,12,.9)`, marge 24 px (16 px sur mo
 ### 4.6 Vignettes caméra
 
 Rapport 4:3, 176 px de large sur ordinateur (réglable 128–288), 92 px en paysage téléphone. Rayon 14 px, contour 2
-px `rgba(255,255,255,.14)`, ombre niveau 3. Étiquette de pied : nom (Hanken 600, 12 px) sur dégradé noir ; pour soi :
+px `rgba(255,255,255,.14)`, ombre niveau 3. Étiquette de pied : nom (Figtree 600, 12 px) sur dégradé noir ; pour soi :
 « Awa (moi) » et image en miroir.
 - **Parle** : contour 3 px `--ok` + halo `0 0 0 3px rgba(111,217,177,.3)` ; 150 ms d'attaque, 600 ms de relâchement
   (évite le clignotement). Un picto n'est pas nécessaire : le contour porte l'information, mais l'étiquette passe
@@ -452,7 +526,7 @@ px `rgba(255,255,255,.14)`, ombre niveau 3. Étiquette de pied : nom (Hanken 600
 
 ### 4.7 Avatars et présence
 
-Rond 36 px (24 px en chat, 56 px en tête de profil), initiale du prénom (Hanken 600) sur la couleur de présence, texte
+Rond 36 px (24 px en chat, 56 px en tête de profil), initiale du prénom (Figtree 600) sur la couleur de présence, texte
 `#16101c`, contour 2 px `--fond` (pour se chevaucher proprement). Pastille verte 12 px = présent dans la salle ; pas de
 pastille = absent. **Pile d'avatars** (chevauchement −10 px) pour une séance : « Awa, Léa et 2 autres ». Pas de photo
 de profil en 1.0 (les caméras servent de visage ; fonction éventuelle en §8). Dans la salle, la pile est en haut à
@@ -703,7 +777,7 @@ temps (position de l'autre) ; discrètement, un bouton « Rejoindre Léa » (all
 
 **Sous-titres** : réglage partagé (la langue et la présence sont communes), **mais le style est personnel** (taille,
 fond, contour) : Petit/Moyen/Grand/Très grand (16/22/30/40 px à 1080p), fond `rgba(0,0,0,.38)` par défaut,
-contour noir, police Hanken 500, jamais en dessous des commandes quand elles sont visibles (les sous-titres
+contour noir, police Figtree 500, jamais en dessous des commandes quand elles sont visibles (les sous-titres
 remontent de 56 px quand la barre est affichée : `::cue` / position calculée). Contraste ≥ 7:1 avec fond opaque
 au choix (« Fond noir »).
 
