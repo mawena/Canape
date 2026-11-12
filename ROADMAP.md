@@ -75,7 +75,7 @@ main, séances, chat et réactions, reprise, PWA, mise en production automatique
 
 ## Phase 9 — Modules (en parallèle)
 
-- [ ] Comptes : connexion Argon2id, sessions, invitations, réinitialisation, administration, quotas
+- [x] Comptes : connexion Argon2id, sessions, invitations, réinitialisation, administration, quotas
 - [ ] Médiathèque : téléversement tus, analyse, fiches automatiques (titre, année, image, TMDB), partage, sous-titres, import 0.1
 - [ ] Lecture universelle : direct, son seul converti, vidéo convertie à la volée (HLS), HDR → SDR, préparation, sous-titres intégrés
 - [x] Séances (serveur) : séances et liens, WebSocket, synchro, chat, réactions, reprise et historique, TURN
