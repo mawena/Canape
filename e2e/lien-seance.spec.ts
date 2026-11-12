@@ -5,12 +5,13 @@ const positionFilm = (p: import('@playwright/test').Page): Promise<number> =>
   p.getByTestId('film').evaluate((v: HTMLVideoElement) => v.currentTime);
 
 test.describe('Lien de la séance pendant le film', () => {
-  test("l'hôte invite sans arrêter le film ; un troisième compte arrive au bon moment ; l'invité n'a pas l'option ; la liste donne le même lien", async ({ ouvrir, monde }) => {
+  test("l'hôte invite sans arrêter le film ; un troisième compte arrive au bon moment ; l'invité n'a pas l'option ; la liste donne le même lien", async ({ ouvrir, monde, browserName }) => {
     test.setTimeout(150_000);
     const filmId = await televerser(monde.serveur, monde.requeteAdmin, FILM_WEBM);
     const id = await creerSeance(monde.serveur, monde.requeteAdmin, filmId, [monde.viewer.id]);
     const a = await ouvrir(monde.admin);
     const b = await ouvrir(monde.viewer);
+    await a.contexte.grantPermissions(['clipboard-read', 'clipboard-write']).catch(() => {}); // Chromium seulement
     await entrerDansLaSalle(a.page, id);
     await entrerDansLaSalle(b.page, id);
     await expect(a.page.getByTestId('salle')).toHaveAttribute('data-nb-presents', '2');
@@ -32,6 +33,7 @@ test.describe('Lien de la séance pendant le film', () => {
     const lien = await a.page.getByTestId('lien-seance').inputValue();
     await a.page.getByTestId('copier-lien-seance').click();
     await expect(a.page.getByTestId('copier-lien-seance')).toContainText('Lien copié');
+    if (browserName === 'chromium') expect(await a.page.evaluate(() => navigator.clipboard.readText())).toBe(lien);
     await expect(a.page.getByTestId('salle')).toHaveAttribute('data-lecture', 'true');
     await expect(b.page.getByTestId('salle')).toHaveAttribute('data-lecture', 'true');
     const avant = await positionFilm(a.page);
