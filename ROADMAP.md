@@ -112,7 +112,7 @@ Ajouter un film par un lien magnet ou un fichier `.torrent` et suivre son télé
 - [x] Serveur : moteur WebTorrent dans un processus enfant, choix des fichiers, quota, import dans la galerie, reprise après redémarrage
 - [x] Interface : « Par torrent » (lien magnet ou `.torrent`), panneau « Téléchargements » avec progression, pause, reprise, annulation, choix des fichiers
 - [x] Livraison : dossier `/srv/canape/telechargements`, réglages d'exemple, guide de déploiement, README
-- [ ] Essais de bout en bout (pair local, sans Internet), release 1.1.0
+- [x] Essais de bout en bout (pair local, sans Internet), release 1.1.0
 
 ## Phase 14 — Design plus attirant, plus pro, plus facile
 
