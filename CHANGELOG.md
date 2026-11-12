@@ -2,6 +2,24 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) ; versions selon [SemVer](https://semver.org/lang/fr/).
 
+## [1.5.0] — 2026-11-12
+
+Inviter quelqu'un pendant la séance, même quand le film est déjà lancé.
+
+### Ajouté
+
+- **Bouton « Inviter » dans la salle**, pour l'hôte de la séance : il s'utilise pendant le film, sans le mettre en
+  pause ni toucher à la synchronisation, et marche aussi en plein écran. Il ouvre un petit panneau avec le lien de la
+  séance, « Copier le lien » et, sur téléphone, « Partager… » (le panneau s'ouvre alors en bas de l'écran). Échap le
+  ferme.
+- La même option dans le sas, avant d'entrer dans la salle.
+- **« Copier le lien »** dans la liste des séances, sur chaque séance prévue ou en cours dont tu es l'hôte.
+- La personne qui ouvre le lien pendant le film arrive directement dans la salle, au même moment du film que les
+  autres (vérifié par un nouvel essai Playwright, sous Chromium et Firefox : un troisième compte rejoint en pleine
+  lecture).
+
+Rien ne change côté serveur, base de données ou déploiement : la mise à jour se fait comme d'habitude.
+
 ## [1.4.1] — 2026-11-12
 
 Correctif : Transmission peut écrire dans les dossiers de téléchargement.
