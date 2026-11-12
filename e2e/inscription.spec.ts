@@ -229,35 +229,81 @@ const DOSSIER_CAPTURES = process.env['CANAPE_CAPTURES_INSCRIPTION'];
 test.describe('Captures de l\'inscription', () => {
   test.skip(!DOSSIER_CAPTURES, 'CANAPE_CAPTURES_INSCRIPTION non défini');
   test('captures', async ({ browser, monde, ouvrir }) => {
-    test.setTimeout(180_000);
-    const tailles = { ordi: { width: 1280, height: 860 }, tel: { width: 390, height: 844 } } as const;
+    test.setTimeout(600_000);
+    const tailles = { ordi: { width: 1440, height: 900 }, tel: { width: 390, height: 844 } } as const;
     const a = await inscrireParApi(monde.serveur, 'Anaïs');
-    await inscrireParApi(monde.serveur, 'Basile');
-    const film = await monde.requeteAdmin.get(`${monde.serveur.url}/api/films?vue=miens`);
-    void film;
+    const b = await inscrireParApi(monde.serveur, 'Basile');
+    // Un film pour Anaïs (partage).
+    const ca = await ouvrir(a);
+    await ca.page.goto('/galerie');
+    const [selecteur] = await Promise.all([ca.page.waitForEvent('filechooser'), ca.page.getByTestId('ajouter-film').click()]);
+    await selecteur.setFiles(cheminMedia(FILM_WEBM));
+    const carte = ca.page.getByRole('link', { name: /Mire de test/ }).first();
+    await expect(carte).toBeVisible({ timeout: 60_000 });
+    await carte.click();
+    await ca.page.waitForURL(/\/galerie\/[^/?]+$/);
+    await expect(ca.page.getByText('Analyse du film en cours…')).toHaveCount(0, { timeout: 60_000 });
+    const urlFilm = ca.page.url();
+    await ca.contexte.close();
+
+    for (const theme of ['clair', 'sombre'] as const) {
+      for (const [nom, viewport] of Object.entries(tailles)) {
+        const prefixe = `${nom}-${theme}`;
+        const nouveau = async (connecte?: Compte) => {
+          const contexte = await browser.newContext({ baseURL: monde.serveur.url, locale: 'fr-FR', viewport });
+          await contexte.addInitScript((t) => { try { localStorage.setItem('canape.theme', t); } catch { /* rien */ } }, theme);
+          const r = connecte ?? undefined;
+          if (r) {
+            const rep = await contexte.request.post(`${monde.serveur.url}/api/connexion`, { headers: { Origin: monde.serveur.url }, data: { identifiant: r.identifiant, motDePasse: r.motDePasse } });
+            expect(rep.status()).toBe(204);
+          }
+          return { contexte, page: await contexte.newPage() };
+        };
+        const photo = async (page: Page, fichier: string) => { await page.waitForTimeout(500); await page.screenshot({ path: `${DOSSIER_CAPTURES}/${prefixe}-${fichier}.png`, fullPage: true }); };
+
+        const an = await nouveau();
+        const p = an.page;
+        await p.goto('/connexion'); await expect(p.getByTestId('lien-inscription')).toBeVisible(); await photo(p, 'connexion');
+        await p.goto('/inscription'); await expect(p.getByTestId('champ-prenom')).toBeVisible();
+        await photo(p, 'inscription-vide');
+        await remplir(p, { prenom: 'Inès', identifiant: 'ines.martin' });
+        await p.getByTestId('champ-mot-de-passe').fill('court');
+        await p.getByTestId('champ-confirmation').fill('different');
+        await photo(p, 'inscription-erreurs');
+        await p.goto('/regles'); await photo(p, 'regles');
+        await an.contexte.close();
+
+        const ad = await nouveau(monde.admin);
+        await ad.page.goto('/admin/reglages'); await expect(ad.page.getByRole('switch', { name: 'Inscriptions libres' })).toBeVisible(); await photo(ad.page, 'reglages');
+        await ad.page.goto('/admin/utilisateurs'); await expect(ad.page.getByTestId('origine-compte').first()).toBeVisible(); await photo(ad.page, 'comptes');
+        await ad.contexte.close();
+
+        const c = await nouveau(a);
+        await c.page.goto('/seances/nouvelle');
+        await c.page.getByTestId('champ-chercher-identifiant').fill(b.identifiant);
+        await c.page.getByTestId('chercher-identifiant').click();
+        await expect(c.page.getByTestId('compte-trouve')).toBeVisible();
+        await photo(c.page, 'invitation-seance');
+        await c.page.goto(urlFilm);
+        await c.page.getByText('Partage', { exact: true }).click();
+        await c.page.getByLabel('Certaines personnes').check();
+        await c.page.getByTestId('champ-chercher-identifiant').fill('personne-nexiste-pas');
+        await c.page.getByTestId('chercher-identifiant').click();
+        await expect(c.page.getByTestId('aucun-compte')).toBeVisible();
+        await photo(c.page, 'partage-film-vide');
+        await c.page.getByLabel('Tous les inscrits').check();
+        await photo(c.page, 'partage-film-tous');
+        await c.contexte.close();
+      }
+    }
+    // Inscriptions fermées.
+    await reglage(monde, { inscriptionsOuvertes: false });
     for (const [nom, viewport] of Object.entries(tailles)) {
-      const anonyme = await browser.newContext({ baseURL: monde.serveur.url, locale: 'fr-FR', viewport });
-      const p = await anonyme.newPage();
-      const photo = async (page: Page, fichier: string) => { await page.waitForTimeout(400); await page.screenshot({ path: `${DOSSIER_CAPTURES}/${nom}-${fichier}.png`, fullPage: true }); };
-      await p.goto('/connexion'); await expect(p.getByTestId('lien-inscription')).toBeVisible(); await photo(p, 'connexion');
-      await p.goto('/inscription'); await expect(p.getByTestId('champ-prenom')).toBeVisible();
-      await photo(p, 'inscription-vide');
-      await remplir(p, { prenom: 'Inès', identifiant: 'ines.martin' });
-      await p.getByTestId('champ-confirmation').fill('different');
-      await photo(p, 'inscription-remplie');
-      await p.goto('/regles'); await photo(p, 'regles');
-      await anonyme.close();
-
-      const admin = await nouveauContexteAdmin(browser, monde, viewport);
-      await admin.page.goto('/admin/reglages'); await expect(admin.page.getByRole('switch', { name: 'Inscriptions libres' })).toBeVisible(); await photo(admin.page, 'reglages');
-      await admin.page.goto('/admin/utilisateurs'); await expect(admin.page.getByTestId('origine-compte').first()).toBeVisible(); await photo(admin.page, 'comptes');
-      await admin.contexte.close();
-
-      const c = await ouvrir(a);
-      await c.page.setViewportSize(viewport);
-      await c.page.goto('/seances/nouvelle');
-      await expect(c.page.getByTestId('chercher-identifiant')).toBeVisible();
-      await photo(c.page, 'invitation-seance');
+      const contexte = await browser.newContext({ baseURL: monde.serveur.url, locale: 'fr-FR', viewport });
+      const p = await contexte.newPage();
+      await p.goto('/inscription'); await expect(p.getByTestId('inscriptions-fermees')).toBeVisible(); await p.waitForTimeout(400);
+      await p.screenshot({ path: `${DOSSIER_CAPTURES}/${nom}-clair-inscription-fermee.png`, fullPage: true });
+      await contexte.close();
     }
   });
 });

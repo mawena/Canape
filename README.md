@@ -160,6 +160,12 @@ inviter parmi les comptes). Chacun rejoint la salle, autorise sa caméra et son 
   `CANAPE_TURN_SECRET`, voir ci-dessous).
 - Les films lourds (4K, HDR) se préparent à l'avance depuis leur fiche ou automatiquement quand le serveur est calme.
 
+**Inscription libre, côté visiteur** : sur `/connexion`, le lien « Créer un compte » (visible seulement quand c'est ouvert)
+mène à `/inscription` : prénom, identifiant, mot de passe (au moins 10 caractères, jauge et confirmation), couleur, et la
+case « J'accepte les règles d'usage » (page `/regles`, lisible sans compte). Une fois inscrit, il arrive connecté sur
+l'accueil avec les premiers pas. Si l'administrateur a fermé les inscriptions (ou si le maximum est atteint), la page
+l'explique. Ses films restent privés tant qu'il ne les partage pas.
+
 **Inscription libre** : page Réglages de l'administration (ou `sudo canape admin inscriptions ouvrir|fermer`) :
 `inscriptionsOuvertes` (défaut : oui), `quotaInscriptionOctets` (défaut 20 Go par inscrit), `torrentsInscrits` (défaut :
 non, un inconnu ne fait pas télécharger de torrents au serveur sans ton accord ; le droit se donne compte par compte

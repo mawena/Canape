@@ -363,6 +363,11 @@ N'importe qui peut venir sur le site, **créer son compte** et ajouter des films
   l'administration avec les nouveaux champs ; partage d'un film et invitation à une séance par identifiant (« Ajouter
   quelqu'un : son identifiant »), plus la liste des comptes connus.
 
+*Réalisé (interface)* : pages `/inscription` (attend 3,2 s avant l'envoi pour le garde-fou anti-robot, erreurs près des
+champs, 409/403/429 traduits) et `/regles`, composant `ChercherCompte` (partage d'un film, invitation à une séance),
+réglages et origine des comptes dans l'administration ; essais `e2e/inscription.spec.ts` (Chromium et Firefox) et captures
+à la demande (`CANAPE_CAPTURES_INSCRIPTION=<dossier>`, clair/sombre, ordinateur/téléphone).
+
 ## Torrents (1.1)
 
 Ajouter un film par un lien magnet ou un fichier `.torrent`, et suivre son téléchargement. Partie du module
