@@ -8,9 +8,12 @@
   } from '$lib/mediatheque/api.ts';
   import { formaterDuree, formaterTaille, libelleCanaux, nomLangue } from '$lib/mediatheque/formats.ts';
   import { Bouton, Champ, Chargement, EtatVide, Icone, Modale, toast } from '$lib/ui/index.ts';
+  import Lecteur from '$lib/lecture/Lecteur.svelte';
+  import Preparation from '$lib/lecture/Preparation.svelte';
 
   const id = $derived(page.params['id'] ?? '');
   let film: Film | null = $state(null);
+  let regarderSeul = $state(false);
   let introuvable = $state(false);
   let erreur: string | null = $state(null);
 
@@ -197,6 +200,7 @@
         <div class="actions">
           {#if f.etat === 'pret'}
             <Bouton href={`/seances/nouvelle?film=${f.id}`} icone="lecture">Lancer une séance</Bouton>
+            <Bouton variante="secondaire" onclick={() => { regarderSeul = !regarderSeul; }}>{regarderSeul ? 'Fermer le lecteur' : 'Regarder seul'}</Bouton>
           {/if}
           {#if f.modifiable}
             <Bouton variante="secondaire" icone="reglages" onclick={commencerEdition}>Modifier la fiche</Bouton>
@@ -204,7 +208,13 @@
           {/if}
         </div>
 
-        <!-- PREPARATION : composant du module lecture, branché à l'intégration -->
+        {#if regarderSeul && f.etat === 'pret'}
+          <div class="section" data-test="lecteur-seul"><Lecteur filmId={f.id} /></div>
+        {/if}
+
+        {#if f.etat === 'pret' && f.modifiable}
+          <Preparation filmId={f.id} />
+        {/if}
 
         {#if f.etat === 'pret' && f.analyse}
           <details class="section" open>
