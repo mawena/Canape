@@ -325,6 +325,54 @@ compteARebours: number|null, serveur }` : mêmes règles qu'en 0.1 (position à 
 rattrapage par saut au-delà de 1 s et par vitesse 0,95/1,05 entre 0,3 et 1 s, attente mutuelle, aucun écho
 d'événement). Changer de piste audio ou de film remet tout le monde en pause à la même position.
 
+## Torrents (1.1)
+
+Ajouter un film par un lien magnet ou un fichier `.torrent`, et suivre son téléchargement. Partie du module
+**médiathèque** (il possède les films, les envois et les quotas). Types : `partage/src/torrents.ts` ; table
+`telechargements` (`serveur/migrations/050_torrents.sql`).
+
+- **Moteur** : WebTorrent (`webtorrent` 3, MIT), dans un **processus enfant** de Canapé (`child_process.fork`) qui parle
+  au serveur par messages : un plantage ou une charge du moteur ne touche ni la synchro des séances ni l'API. Le
+  serveur relance l'enfant s'il meurt et reprend les téléchargements en cours (les morceaux déjà reçus sont revérifiés,
+  pas retéléchargés).
+- **Droits** : admin, et viewers qui ont le droit de téléverser ; un téléchargement compte dans le quota dès que la
+  taille des fichiers choisis est connue (avec les envois en cours) : dépassement → `erreur` « Ton espace est plein ».
+  Chacun voit les siens, l'admin tous ; ceux des autres répondent 404.
+- **Choix des fichiers** : dès les informations reçues, la plus grosse vidéo et les sous-titres `.srt`/`.vtt` de son
+  dossier sont choisis ; le propriétaire peut changer le choix pendant le téléchargement (chaque vidéo choisie devient
+  un film). Un torrent sans vidéo → `erreur` « Ce torrent ne contient pas de vidéo ».
+- **Fin** : `import` → chaque vidéo passe par `creerFilm` (déplacée dans `CANAPE_FILMS/<id>/original.<ext>`, analyse,
+  images, TMDB) et ses sous-titres par `ajouterSousTitre` → `termine` avec `filmIds`. Puis le torrent **cesse d'être
+  partagé** (sauf `CANAPE_TORRENT_PARTAGE` > 0 : partagé jusqu'à ce ratio) et ses fichiers restants sont effacés.
+- **Ménagement des autres sites** : au plus `CANAPE_TORRENT_SIMULTANES` téléchargements actifs (les autres attendent en
+  `telechargement` avec 0 pair), débits plafonnés, enfant lancé en `nice` `CANAPE_TRANSCODAGE_PRIORITE`.
+
+| Variable | Défaut | Rôle |
+|---|---|---|
+| `CANAPE_TORRENTS` | `1` | `0` désactive les torrents (`peutAjouter=false`, routes d'ajout en 403) |
+| `CANAPE_TELECHARGEMENTS` | `./telechargements` | données en cours (`<id>/…`) et `.torrent` gardés (`.torrents/`) ; VPS : `/srv/canape/telechargements` |
+| `CANAPE_TORRENT_SIMULTANES` | `2` | téléchargements actifs en même temps |
+| `CANAPE_TORRENT_DEBIT_MAX` | `0` | octets/s reçus au plus (`0` = sans limite ; `20M` accepté) |
+| `CANAPE_TORRENT_ENVOI_MAX` | `1M` | octets/s envoyés au plus |
+| `CANAPE_TORRENT_PARTAGE` | `0` | ratio de partage après la fin (`0` = s'arrête dès la fin) |
+| `CANAPE_TORRENT_PORT` | `0` | port d'écoute des pairs (`0` = au hasard ; ouvrir un port fixe dans le pare-feu aide) |
+
+Routes (session obligatoire, contrôle d'`Origin` comme le reste de l'API) :
+- `GET /api/torrents` → `ListeTelechargements`
+- `POST /api/torrents` : JSON `{ magnet }` ou multipart avec un fichier `.torrent` (≤ `TAILLE_MAX_FICHIER_TORRENT`)
+  → 201 `Telechargement` ; 400 lien ou fichier illisible ; 403 sans droit ou torrents désactivés ; 409 même torrent
+  déjà en cours (`infoHash`) ; limite 10 ajouts par minute.
+- `PATCH /api/torrents/:id` `CorpsModifTorrent` → `Telechargement` (fichiers : au moins une vidéo ; refusé une fois
+  `import`/`termine`/`annule`)
+- `DELETE /api/torrents/:id` → 204 : arrête et efface les données partielles (les films déjà créés restent) ; une
+  ligne `termine`, `erreur` ou `annule` est simplement retirée de la liste.
+
+Interface (galerie) : « Ajouter un film » propose « Depuis mon ordinateur » ou « Par torrent » (coller un lien
+magnet, ou déposer un `.torrent`) ; un panneau « Téléchargements » suit chaque torrent (nom, barre de progression,
+reçu / total, débit, temps restant, pairs, état en clair), avec pause, reprise, annulation et « Choisir les fichiers » ;
+rafraîchi toutes les `INTERVALLE_SUIVI_TORRENTS` ms tant qu'un téléchargement est actif ; à la fin, un toast « <titre>
+est dans ta galerie » et la carte du film apparaît (en analyse puis prête).
+
 ## Lecture universelle
 
 1. **Direct** si le conteneur (MP4, M4V, MOV, WebM), la vidéo (H.264 8 bits SDR, VP9, AV1) et la piste audio

@@ -98,3 +98,18 @@ main, séances, chat et réactions, reprise, PWA, mise en production automatique
 
 - [x] Version, CHANGELOG, tag, release GitHub
 - [ ] Premier déploiement automatique sur https://canape.mawena.cloud, vérifié
+
+---
+
+# Canapé 1.1 — films par torrent
+
+Ajouter un film par un lien magnet ou un fichier `.torrent` et suivre son téléchargement. Contrat :
+[docs/CONCEPTION.md](docs/CONCEPTION.md), « Torrents ».
+
+## Phase 13 — Torrents
+
+- [x] Contrat : types partagés, table `telechargements`, réglages `CANAPE_TORRENT_*`, routes, dépendance WebTorrent
+- [ ] Serveur : moteur WebTorrent dans un processus enfant, choix des fichiers, quota, import dans la galerie, reprise après redémarrage
+- [ ] Interface : « Par torrent » (lien magnet ou `.torrent`), panneau « Téléchargements » avec progression, pause, reprise, annulation, choix des fichiers
+- [ ] Livraison : dossier `/srv/canape/telechargements`, réglages d'exemple, guide de déploiement, README
+- [ ] Essais de bout en bout (pair local, sans Internet), release 1.1.0
