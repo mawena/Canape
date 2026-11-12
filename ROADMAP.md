@@ -114,7 +114,7 @@ Ajouter un film par un lien magnet ou un fichier `.torrent` et suivre son télé
 - [x] Livraison : dossier `/srv/canape/telechargements`, réglages d'exemple, guide de déploiement, README
 - [ ] Essais de bout en bout (pair local, sans Internet), release 1.1.0
 
-## Phase 14 — Design plus attirant, plus pro, plus facile
+## Phase 14 — Canapé 2.0 : design plus attirant, plus pro, plus facile
 
 - [ ] Recherche : applications de streaming et de visionnage à deux de 2026, palettes, typographie, composants
 - [ ] Nouvelle palette et jetons (contrastes AA vérifiés), typographie, élévations, mouvement
@@ -122,3 +122,4 @@ Ajouter un film par un lien magnet ou un fichier `.torrent` et suivre son télé
 - [ ] Écrans repris un par un : accueil, galerie et fiche, téléchargements, séances, salle, compte, administration, connexion et invitation
 - [ ] Facilité d'usage : premiers pas guidés, textes d'aide, messages d'erreur clairs, retours visuels, cibles tactiles
 - [ ] Captures avant / après (ordinateur et téléphone), DESIGN.md à jour, essais Playwright verts
+- [ ] Release 2.0.0 (choix de l'utilisateur : le nouveau design fait la version 2.0)
