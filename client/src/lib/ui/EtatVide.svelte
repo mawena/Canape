@@ -26,10 +26,11 @@
 <style>
   .vide {
     display: grid; justify-items: center; gap: 10px; text-align: center; padding: var(--e-8) var(--e-5);
-    background: var(--s1); border: 1.5px dashed var(--bord-champ); border-radius: var(--r-l);
+    background: var(--s1); border: 1.5px dashed var(--bord-vif); border-radius: var(--r-l);
+    background-image: radial-gradient(420px 160px at 50% 0%, var(--lampe-fond), transparent 75%);
   }
-  .icone-vide { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50%; background: var(--lampe-fond); color: var(--lampe); }
-  h3 { font: 400 1.7rem / 1.12 var(--titre); color: var(--texte); }
+  .icone-vide { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 18px; margin-bottom: 4px; background: var(--lampe-fond); color: var(--lampe); }
+  h3 { font: 700 1.375rem / 1.2 var(--texte-police); letter-spacing: -0.02em; color: var(--texte); text-wrap: balance; }
   p { max-width: 40ch; color: var(--doux); }
   .actions { display: flex; gap: var(--e-3); flex-wrap: wrap; justify-content: center; margin-top: var(--e-2); }
 </style>

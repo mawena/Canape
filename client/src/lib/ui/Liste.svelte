@@ -11,6 +11,6 @@
 <ul class="liste" aria-label={libelle}>{@render children?.()}</ul>
 
 <style>
-  .liste { list-style: none; margin: 0; padding: 0; background: var(--s1); border: 1px solid var(--bord); border-radius: var(--r-l); overflow: hidden; }
+  .liste { list-style: none; margin: 0; padding: 0; background: var(--s1); border: 1px solid var(--bord); border-radius: var(--r-l); overflow: hidden; box-shadow: inset 0 1px 0 var(--reflet); }
   .liste > :global(li + li) { border-top: 1px solid var(--bord); }
 </style>

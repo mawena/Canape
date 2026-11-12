@@ -31,7 +31,7 @@
   @media (max-width: 640px) { :global(body.avec-onglets) .zone { bottom: calc(var(--barre-onglets) + var(--e-4) + env(safe-area-inset-bottom)); } }
   .toast {
     display: flex; align-items: center; gap: 12px; width: fit-content; max-width: 100%; pointer-events: auto;
-    background: var(--s3); border: 1px solid var(--bord-champ); border-radius: var(--r-pill);
+    background: var(--s3); border: 1px solid var(--bord-vif); border-radius: 16px;
     padding: 8px 8px 8px 10px; font-size: 15px; box-shadow: var(--ombre-3); animation: entree var(--d-2) var(--ease);
   }
   .ic { display: grid; place-items: center; width: 28px; height: 28px; flex: none; border-radius: 50%; background: var(--lampe-fond); color: var(--lampe); }

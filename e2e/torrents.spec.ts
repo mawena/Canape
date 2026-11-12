@@ -151,6 +151,8 @@ test.describe('Torrents', () => {
 
   });
 
+  test.describe('débit limité à 60 Ko/s (le premier ajout reste en cours)', () => {
+  test.use({ debitMax: '60K' });
   test('erreurs : lien invalide côté client, même torrent deux fois', async ({ ouvrir, monde, reseau }) => {
     const { page } = await ouvrir(monde.admin);
     await page.goto('/galerie');
@@ -169,6 +171,7 @@ test.describe('Torrents', () => {
     await page.getByTestId('envoyer-torrent').click();
     await expect(page.getByText('Ce torrent est déjà en cours.')).toBeVisible();
     await expect(ligne(page)).toHaveCount(1);
+  });
   });
 
   test('un compte sans droit de téléverser ne voit pas « Par torrent »', async ({ ouvrir, monde }) => {

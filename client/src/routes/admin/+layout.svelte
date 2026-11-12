@@ -45,10 +45,12 @@
 {/if}
 
 <style>
-  .admin { max-width: 960px; margin: 0 auto; padding: var(--espace-4); display: grid; gap: var(--espace-4); }
-  nav { display: flex; flex-wrap: wrap; gap: var(--espace-3); border-bottom: 1px solid var(--bordure); padding-bottom: var(--espace-3); }
-  nav a { color: var(--doux); text-decoration: none; padding: var(--espace-1) var(--espace-2); border-radius: var(--rayon-m, 8px); }
-  nav a[aria-current='page'] { color: var(--or); }
-  main { display: grid; gap: var(--espace-4); align-content: start; }
-  .refus { max-width: 480px; margin: var(--espace-6) auto; padding: 0 var(--espace-4); }
+  .admin { max-width: 960px; margin: 0 auto; display: grid; gap: var(--e-5); }
+  nav { display: flex; gap: 2px; padding: 4px; max-width: 100%; overflow-x: auto; scrollbar-width: none; justify-self: start; background: var(--s1); border: 1px solid var(--bord); border-radius: var(--r-m); }
+  nav::-webkit-scrollbar { display: none; }
+  nav a { display: inline-flex; align-items: center; min-height: 40px; color: var(--doux); text-decoration: none; padding: 0 16px; border-radius: 9px; font-weight: 600; font-size: 14.5px; white-space: nowrap; }
+  nav a:hover:not([aria-current='page']) { color: var(--texte); }
+  nav a[aria-current='page'] { color: var(--texte); background: var(--s3); box-shadow: inset 0 1px 0 var(--reflet), 0 1px 3px rgba(0, 0, 0, 0.4); }
+  main { display: grid; gap: var(--e-5); align-content: start; }
+  .refus { max-width: 480px; margin: var(--e-8) auto; padding: 0 var(--e-4); }
 </style>

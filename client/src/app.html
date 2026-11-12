@@ -3,8 +3,20 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#14111a" />
-    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#f5f7fb" />
+    <script>
+      // Thème posé avant le premier rendu (pas de flash) : clair par défaut, « sombre » ou « auto » (appareil) choisis dans le menu du compte.
+      (function () {
+        var r = document.documentElement, t = 'clair';
+        try { var p = localStorage.getItem('canape.theme'); if (p === 'sombre' || p === 'auto') t = p; } catch (e) { /* stockage indisponible */ }
+        var sombre = t === 'sombre' || (t === 'auto' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        r.setAttribute('data-theme', sombre ? 'sombre' : 'clair');
+        r.setAttribute('data-preference', t);
+        var m = document.querySelector('meta[name="theme-color"]');
+        if (m) m.setAttribute('content', sombre ? '#0b1220' : '#f5f7fb');
+      })();
+    </script>
+    <meta name="color-scheme" content="light dark" />
     <meta name="description" content="Regarde un film ensemble, chacun chez soi." />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -15,7 +27,7 @@
     <link rel="icon" href="%sveltekit.assets%/favicon.ico" sizes="32x32" />
     <link rel="apple-touch-icon" href="%sveltekit.assets%/icones/apple-touch-icon.png" />
     <link rel="preload" href="%sveltekit.assets%/polices/instrument-serif-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="preload" href="%sveltekit.assets%/polices/hanken-grotesk-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="%sveltekit.assets%/polices/figtree-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
     <!-- Écrans de démarrage iOS (fond nuit prune + logo) -->
     <link rel="apple-touch-startup-image" href="%sveltekit.assets%/demarrage/demarrage-1290x2796.png" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" />
     <link rel="apple-touch-startup-image" href="%sveltekit.assets%/demarrage/demarrage-1179x2556.png" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" />
