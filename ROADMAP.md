@@ -123,3 +123,13 @@ Ajouter un film par un lien magnet ou un fichier `.torrent` et suivre son télé
 - [ ] Facilité d'usage : premiers pas guidés, textes d'aide, messages d'erreur clairs, retours visuels, cibles tactiles
 - [ ] Captures avant / après (ordinateur et téléphone), DESIGN.md à jour, essais Playwright verts
 - [ ] Release du nouveau design (version mineure : rien d'incompatible)
+
+## Phase 15 — Inscription libre
+
+N'importe qui peut venir sur https://canape.mawena.cloud, créer son compte et ajouter des films. Contrat :
+[docs/CONCEPTION.md](docs/CONCEPTION.md), « Inscription libre ».
+
+- [x] Contrat : types, migration `011_inscription.sql`, réglages, routes, vie privée entre inconnus
+- [ ] Serveur : inscription avec jeton anti-robot et limites, réglages de l'admin, droit aux torrents par compte, liste des comptes restreinte et recherche par identifiant
+- [ ] Interface : pages `/inscription` et `/regles`, lien « Créer un compte », réglages et comptes de l'administration, partage et invitation par identifiant
+- [ ] Essais de bout en bout (inscription, droits, vie privée), README et guide de déploiement, release
