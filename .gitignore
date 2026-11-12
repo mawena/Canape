@@ -1,5 +1,12 @@
 node_modules/
+client/build/
+client/.svelte-kit/
 dist/
-build/
+donnees/
 films/
+cache/
+televersements/
+dev/
+test-results/
+playwright-report/
 *.log
