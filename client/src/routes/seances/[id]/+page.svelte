@@ -227,7 +227,7 @@
       {#each salle.annonces as a (a.id)}<p class="annonce" data-test="annonce">{a.texte}</p>{/each}
     </div>
 
-    {#if !salle.prefs.conseilCasqueVu && !salle.prefs.casque}
+    {#if !salle.prefs.conseilCasqueVu && !salle.prefs.casque && !salle.chatOuvert}
       <p class="conseil">
         Un casque évite l’écho : sans casque, le film repart dans le micro.
         <button type="button" onclick={() => { salle.prefs.conseilCasqueVu = true; salle.sauverPrefs(); }}>Ne plus afficher</button>
