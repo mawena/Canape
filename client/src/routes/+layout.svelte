@@ -6,6 +6,8 @@
   import { Avatar, Bouton, EtatVide, Icone, Logo, Menu, Modale, Toasts, toast, type ElementMenu, type NomIcone } from '$lib/ui/index.ts';
   import { estRouteLibre, estSalle, sectionActive } from '$lib/interface/routes.ts';
   import { session } from '$lib/interface/session.svelte.ts';
+  import { theme, LIBELLES_THEME, type PreferenceTheme } from '$lib/interface/theme.svelte.ts';
+  import SelecteurTheme from '$lib/interface/SelecteurTheme.svelte';
   import '$lib/ui/jetons.css';
 
   let { children }: { children: Snippet } = $props();
@@ -29,6 +31,9 @@
   const elementsCompte = $derived.by<ElementMenu[]>(() => {
     const liste: ElementMenu[] = [{ libelle: 'Mon compte', icone: 'utilisateur', href: '/compte' }];
     if (session.estAdmin) liste.push({ libelle: 'Administration', icone: 'reglages', href: '/admin' });
+    (['clair', 'sombre', 'auto'] as PreferenceTheme[]).forEach((c, i) => liste.push({
+      libelle: `Thème : ${LIBELLES_THEME[c].toLowerCase()}`, icone: theme.preference === c ? 'verifier' : 'lune', surClic: () => theme.choisir(c), separateurAvant: i === 0,
+    }));
     liste.push({ libelle: 'Se déconnecter', icone: 'deconnexion', surClic: () => void session.deconnexion(), separateurAvant: true });
     return liste;
   });
@@ -39,6 +44,7 @@
   }
 
   onMount(() => {
+    theme.init();
     void charger();
     // Hors ligne : on le dit une fois, doucement.
     const horsLigne = () => toast.info('Tu es hors ligne. Canapé revient dès que le réseau revient.', 6000);
@@ -145,6 +151,7 @@
     <nav class="moi" aria-label="Mon espace" onclick={() => (moiOuvert = false)} role="presentation">
       <a href="/historique"><Icone nom="historique" />Historique</a>
       <a href="/compte"><Icone nom="utilisateur" />Mon compte</a>
+      <div class="theme-moi" role="presentation" onclick={(e) => e.stopPropagation()}><span>Apparence</span><SelecteurTheme /></div>
       {#if session.estAdmin}<a href="/admin"><Icone nom="reglages" />Administration</a>{/if}
       <button type="button" class="sortie" onclick={() => void session.deconnexion()}><Icone nom="deconnexion" />Se déconnecter</button>
     </nav>
@@ -166,9 +173,9 @@
   .haut {
     position: sticky; top: 0; z-index: 40; display: flex; align-items: center; gap: 28px; height: var(--barre-haute);
     padding: 0 var(--gouttiere); padding-top: env(safe-area-inset-top);
-    background: rgba(13, 12, 18, 0.72); backdrop-filter: var(--flou-verre); -webkit-backdrop-filter: var(--flou-verre); border-bottom: 1px solid var(--bord);
+    background: var(--fond-verre); backdrop-filter: var(--flou-verre); -webkit-backdrop-filter: var(--flou-verre); border-bottom: 1px solid var(--bord);
   }
-  @supports not (backdrop-filter: blur(1px)) { .haut { background: rgba(21, 20, 28, 0.97); } }
+  @supports not (backdrop-filter: blur(1px)) { .haut { background: var(--s1); } }
   .marque { display: inline-flex; border-radius: var(--r-s); text-decoration: none; }
   .nav { display: flex; gap: 4px; margin-right: auto; }
   .nav a {
@@ -178,7 +185,7 @@
   .nav a[aria-current='page'] { color: var(--texte); }
   .nav a[aria-current='page']::after {
     content: ''; position: absolute; left: 14px; right: 14px; bottom: 2px; height: 3px; border-radius: 3px;
-    background: var(--lampe); box-shadow: 0 0 12px rgba(255, 179, 71, 0.7);
+    background: var(--lampe); box-shadow: 0 0 12px var(--lampe-fond);
   }
   @media (hover: hover) { .nav a:hover { color: var(--texte); background: var(--s1); } }
   .actions-haut { display: flex; align-items: center; gap: var(--e-4); }
@@ -195,7 +202,7 @@
     main { padding: 16px var(--gouttiere) calc(var(--barre-onglets) + env(safe-area-inset-bottom) + 32px); }
     .onglets-bas {
       position: fixed; z-index: 40; left: 0; right: 0; bottom: 0; display: grid; grid-template-columns: repeat(4, 1fr);
-      padding: 6px 8px env(safe-area-inset-bottom); min-height: var(--barre-onglets); background: rgba(21, 20, 28, 0.82); backdrop-filter: var(--flou-verre); -webkit-backdrop-filter: var(--flou-verre); border-top: 1px solid var(--bord);
+      padding: 6px 8px env(safe-area-inset-bottom); min-height: var(--barre-onglets); background: var(--fond-verre); backdrop-filter: var(--flou-verre); -webkit-backdrop-filter: var(--flou-verre); border-top: 1px solid var(--bord);
     }
     .onglets-bas a, .onglets-bas button {
       display: grid; justify-items: center; align-content: center; gap: 2px; min-height: 52px; border: 0; background: transparent;
@@ -203,7 +210,7 @@
     }
     .onglets-bas [aria-current='page'] { color: var(--lampe); }
     .onglets-bas [aria-current='page']::before {
-      content: ''; position: absolute; top: 0; width: 28px; height: 3px; border-radius: 0 0 3px 3px; background: var(--lampe); box-shadow: 0 0 12px rgba(255, 179, 71, 0.7);
+      content: ''; position: absolute; top: 0; width: 28px; height: 3px; border-radius: 0 0 3px 3px; background: var(--lampe); box-shadow: 0 0 12px var(--lampe-fond);
     }
   }
   @media (min-width: 641px) and (max-width: 860px) {
@@ -218,4 +225,5 @@
   }
   .moi a:hover, .moi button:hover { background: var(--s3); }
   .moi .sortie { color: var(--mal); }
+  .theme-moi { display: grid; gap: 8px; padding: 8px 12px 12px; color: var(--doux); font-size: 14px; font-weight: 600; }
 </style>

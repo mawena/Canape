@@ -58,13 +58,13 @@
   .rond.s { width: 36px; }
   .rond.l { width: 56px; }
 
-  .primaire { background: var(--lampe-degrade); color: var(--lampe-sur); box-shadow: var(--halo-lampe), inset 0 1px 0 rgba(255, 255, 255, 0.35); }
+  .primaire { background: var(--lampe-degrade); color: var(--lampe-sur); box-shadow: var(--halo-lampe), inset 0 1px 0 rgba(255, 255, 255, 0.3); }
   .secondaire { background: var(--s2); border-color: var(--bord-champ); color: var(--texte); box-shadow: inset 0 1px 0 var(--reflet); }
   .discret { background: transparent; color: var(--doux); }
   .danger { background: transparent; border-color: var(--mal); color: var(--mal); }
   .danger.confirme { background: var(--mal); color: var(--mal-sur); }
   @media (hover: hover) {
-    .primaire:hover:not(:disabled) { background: var(--lampe-vive); box-shadow: 0 8px 28px -6px rgba(255, 179, 71, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.4); }
+    .primaire:hover:not(:disabled) { background: var(--lampe-vive); filter: brightness(1.04); box-shadow: var(--halo-lampe-fort), inset 0 1px 0 rgba(255, 255, 255, 0.35); }
     .secondaire:hover:not(:disabled) { background: var(--s3); }
     .discret:hover:not(:disabled) { background: var(--s2); color: var(--texte); }
     .danger:hover:not(:disabled) { background: var(--mal-fond); }

@@ -176,7 +176,7 @@
 {:else}
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
-    class="salle" class:repos={cache} class:portrait class:paysage={paysageTel} class:plein-cadre={pleinEcran && !document.fullscreenElement}
+    data-theme="sombre" class="salle" class:repos={cache} class:portrait class:paysage={paysageTel} class:plein-cadre={pleinEcran && !document.fullscreenElement}
     bind:this={conteneur} onpointermove={reveiller} onpointerdown={reveiller} data-test="salle" data-phase={salle.phase} data-liaison={salle.liaison}
     data-lecture={salle.enLecture} data-position={Math.round(salle.temps)} data-nb-presents={salle.personnes.length}
   >
@@ -262,7 +262,7 @@
   }
   .salle.plein-cadre { position: fixed; inset: 0; z-index: 100; }
   .salle.repos { cursor: none; }
-  .lueur { position: absolute; inset: 0; background: radial-gradient(ellipse at center, rgba(255, 179, 71, 0.16), transparent 70%); filter: blur(40px); }
+  .lueur { position: absolute; inset: 0; background: radial-gradient(ellipse at center, rgba(96, 165, 250, 0.16), transparent 70%); filter: blur(40px); }
   .scene { position: relative; flex: 1; min-height: 0; display: grid; place-items: center; z-index: 1; }
   video { width: 100%; height: 100%; object-fit: contain; background: transparent; }
   .haut {
@@ -288,7 +288,7 @@
   @keyframes entre { from { opacity: 0; transform: translateY(-6px); } }
   .apercu { position: absolute; z-index: 6; bottom: 130px; left: 50%; transform: translateX(-50%); margin: 0; max-width: 280px; padding: 6px 14px; border-radius: 999px; background: rgba(13, 12, 18, 0.85); font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .conseil { position: absolute; z-index: 6; top: 64px; left: 16px; margin: 0; padding: 8px 14px; border-radius: 12px; background: rgba(13, 12, 18, 0.85); font-size: 0.85rem; max-width: 360px; }
-  .conseil button { background: none; border: 0; color: var(--lampe, #ffb347); text-decoration: underline; padding: 0 0 0 6px; }
+  .conseil button { background: none; border: 0; color: var(--lampe, #1f5ce0); text-decoration: underline; padding: 0 0 0 6px; }
   .bas { position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; transition: opacity 220ms; }
   .repos .haut, .repos .bas { opacity: 0; pointer-events: none; }
   .repos .conseil { display: none; }

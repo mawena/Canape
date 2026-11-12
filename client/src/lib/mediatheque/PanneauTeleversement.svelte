@@ -72,7 +72,7 @@
   .envoi { display: grid; gap: 8px; padding: 12px 0; }
   .envoi + .envoi { border-top: 1px solid var(--bord, #2f2c3b); }
   .ligne { display: flex; align-items: center; gap: 10px; }
-  .icone { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 10px; background: var(--s2, #1d1b26); color: var(--lampe, #ffb347); }
+  .icone { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 10px; background: var(--s2, #1d1b26); color: var(--lampe, #1f5ce0); }
   .fini .icone { color: var(--ok, #5fdcae); }
   .erreur .icone { color: var(--mal, #ff7b6e); }
   .erreur { outline: 1px solid rgba(255, 123, 110, 0.6); outline-offset: 4px; border-radius: 10px; }

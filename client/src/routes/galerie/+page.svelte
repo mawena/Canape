@@ -217,5 +217,5 @@
   .option span { display: grid; gap: 2px; }
   .option .t-petit { color: var(--doux); }
   .voile { position: fixed; inset: 0; z-index: 50; background: rgba(6, 5, 10, 0.7); display: grid; place-items: center; pointer-events: none; }
-  .voile p { margin: 0; padding: 48px 72px; border: 2px dashed var(--lampe, #ffb347); background: var(--lampe-fond, rgba(255, 179, 71, 0.14)); border-radius: var(--r-xl); font-family: var(--titre); font-size: 1.9rem; }
+  .voile p { margin: 0; padding: 48px 72px; border: 2px dashed var(--lampe, #1f5ce0); background: var(--lampe-fond); border-radius: var(--r-xl); font-family: var(--titre); font-size: 1.9rem; }
 </style>

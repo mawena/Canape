@@ -15,7 +15,7 @@
   const details = $derived([film.annee ? String(film.annee) : '', formaterDuree(film.duree)].filter(Boolean).join(' · '));
   const etat = $derived(film.etat === 'pret' ? 'prêt' : film.etat === 'erreur' ? 'illisible' : 'analyse en cours');
   const libelle = $derived(`${film.titre}${film.annee ? `, ${film.annee}` : ''}${film.duree ? `, ${formaterDuree(film.duree)}` : ''}, ${etat}`);
-  const lueur = $derived(film.couleur ?? '#ffb347');
+  const lueur = $derived(film.couleur ?? '#3b82f6');
 </script>
 
 <a class="carte" {href} aria-label={libelle} style:--lueur={lueur}>
@@ -27,7 +27,7 @@
       {#if film.annee}<span class="annee-generee">{film.annee}</span>{/if}
     {/if}
     <span class="pied"></span>
-    <span class="badges">
+    <span class="badges" data-theme="sombre">
       {#if film.etat === 'analyse'}<span class="puce alerte">Analyse…</span>{/if}
       {#if film.etat === 'erreur'}<span class="puce mal"><Icone nom="alerte" taille={14} />Illisible</span>{/if}
       {#if film.etat === 'pret' && film.visibilite !== 'prive'}<span class="puce rose"><Icone nom="utilisateurs" taille={14} />Partagé</span>{/if}
@@ -39,7 +39,7 @@
 
 <style>
   .carte { display: block; color: inherit; text-decoration: none; border-radius: var(--r-affiche); }
-  .carte:focus-visible { outline: 3px solid var(--lampe, #ffb347); outline-offset: 3px; }
+  .carte:focus-visible { outline: 3px solid var(--lampe, #1f5ce0); outline-offset: 3px; }
   .affiche {
     position: relative; aspect-ratio: 2 / 3; border-radius: var(--r-affiche); overflow: hidden; background: var(--s2);
     box-shadow: var(--ombre-2), 0 0 0 1px rgba(255, 255, 255, 0.06); transition: transform var(--d-2) var(--ease), box-shadow var(--d-2) var(--ease);

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import SelecteurTheme from '$lib/interface/SelecteurTheme.svelte';
   import { COULEURS_AVATAR, type Compte } from '@canape/partage';
   import { api, ErreurApi } from '$lib/api/client.ts';
   import { aideMotDePasse, formaterOctets, pourcentage } from '$lib/comptes/format.ts';
@@ -84,6 +85,11 @@
         <Champ libelle="Nouveau mot de passe" bind:value={nouveau} type="password" autocomplete="new-password" required erreur={aide} aide="10 caractères au minimum, sans autre règle." />
         <Bouton type="submit" chargement={envoiMdp} disabled={!actuel || !nouveau || aide !== null}>Changer le mot de passe</Bouton>
       </form>
+    </Carte>
+
+    <Carte titre="Apparence">
+      <p class="doux">Clair par défaut. Le thème sombre est plus reposant le soir ; « Comme mon appareil » suit ses réglages.</p>
+      <SelecteurTheme />
     </Carte>
 
     <Carte titre="Mon espace">

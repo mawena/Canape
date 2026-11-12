@@ -1,6 +1,6 @@
 /*
- * Jetons de design de Canapé, version 2 (phase 14) : « la salle de cinéma privée, une lampe allumée » (docs/DESIGN.md, « Version 2 »).
- * Un seul thème, sombre. Aucune ressource externe : les polices sont hébergées dans /polices/.
+ * Jetons de design de Canapé, version 2 (phase 14) : thème clair par défaut, thème sombre en option (bleu) (docs/DESIGN.md, « Version 2 »).
+ * Aucune ressource externe : les polices sont hébergées dans /polices/.
  * À importer une seule fois (dans +layout.svelte).
  */
 
@@ -27,62 +27,8 @@
 }
 
 :root {
-  /* Surfaces : « encre » (noir à peine violacé), les plans montent par paliers de luminosité */
-  --fond: #0d0c12;
-  --s1: #15141c;
-  --s2: #1d1b26;
-  --s3: #282532;
-  --bord: #2f2c3b;          /* séparateurs décoratifs seulement */
-  --bord-vif: #3b3749;      /* contour d'une carte survolée ou mise en avant */
-  --bord-champ: #7d7790;    /* contours des champs et boutons : 3,5:1 minimum sur toutes les surfaces */
-  --reflet: rgba(255, 255, 255, 0.055);  /* filet de lumière en haut des surfaces (inset 0 1px) */
-
-  /* Texte */
-  --texte: #f7f3ee;
-  --doux: #c0bacb;
-  --discret: #9f99ad;
-
-  /* La lampe : seule couleur d'action */
-  --lampe: #ffb347;
-  --lampe-vive: #ffc873;
-  --lampe-sur: #1a1006;
-  --lampe-fond: rgba(255, 179, 71, 0.14);
-  --lampe-degrade: linear-gradient(180deg, #ffc15f 0%, #ffab3b 100%);
-
-  /* États */
-  --ok: #5fdcae;
-  --alerte: #ffd166;
-  --mal: #ff7b6e;
-  --mal-sur: #2a0d0a;
-  --info: #7cc0ff;
-  --rose: #ff8fb4;          /* réservé à l'autre personne */
-  --ok-fond: rgba(95, 220, 174, 0.13);
-  --alerte-fond: rgba(255, 209, 102, 0.13);
-  --mal-fond: rgba(255, 123, 110, 0.14);
-  --info-fond: rgba(124, 192, 255, 0.13);
-  --rose-fond: rgba(255, 143, 180, 0.14);
-
-  /* Couleurs de présence (ordre d'arrivée : lampe, rose, …) ; texte #16101c dessus */
-  --presence-1: #ffb347; --presence-2: #ff8fb4; --presence-3: #8fc7f0;
-  --presence-4: #b4a2f0; --presence-5: #9ad9a0; --presence-6: #f0d27a;
-  --sur-presence: #16101c;
-
-  /* Voile des modales, dégradés sur l'image du film */
-  --voile: rgba(6, 5, 10, 0.72);
-
   /* Rayons : champs et boutons 12, cartes 20, grandes surfaces 28 ; pastilles et avatars ronds */
   --r-s: 8px; --r-m: 12px; --r-l: 20px; --r-xl: 28px; --r-affiche: 12px; --r-pill: 999px;
-
-  /* Élévations (une ombre = un plan ; le reflet du haut donne le volume) */
-  --ombre-1: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --ombre-2: 0 8px 20px rgba(0, 0, 0, 0.38), 0 1px 0 var(--reflet) inset;
-  --ombre-3: 0 14px 36px rgba(0, 0, 0, 0.5), 0 1px 0 var(--reflet) inset;
-  --ombre-4: 0 32px 90px rgba(0, 0, 0, 0.62), 0 1px 0 var(--reflet) inset;
-  --halo-lampe: 0 6px 22px -6px rgba(255, 179, 71, 0.55);
-
-  /* Flous */
-  --flou-verre: blur(20px) saturate(1.4);
-  --fond-verre: rgba(21, 20, 28, 0.78);
 
   /* Espacements (base 4 px) */
   --e-1: 4px; --e-2: 8px; --e-3: 12px; --e-4: 16px; --e-5: 20px; --e-6: 24px;
@@ -101,8 +47,135 @@
   --gouttiere: 16px;
   --barre-haute: 68px;
   --barre-onglets: 64px;
+}
 
-  /* ---- Alias de compatibilité avec le kit de la 0.1 (pages des autres modules déjà écrites) ---- */
+/*
+ * Couleurs, deux thèmes (docs/DESIGN.md, « Version 2 ») : clair par défaut, sombre en option.
+ * L'attribut `data-theme` de <html> (posé avant le premier rendu par app.html) choisit le thème ;
+ * un élément peut aussi porter `data-theme="sombre"` pour rester sombre dans un thème clair
+ * (la salle, le lecteur, les pastilles sur une affiche). Les noms de jetons sont les mêmes dans les deux.
+ */
+:root, [data-theme='clair'] {
+  color-scheme: light;
+
+  /* Surfaces : fond bleuté très clair, cartes blanches, les plans « montent » vers le blanc */
+  --fond: #f5f7fb;
+  --s1: #ffffff;
+  --s2: #f1f4f9;
+  --s3: #e5eaf3;
+  --bord: #e2e8f1;          /* séparateurs décoratifs seulement */
+  --bord-vif: #cdd6e4;      /* contour d'une carte survolée ou mise en avant */
+  --bord-champ: #70829c;    /* contours des champs et boutons : 3,2:1 minimum sur toutes les surfaces */
+  --reflet: rgba(255, 255, 255, 0.9);  /* filet de lumière en haut des surfaces */
+
+  /* Texte */
+  --texte: #0f172a;
+  --doux: #475569;
+  --discret: #54647c;
+
+  /* Le bleu : seule couleur d'action (le nom `lampe` est gardé pour ne rien casser) */
+  --lampe: #1f5ce0;
+  --lampe-vive: #1b4fd1;    /* survol, anneau de focus */
+  --lampe-sur: #ffffff;
+  --lampe-fond: rgba(31, 92, 224, 0.1);
+  --lampe-degrade: linear-gradient(135deg, #2f6df0 0%, #4f46e5 100%);
+  --hero-degrade: linear-gradient(135deg, #1d4ed8 0%, #3b3fe0 55%, #6d3df0 100%);
+
+  /* États (texte lisible sur blanc, AA) */
+  --ok: #13753a;
+  --alerte: #8f4a06;
+  --mal: #c62222;
+  --mal-sur: #ffffff;
+  --info: #0369a1;
+  --rose: #c4165f;          /* réservé à l'autre personne */
+  --ok-fond: rgba(19, 117, 58, 0.1);
+  --alerte-fond: rgba(217, 119, 6, 0.13);
+  --mal-fond: rgba(198, 34, 34, 0.09);
+  --info-fond: rgba(3, 105, 161, 0.1);
+  --rose-fond: rgba(196, 22, 95, 0.09);
+
+  /* Couleurs de présence (ordre d'arrivée) ; texte #16101c dessus */
+  --presence-1: #ffb347; --presence-2: #ff8fb4; --presence-3: #8fc7f0;
+  --presence-4: #b4a2f0; --presence-5: #9ad9a0; --presence-6: #f0d27a;
+  --sur-presence: #16101c;
+
+  --voile: rgba(15, 23, 42, 0.5);
+
+  /* Élévations : ombres douces teintées de bleu */
+  --ombre-1: 0 1px 2px rgba(15, 23, 42, 0.08);
+  --ombre-2: 0 8px 24px -4px rgba(30, 58, 138, 0.12), 0 1px 3px rgba(15, 23, 42, 0.06);
+  --ombre-3: 0 16px 40px -8px rgba(30, 58, 138, 0.18), 0 2px 6px rgba(15, 23, 42, 0.06);
+  --ombre-4: 0 32px 80px -12px rgba(30, 58, 138, 0.32), 0 4px 12px rgba(15, 23, 42, 0.08);
+  --halo-lampe: 0 8px 22px -6px rgba(37, 99, 235, 0.55);
+  --halo-lampe-fort: 0 12px 30px -6px rgba(37, 99, 235, 0.68);
+  --lueur-hero: 0 24px 60px -12px rgba(15, 23, 42, 0.4), 0 0 80px -12px rgba(255, 255, 255, 0.5);
+
+  /* Verre et fond de page */
+  --flou-verre: blur(20px) saturate(1.5);
+  --fond-verre: rgba(255, 255, 255, 0.78);
+  --halo-fond-1: rgba(37, 99, 235, 0.1);
+  --halo-fond-2: rgba(124, 58, 237, 0.07);
+
+  /* Logo */
+  --logo-1: #2563eb; --logo-2: #ec4899; --logo-assise: #0f172a;
+}
+
+[data-theme='sombre'] {
+  color-scheme: dark;
+  color: var(--texte);
+
+  /* Surfaces : bleu nuit */
+  --fond: #0b1220;
+  --s1: #111a2e;
+  --s2: #16213a;
+  --s3: #1e2b4a;
+  --bord: #1f2c47;
+  --bord-vif: #2b3b5e;
+  --bord-champ: #6b7fa3;    /* 3,5:1 minimum sur toutes les surfaces */
+  --reflet: rgba(255, 255, 255, 0.06);
+
+  --texte: #f1f5ff;
+  --doux: #b4c0d8;
+  --discret: #94a3c4;
+
+  --lampe: #60a5fa;
+  --lampe-vive: #93c5fd;
+  --lampe-sur: #071226;
+  --lampe-fond: rgba(96, 165, 250, 0.16);
+  --lampe-degrade: linear-gradient(180deg, #7ab6ff 0%, #559af7 100%);
+  --hero-degrade: linear-gradient(135deg, #1e3a8a 0%, #312e81 60%, #4c1d95 100%);
+
+  --ok: #4ade80;
+  --alerte: #fbbf24;
+  --mal: #ff7b72;
+  --mal-sur: #2a0d0a;
+  --info: #7dd3fc;
+  --rose: #ff8fc0;
+  --ok-fond: rgba(74, 222, 128, 0.14);
+  --alerte-fond: rgba(251, 191, 36, 0.14);
+  --mal-fond: rgba(255, 123, 114, 0.14);
+  --info-fond: rgba(125, 211, 252, 0.14);
+  --rose-fond: rgba(255, 143, 192, 0.14);
+
+  --voile: rgba(3, 7, 18, 0.72);
+
+  --ombre-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --ombre-2: 0 8px 20px rgba(0, 0, 0, 0.38), 0 1px 0 var(--reflet) inset;
+  --ombre-3: 0 14px 36px rgba(0, 0, 0, 0.5), 0 1px 0 var(--reflet) inset;
+  --ombre-4: 0 32px 90px rgba(0, 0, 0, 0.62), 0 1px 0 var(--reflet) inset;
+  --halo-lampe: 0 6px 22px -6px rgba(96, 165, 250, 0.55);
+  --halo-lampe-fort: 0 8px 28px -6px rgba(96, 165, 250, 0.7);
+  --lueur-hero: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 90px -10px rgba(96, 165, 250, 0.45);
+
+  --fond-verre: rgba(17, 26, 46, 0.78);
+  --halo-fond-1: rgba(59, 130, 246, 0.14);
+  --halo-fond-2: rgba(99, 102, 241, 0.1);
+
+  --logo-1: #3b82f6; --logo-2: #f472b6; --logo-assise: #e2e8f0;
+}
+
+/* ---- Alias de compatibilité avec le kit de la 0.1 : recalculés dans chaque thème ---- */
+:root, [data-theme='clair'], [data-theme='sombre'] {
   --fond-2: var(--s1); --fond-3: var(--s2);
   --bordure: var(--bord); --or: var(--lampe); --or-doux: var(--lampe);
   --creme: var(--texte); --velours: var(--mal-fond); --velours-vif: var(--mal);
@@ -110,8 +183,6 @@
   --ombre: var(--ombre-3);
   --espace-1: 4px; --espace-2: 8px; --espace-3: 12px; --espace-4: 16px; --espace-5: 24px; --espace-6: 40px;
   --duree: var(--d-1);
-
-  color-scheme: dark;
 }
 
 @media (min-width: 641px) { :root { --gouttiere: 24px; } }
@@ -137,8 +208,8 @@ html, body { height: 100%; margin: 0; }
 body {
   background-color: var(--fond);
   background-image:
-    radial-gradient(1100px 600px at 88% -10%, rgba(255, 179, 71, 0.075), transparent 70%),
-    radial-gradient(900px 600px at -10% 15%, rgba(255, 143, 180, 0.045), transparent 70%);
+    radial-gradient(1100px 600px at 88% -10%, var(--halo-fond-1), transparent 70%),
+    radial-gradient(900px 600px at -10% 15%, var(--halo-fond-2), transparent 70%);
   background-attachment: fixed;
   color: var(--texte);
   font: 400 16px/1.5 var(--texte-police);
@@ -157,7 +228,7 @@ button { cursor: pointer; }
 a { color: var(--lampe); }
 input[type='checkbox'], input[type='radio'] { accent-color: var(--lampe); }
 img, svg { max-width: 100%; }
-::selection { background: rgba(255, 179, 71, 0.35); color: var(--texte); }
+::selection { background: var(--lampe-fond); color: var(--texte); }
 :focus-visible { outline: 3px solid var(--lampe-vive); outline-offset: 3px; border-radius: var(--r-s); }
 .vh {
   position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);

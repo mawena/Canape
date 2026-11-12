@@ -88,7 +88,7 @@
   };
 </script>
 
-<main class="sas" data-test="sas">
+<main class="sas" data-theme="sombre" data-test="sas">
   <section class="carte">
     <h1>Avant d’entrer</h1>
     <p class="sous">{salle.titre}</p>
@@ -150,14 +150,14 @@
 </main>
 
 <style>
-  .sas { min-height: 100dvh; display: grid; place-items: center; padding: 16px; background: radial-gradient(800px 480px at 50% 0%, rgba(255, 179, 71, 0.1), transparent 70%), var(--fond, #0d0c12); color: var(--texte, #f7f3ee); }
+  .sas { min-height: 100dvh; display: grid; place-items: center; padding: 16px; background: radial-gradient(800px 480px at 50% 0%, rgba(96, 165, 250, 0.14), transparent 70%), var(--fond, #0d0c12); color: var(--texte, #f7f3ee); }
   .carte { width: min(520px, 100%); background: var(--s1, #15141c); border-radius: var(--r-xl, 28px); padding: 28px; display: grid; gap: 16px; border: 1px solid var(--bord); box-shadow: var(--ombre-4); }
   h1 { font-family: 'Instrument Serif', var(--titre, Georgia, serif); font-size: 2rem; font-weight: 400; margin: 0; }
   .sous { margin: -8px 0 0; color: var(--doux, #c0bacb); }
   .apercu { position: relative; aspect-ratio: 4 / 3; border-radius: var(--r-l, 20px); overflow: hidden; background: var(--s3); display: grid; place-items: center; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.07); }
   .apercu video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
   .apercu.sans-image video { visibility: hidden; }
-  .initiale { font-family: 'Instrument Serif', Georgia, serif; font-size: 3rem; width: 96px; height: 96px; border-radius: 50%; background: var(--lampe, #ffb347); color: #16101c; display: grid; place-items: center; }
+  .initiale { font-family: 'Instrument Serif', Georgia, serif; font-size: 3rem; width: 96px; height: 96px; border-radius: 50%; background: var(--lampe, #1f5ce0); color: #16101c; display: grid; place-items: center; }
   .boutons { display: flex; align-items: center; gap: 12px; }
   .rond { width: 48px; height: 48px; border-radius: 50%; border: 1px solid var(--bord-vif); display: grid; place-items: center; background: var(--s3); color: var(--texte, #f7f3ee); }
   .rond.coupe { background: rgba(255, 123, 110, 0.16); color: var(--mal, #ff7b6e); }

@@ -32,7 +32,7 @@
 
   const connexion = $derived(!personne.soi && (personne.pair === 'new' || personne.pair === 'connecting'));
   const sansImage = $derived(!personne.camera || personne.imagePerdue || !personne.flux);
-  const couleur = $derived(personne.utilisateur.couleur ?? '#ffb347');
+  const couleur = $derived(personne.utilisateur.couleur ?? '#3b82f6');
   const nom = $derived(personne.soi ? `${personne.utilisateur.prenom} (moi)` : personne.utilisateur.prenom);
 </script>
 
@@ -92,7 +92,7 @@
   .sans-image video { visibility: hidden; }
   .initiale { position: absolute; inset: 0; margin: auto; width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; font: 700 1.5rem var(--texte-police); color: #16101c; }
   .rangee .initiale, .petite .initiale { width: 40px; height: 40px; font-size: 1.4rem; }
-  .anneau { position: absolute; inset: 0; margin: auto; width: 68px; height: 68px; border-radius: 50%; border: 3px solid transparent; border-top-color: var(--lampe, #ffb347); animation: tour 1.1s linear infinite; }
+  .anneau { position: absolute; inset: 0; margin: auto; width: 68px; height: 68px; border-radius: 50%; border: 3px solid transparent; border-top-color: var(--lampe, #1f5ce0); animation: tour 1.1s linear infinite; }
   @keyframes tour { to { transform: rotate(360deg); } }
   .puce { position: absolute; top: 6px; left: 6px; display: inline-flex; gap: 4px; align-items: center; padding: 2px 8px; border-radius: 999px; font-size: 11px; background: rgba(13, 12, 18, 0.8); color: var(--alerte, #ffd166); }
   .pied { position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: center; gap: 6px; padding: 14px 8px 5px; background: linear-gradient(transparent, rgba(0, 0, 0, 0.75)); color: #fff; font-size: 12px; font-weight: 600; }

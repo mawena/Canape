@@ -94,7 +94,7 @@
   const audioCourant = $derived(plan?.pistesAudio.find((p) => p.parDefaut)?.index);
 </script>
 
-<div class="lecteur">
+<div class="lecteur" data-theme="sombre">
   {#if erreur}
     <EtatVide titre="Ce film ne se lit pas" texte={erreur} icone="alerte" />
   {:else if !plan}
@@ -127,7 +127,7 @@
 </div>
 
 <style>
-  .lecteur { display: grid; gap: var(--espace-3); }
+  .lecteur { display: grid; gap: var(--espace-3); padding: var(--e-3); border-radius: var(--r-l); background: var(--fond); }
   video { width: 100%; max-height: 80vh; background: #000; border-radius: var(--rayon); }
   .barre { display: flex; flex-wrap: wrap; gap: var(--espace-4); align-items: center; color: var(--doux); font-size: 0.9rem; }
   .raison { margin-right: auto; }

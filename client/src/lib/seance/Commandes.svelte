@@ -147,15 +147,15 @@
   .rond, .lecture, .emoji { position: relative; border: 0; background: transparent; display: grid; place-items: center; border-radius: 50%; transition: background 120ms; }
   .rond { width: 44px; height: 44px; }
   .rond:hover:not(:disabled), .emoji:hover { background: rgba(255, 255, 255, 0.12); }
-  .rond.actif { background: var(--lampe-fond, rgba(255, 179, 71, 0.14)); color: var(--lampe, #ffb347); }
+  .rond.actif { background: var(--lampe-fond); color: var(--lampe, #1f5ce0); }
   .rond.coupe { background: rgba(255, 123, 110, 0.16); color: var(--mal, #ff7b6e); }
   .rond:disabled, .lecture:disabled { opacity: 0.4; cursor: not-allowed; }
   .lecture { width: 52px; height: 52px; background: var(--texte, #f7f3ee); color: var(--fond, #0d0c12); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4); }
-  .texte { display: inline-flex; gap: 6px; align-items: center; border: 0; padding: 8px 14px; border-radius: 999px; background: var(--lampe-fond, rgba(255, 179, 71, 0.14)); color: var(--lampe, #ffb347); font-weight: 600; }
+  .texte { display: inline-flex; gap: 6px; align-items: center; border: 0; padding: 8px 14px; border-radius: 999px; background: var(--lampe-fond); color: var(--lampe, #1f5ce0); font-weight: 600; }
   .puce { display: inline-flex; gap: 4px; align-items: center; padding: 3px 10px; border-radius: 999px; background: rgba(13, 12, 18, 0.7); font-size: 12px; color: var(--alerte, #ffd166); }
   .reactions { background: var(--fond-verre); backdrop-filter: var(--flou-verre); -webkit-backdrop-filter: var(--flou-verre); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 999px; padding: 2px 6px; gap: 0; }
   .emoji { width: 40px; height: 40px; font-size: 20px; }
-  .pastille { position: absolute; top: 8px; right: 8px; width: 10px; height: 10px; border-radius: 50%; background: var(--lampe, #ffb347); }
+  .pastille { position: absolute; top: 8px; right: 8px; width: 10px; height: 10px; border-radius: 50%; background: var(--lampe, #1f5ce0); }
   .menu-ancre { position: relative; }
   .popover { position: absolute; bottom: 52px; left: 0; z-index: 8; min-width: 260px; display: grid; gap: 10px; padding: 12px 14px; border-radius: 16px; background: var(--s2); border: 1px solid var(--bord-vif); box-shadow: var(--ombre-3); }
   .popover label { display: grid; gap: 4px; font-size: 0.85rem; color: var(--doux, #c0bacb); }

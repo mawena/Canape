@@ -63,7 +63,7 @@
   const avecImage = $derived(!!src && !imageEnErreur);
   const teinte = $derived(teinteTitre(t));
   // Couleur dominante calculée par la médiathèque (`film.couleur`), sauf couleur donnée explicitement.
-  const lueur = $derived(couleurValide(couleur ?? film?.couleur ?? null) ?? (avecImage ? '#ffb347' : `hsl(${teinte} 60% 55%)`));
+  const lueur = $derived(couleurValide(couleur ?? film?.couleur ?? null) ?? (avecImage ? '#3b82f6' : `hsl(${teinte} 60% 55%)`));
   const detail = $derived([a, d ? formaterDuree(d) : ''].filter(Boolean).join(' · '));
   const pctPrep = $derived(preparation === null ? null : Math.round(preparation * 100));
   const nomEtat = $derived(e === 'pret' ? 'prêt' : e === 'analyse' ? 'préparation en cours' : 'illisible');

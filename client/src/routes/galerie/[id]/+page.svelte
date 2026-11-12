@@ -168,7 +168,7 @@
     <div class="fond" aria-hidden="true">
       {#if f.aFond}<img src={urlImage(f, 'fond')} alt="" />{/if}
     </div>
-    <article class="fiche" style:--lueur={f.couleur ?? '#ffb347'}>
+    <article class="fiche" style:--lueur={f.couleur ?? '#3b82f6'}>
       <div class="affiche-bloc">
         <div class="affiche">
           {#if f.aAffiche}<img src={urlImage(f, 'affiche')} alt={`Affiche de ${f.titre}`} />{:else}<span>{f.titre}</span>{/if}
@@ -346,7 +346,7 @@
   .discret { color: var(--discret, #9f99ad); }
   dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; }
   dt { color: var(--discret, #9f99ad); } dd { margin: 0; overflow-wrap: anywhere; }
-  .lien { background: none; border: 0; color: var(--lampe, #ffb347); text-decoration: underline; padding: 0 4px; }
+  .lien { background: none; border: 0; color: var(--lampe, #1f5ce0); text-decoration: underline; padding: 0 4px; }
   fieldset { border: 0; padding: 0; margin: 12px 0; display: grid; gap: 8px; }
   .radio { display: inline-flex; gap: 8px; align-items: center; }
   .comptes { margin: 8px 0 12px 4px; }
@@ -358,7 +358,7 @@
   .rangee { display: flex; gap: 8px; }
   .candidats { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 6px; max-height: 220px; overflow: auto; }
   .candidats button { width: 100%; text-align: left; background: var(--s1, #15141c); border: 1px solid var(--bord, #2f2c3b); border-radius: 10px; padding: 8px 10px; display: grid; gap: 2px; }
-  .candidats button:hover { border-color: var(--lampe, #ffb347); }
+  .candidats button:hover { border-color: var(--lampe, #1f5ce0); }
   .candidats small { color: var(--discret, #9f99ad); }
   .boutons { display: flex; justify-content: flex-end; gap: 8px; }
 </style>

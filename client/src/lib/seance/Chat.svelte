@@ -64,12 +64,12 @@
   .liste { flex: 1; overflow-y: auto; padding: 8px 12px; display: flex; flex-direction: column; gap: 4px; }
   .auteur { font-size: 12px; font-weight: 600; color: var(--rose, #ff8fb4); margin-top: 6px; }
   .bulle { margin: 0; padding: 8px 13px; background: var(--s3); border-radius: 6px 18px 18px 18px; max-width: 85%; align-self: flex-start; overflow-wrap: anywhere; white-space: pre-wrap; font-size: 0.92rem; }
-  .bulle.soi { align-self: flex-end; background: var(--lampe-fond, rgba(255, 179, 71, 0.14)); border-radius: 18px 6px 18px 18px; border: 1px solid rgba(255, 179, 71, 0.25); }
+  .bulle.soi { align-self: flex-end; background: var(--lampe-fond); border-radius: 18px 6px 18px 18px; border: 1px solid rgba(255, 179, 71, 0.25); }
   .systeme { margin: 6px 0; text-align: center; color: var(--discret, #9f99ad); font-size: 13px; }
   form { position: relative; display: flex; gap: 6px; padding: 8px 10px 12px; align-items: flex-end; }
   textarea { flex: 1; resize: none; background: var(--s2, #1d1b26); border: 1px solid var(--bord-champ, #7d7790); border-radius: 22px; padding: 11px 16px; color: inherit; max-height: 96px; }
   textarea:focus { outline: 3px solid var(--lampe-vive); outline-offset: 1px; border-color: var(--lampe); }
-  form button { width: 44px; height: 44px; border-radius: 50%; border: 0; background: var(--lampe, #ffb347); color: var(--lampe-sur, #1a1006); display: grid; place-items: center; }
+  form button { width: 44px; height: 44px; border-radius: 50%; border: 0; background: var(--lampe, #1f5ce0); color: var(--lampe-sur, #1a1006); display: grid; place-items: center; }
   form button:disabled { opacity: 0.4; }
   .compteur { position: absolute; right: 56px; top: -4px; font-size: 11px; color: var(--alerte, #ffd166); }
   @media (max-width: 1024px) {

@@ -62,10 +62,10 @@
 <style>
   main {
     min-height: 100%; display: grid; place-content: center; justify-items: center; gap: var(--e-5); padding: var(--e-7) var(--e-4); text-align: center;
-    background: radial-gradient(700px 420px at 50% 18%, rgba(255, 179, 71, 0.13), transparent 70%);
+    background: radial-gradient(700px 420px at 50% 18%, rgba(255, 255, 255, 0.18), transparent 70%), var(--hero-degrade);
   }
-  .marque { text-decoration: none; margin-bottom: var(--e-2); }
-  h1 { font: 400 clamp(2.1rem, 6vw, 3.25rem) / 1.04 var(--titre); letter-spacing: -0.01em; max-width: 16ch; text-wrap: balance; margin-bottom: var(--e-3); }
+  .marque { text-decoration: none; margin-bottom: var(--e-2); --texte: #fff; --logo-1: #bfdbfe; --logo-2: #fbcfe8; --logo-assise: #fff; }
+  h1 { color: #fff; text-shadow: 0 2px 24px rgba(30, 27, 120, 0.35); font: 400 clamp(2.1rem, 6vw, 3.25rem) / 1.04 var(--titre); letter-spacing: -0.01em; max-width: 16ch; text-wrap: balance; margin-bottom: var(--e-3); }
   main :global(.carte) { width: min(420px, calc(100vw - 2 * var(--e-4))); text-align: left; box-shadow: var(--ombre-3); border-radius: var(--r-xl); padding: var(--e-7); }
   form { display: grid; gap: var(--e-4); }
   .aide { margin: 0; color: var(--doux); font-size: 0.9rem; }

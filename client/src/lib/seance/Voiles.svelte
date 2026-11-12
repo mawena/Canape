@@ -89,7 +89,7 @@
   .auteur, .petit { margin: 0; color: var(--doux, #c0bacb); }
   p { margin: 0; }
   .actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 8px; }
-  .anneau { width: 56px; height: 56px; border-radius: 50%; border: 4px solid rgba(255, 255, 255, 0.15); border-top-color: var(--lampe, #ffb347); animation: tour 1.1s linear infinite; }
+  .anneau { width: 56px; height: 56px; border-radius: 50%; border: 4px solid rgba(255, 255, 255, 0.15); border-top-color: var(--lampe, #1f5ce0); animation: tour 1.1s linear infinite; }
   .voile.attente { pointer-events: none; }
   .voile.attente :global(button) { pointer-events: auto; }
   @keyframes tour { to { transform: rotate(360deg); } }
