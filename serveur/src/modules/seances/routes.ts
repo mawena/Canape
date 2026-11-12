@@ -148,16 +148,23 @@ export function enregistrerRoutes(app: FastifyInstance, salles: Salles): void {
   app.post<{ Params: { id: string } }>('/api/seances/:id/lien', pre, async (req, reply): Promise<ReponseLienSeance> => {
     const { ligne, role } = accesSeance(app, req.params.id, req.utilisateur);
     exigerHote(role);
-    const jeton = jetonAleatoire();
-    db.prepare('UPDATE seances SET lien_hash = ? WHERE id = ?').run(sha256Hex(jeton), ligne.id);
-    reply.status(201);
+    // Lien stable : un lien existant est redonné (il a peut-être déjà été envoyé) ; sinon il est créé.
+    const existant = db.prepare('SELECT lien_jeton FROM seances WHERE id = ? AND lien_hash IS NOT NULL').get(ligne.id) as { lien_jeton: string | null } | undefined;
+    let jeton = existant?.lien_jeton ?? null;
+    if (jeton) {
+      reply.status(200);
+    } else {
+      jeton = jetonAleatoire();
+      db.prepare('UPDATE seances SET lien_hash = ?, lien_jeton = ? WHERE id = ?').run(sha256Hex(jeton), jeton, ligne.id);
+      reply.status(201);
+    }
     return { lien: `${app.config.urlPublique}/rejoindre/${jeton}` };
   });
 
   app.delete<{ Params: { id: string } }>('/api/seances/:id/lien', pre, async (req, reply) => {
     const { ligne, role } = accesSeance(app, req.params.id, req.utilisateur);
     exigerHote(role);
-    db.prepare('UPDATE seances SET lien_hash = NULL WHERE id = ?').run(ligne.id);
+    db.prepare('UPDATE seances SET lien_hash = NULL, lien_jeton = NULL WHERE id = ?').run(ligne.id);
     return reply.status(204).send();
   });
 

@@ -90,6 +90,10 @@ describe('séances : REST', () => {
     const url: string = lien.json().lien;
     assert.match(url, /^http:\/\/localhost:8080\/rejoindre\/[A-Za-z0-9_-]+$/);
     const jeton = url.split('/').pop();
+    // « Copier le lien » une seconde fois redonne le même lien (celui déjà envoyé reste valable)
+    const encore = await post(env.app, `/api/seances/${id}/lien`, undefined, hote);
+    assert.equal(encore.statusCode, 200);
+    assert.equal(encore.json().lien, url);
     assert.equal((await get(env.app, `/api/seances/${id}`, etranger)).statusCode, 404);
     const r = await post(env.app, `/api/rejoindre/${jeton}`, undefined, etranger);
     assert.equal(r.statusCode, 200);
@@ -101,6 +105,10 @@ describe('séances : REST', () => {
     assert.equal((await supprimer(env.app, `/api/seances/${id}/lien`, hote)).statusCode, 204);
     assert.equal((await post(env.app, `/api/rejoindre/${jeton}`, undefined, autre)).statusCode, 404);
     assert.equal((await get(env.app, `/api/seances/${id}`, autre)).statusCode, 404);
+    // après retrait, un nouveau lien est créé, différent de l'ancien
+    const neuf = await post(env.app, `/api/seances/${id}/lien`, undefined, hote);
+    assert.equal(neuf.statusCode, 201);
+    assert.notEqual(neuf.json().lien, url);
   });
 
   test('règle d\'accès : l\'invité voit le film privé de la séance, plus après la fin', async () => {
