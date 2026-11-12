@@ -61,6 +61,8 @@ export interface Preparation {
   creeLe: string;
   termineLe: string | null;
   erreur: string | null;
+  /** Ajout : titre du film (renseigné dans `GET /api/admin/lecture`). */
+  titre?: string;
 }
 
 /** `GET /api/admin/lecture` */

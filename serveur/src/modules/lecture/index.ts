@@ -264,7 +264,7 @@ const modulelecture: FastifyPluginAsync = async (app) => {
     if (Date.now() - cacheMesure.t > 15_000) cacheMesure = { t: Date.now(), octets: await tailleDossier(config.cache) };
     return {
       conversionsALaVolee: conversions.lister(),
-      preparations: preparations.lignes(),
+      preparations: preparations.lignes().map((l) => ({ ...l, titre: app.mediatheque.obtenir(l.filmId)?.titre ?? l.filmId })),
       charge: { cpu1min: Math.round(loadavg()[0]! * 100) / 100, coeurs: availableParallelism() },
       cache: { octets: cacheMesure.octets, max: config.cacheMax },
     };
