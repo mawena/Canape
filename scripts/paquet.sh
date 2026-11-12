@@ -63,9 +63,9 @@ find "$STAGE" -name '*.test.ts' -not -path '*/node_modules/*' -delete 2>/dev/nul
 rm -rf "$STAGE/serveur/tests"
 
 echo "== node_modules de production (serveur seulement : le client est déjà construit)"
-# Réinstallation à partir du verrou dans le dossier d'assemblage : seules les dépendances du serveur (et de ce qu'il
+# Réinstallation à partir du verrou dans le dossier d'assemblage : seules les dépendances du serveur et du code partagé (lié comme espace de travail : @canape/partage), sans les
 # importe : partage), sans les outils de développement. --ignore-scripts : les binaires précompilés (N-API) suffisent.
-( cd "$STAGE" && npm ci --omit=dev --workspace=serveur --include-workspace-root=false --ignore-scripts --no-audit --no-fund --loglevel=error )
+( cd "$STAGE" && npm ci --omit=dev --workspace=serveur --workspace=partage --include-workspace-root=false --ignore-scripts --no-audit --no-fund --loglevel=error )
 # Les espaces de travail du client ne servent pas à l'exécution : leurs liens dans node_modules sont retirés s'ils pendent.
 find "$STAGE/node_modules" -maxdepth 2 -xtype l -delete 2>/dev/null || true
 
