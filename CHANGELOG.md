@@ -2,6 +2,61 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) ; versions selon [SemVer](https://semver.org/lang/fr/).
 
+## [1.0.0] — 2026-11-12
+
+Canapé devient une plateforme privée : comptes, galeries, envoi de n'importe quel fichier vidéo, lecture de tous les
+formats sans conversion à la main, séances avec lien, salle refaite, mise en production automatique.
+
+### Changé (incompatible avec la 0.1)
+
+- **Comptes au lieu du mot de passe commun** : un administrateur et des viewers, invités par lien (7 jours, usage
+  unique) ; plus de salon unique, des **séances**. Les films de la 0.1 se reprennent avec
+  `canape films importer <dossier> --proprietaire <identifiant> [--copier]`.
+- **Nouvelle pile** : Node.js 26 qui exécute directement le TypeScript, Fastify 5, SQLite intégré à Node (`node:sqlite`),
+  Svelte 5 + SvelteKit 2 ; configuration `CANAPE_*` revue (voir le README).
+- **`canape-convertir` retiré** : le serveur lit tout seul tous les formats (voir « Lecture universelle »).
+- **Déploiement revu** : paquet `canape-<version>.tar.gz`, versions côte à côte dans `/opt/canape/versions/`, données dans
+  `/srv/canape/` ; `installer-serveur.sh` met à niveau une installation 0.1 en place. `deployer.sh` est retiré.
+
+### Ajouté
+
+- **Comptes** : connexion protégée par Argon2id (5 essais par minute), sessions de 30 jours glissants, réinitialisation
+  du mot de passe par lien, couleur de chacun ; administration des comptes, invitations, quotas, droit d'envoyer des
+  films, espace disque et réglages ; le dernier admin ne peut pas être retiré ; `canape admin inviter` et
+  `canape admin reinitialiser` ; lien admin écrit dans le journal au premier démarrage.
+- **Médiathèque** : chacun sa galerie ; envoi par morceaux (tus) avec pause, reprise, débit et temps restant, par le
+  bouton ou par glisser-déposer, dans la limite de son quota ; analyse du fichier, titre et année tirés du nom, affiche
+  et image de fond tirées du film (couleurs HDR corrigées), couleur dominante pour la « lueur » ; fiches TMDB si une clé
+  est configurée ; films privés par défaut, partagés avec certains comptes ou avec tous ; sous-titres `.srt`/`.vtt` à
+  ajouter ; recherche, filtres, tri.
+- **Lecture universelle** : lecture directe quand le navigateur sait lire le fichier ; sinon le son seul est converti,
+  ou l'image est convertie pendant la lecture (HLS par morceaux de 6 s, saut n'importe où, une seule conversion par film
+  partagée par tous, priorité basse pour ne pas gêner les autres sites, préréglage choisi d'après la vitesse mesurée) ;
+  HDR → SDR (`zscale` + `tonemap` mobius) ; préparation à l'avance des films lourds quand le serveur est calme ;
+  sous-titres intégrés extraits en WebVTT ; page d'administration des conversions ; « Regarder seul » sur la fiche.
+- **Séances** : séance tout de suite ou prévue, invités, lien pour rejoindre (stable tant qu'on ne le retire pas),
+  chat, réactions, reprise là où on s'est arrêté, historique, identifiants TURN temporaires.
+- **Salle** : sas avant d'entrer (aperçu de la caméra, micro, casque) ; lecture synchronisée (rattrapage par vitesse ou
+  par saut, attente mutuelle avec « Ne plus attendre … », pause pour tous quand quelqu'un perd la connexion, reprise
+  même sur les navigateurs qui ne chargent pas un film en pause) ; compte à rebours « Lancer ensemble » ; langue et
+  sous-titres choisis pour tous ; chaque geste dit qui l'a fait ; appel vidéo pair à pair jusqu'à 8 avec vignettes
+  déplaçables ou en rangée, volumes film / voix / par personne, film baissé quand quelqu'un parle, conseil du casque ;
+  chat repliable, réactions qui flottent, « Je reviens dans 5 min », écran de fin ; plein écran, raccourcis clavier,
+  téléphone en portrait et en paysage.
+- **Interface** : direction artistique « un salon la nuit, une lampe allumée » (nuit prune, lampe ambre, rose pour
+  l'autre, Instrument Serif et Hanken Grotesk servies par l'application, icônes Lucide), accueil « Ce soir », reprise,
+  ajouts récents, historique ; accessible (WCAG 2.2 AA visé, mouvement réduit respecté) ; installable (PWA) sans jamais
+  mettre en cache les films ni l'API.
+- **Mise en production automatique** : GitHub Actions (vérifications sur `develop`, déploiement sur `main` par une clé
+  SSH à commande forcée, release GitHub du tag avec le paquet) ; `mettre-a-jour` sauvegarde la base, bascule de
+  version, vérifie que le service répond et revient seul à l'ancienne version sinon ; garde 3 versions ;
+  `preparer-deploiement-auto.sh` prépare le VPS. Guide : `docs/DEPLOIEMENT.md`.
+- **Documents** : conception (`docs/CONCEPTION.md`), direction artistique et maquette (`docs/DESIGN.md`,
+  `docs/maquettes/canape.html`), recherche technique chiffrée (`docs/RECHERCHE-TECHNIQUE.md`), README réécrit.
+- **Essais** : 274 tests Node du serveur et de la logique du client ; 70 essais de bout en bout Playwright dans
+  Chromium, Firefox, WebKit, Chrome et sur téléphone, à deux avec caméras simulées ; essais du déploiement (mise à jour,
+  installation, nginx) sans root.
+
 ## [0.1.0] — 2026-11-12
 
 Première version : regarder un film à deux, chacun chez soi, en se voyant et en s'entendant, sans le partage
@@ -27,4 +82,5 @@ d'écran saccadé de Google Meet, avec le son du film et la voix en même temps.
 - **Tests** : 29 tests Node (unitaires et intégration), essai de bout en bout dans Chrome à deux participants
   (`npm run essai-navigateur`), essai nginx du déploiement (70 vérifications) ; passés sous Node 18 et Node 26.
 
+[1.0.0]: https://github.com/mawena/Canape/releases/tag/v1.0.0
 [0.1.0]: https://github.com/mawena/Canape/releases/tag/v0.1.0
