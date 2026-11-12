@@ -8,7 +8,6 @@
 
   let identifiant = $state('');
   let motDePasse = $state('');
-  let voir = $state(false);
   let erreur = $state<string | null>(null);
   let envoi = $state(false);
   let prete = $state(false);
@@ -52,8 +51,7 @@
     <Carte titre="Se connecter">
       <form onsubmit={envoyer}>
         <Champ libelle="Identifiant" bind:value={identifiant} autocomplete="username" required autocapitalize="none" spellcheck={false} />
-        <Champ libelle="Mot de passe" bind:value={motDePasse} type={voir ? 'text' : 'password'} autocomplete="current-password" required erreur={erreur} />
-        <label class="voir"><input type="checkbox" bind:checked={voir} /> Afficher le mot de passe</label>
+        <Champ libelle="Mot de passe" bind:value={motDePasse} type="password" autocomplete="current-password" required erreur={erreur} />
         <Bouton type="submit" chargement={envoi} disabled={!identifiant || !motDePasse}>Se connecter</Bouton>
       </form>
       <p class="aide">Pas de compte ? Il faut une invitation.</p>
@@ -70,7 +68,5 @@
   h1 { font: 400 clamp(2.1rem, 6vw, 3.25rem) / 1.04 var(--titre); letter-spacing: -0.01em; max-width: 16ch; text-wrap: balance; margin-bottom: var(--e-3); }
   main :global(.carte) { width: min(420px, calc(100vw - 2 * var(--e-4))); text-align: left; box-shadow: var(--ombre-3); border-radius: var(--r-xl); padding: var(--e-7); }
   form { display: grid; gap: var(--e-4); }
-  .voir { color: var(--doux); font-size: 0.9rem; display: flex; gap: var(--e-2); align-items: center; min-height: 32px; }
-  .voir input { width: 18px; height: 18px; accent-color: var(--lampe); }
   .aide { margin: 0; color: var(--doux); font-size: 0.9rem; }
 </style>

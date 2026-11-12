@@ -323,7 +323,7 @@
   main { position: relative; max-width: 1100px; margin: 0 auto; padding: 0 0 64px; }
   .retour a { color: var(--doux); text-decoration: none; display: inline-flex; align-items: center; min-height: 44px; font-weight: 600; }
   .retour a:hover { color: var(--texte); }
-  .fond { position: absolute; inset: -44px calc(var(--gouttiere) * -1) auto; height: 520px; overflow: hidden; z-index: -1; mask-image: linear-gradient(#000, transparent); -webkit-mask-image: linear-gradient(#000, transparent); opacity: 0.4; }
+  .fond { position: absolute; top: -44px; left: 50%; width: 100vw; transform: translateX(-50%); height: 520px; overflow: hidden; z-index: -1; mask-image: linear-gradient(#000, transparent); -webkit-mask-image: linear-gradient(#000, transparent); opacity: 0.4; }
   .fond img { width: 100%; height: 100%; object-fit: cover; filter: blur(28px) saturate(1.3); transform: scale(1.15); }
   .fiche { display: grid; gap: 28px; margin-top: 12px; }
   @media (min-width: 760px) { .fiche { grid-template-columns: 280px minmax(0, 1fr); } }
