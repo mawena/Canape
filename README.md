@@ -114,7 +114,7 @@ sudo canape films importer /srv/canape/films --proprietaire <identifiant-admin> 
 ## Premier compte administrateur
 
 À la fin de l'installation, le script lance `canape admin inviter --role admin` et affiche le **lien d'invitation de
-l'administrateur** (il se retrouve aussi dans `journalctl`, selon la sortie du script) : l'ouvrir dans le navigateur et
+l'administrateur** (au premier démarrage sans compte, le serveur l'écrit aussi dans son journal : `journalctl -u canape`) : l'ouvrir dans le navigateur et
 choisir son identifiant et son mot de passe. Pour en recréer un :
 
 ```bash

@@ -331,17 +331,26 @@ d'événement). Changer de piste audio ou de film remet tout le monde en pause �
    choisie (AAC, MP3, Opus, Vorbis ; et c'est la première piste) passent partout.
 2. **Son seul converti** si la vidéo est H.264 8 bits SDR mais que le conteneur ou le son ne passent pas : HLS
    avec `-c:v copy` et le son en AAC stéréo, découpé sur les images clés (index des images clés calculé une fois et
-   mis en cache).
+   mis en cache). *Réalisé (1.0)* : une seule passe séquentielle depuis le début, jamais relancée au milieu (la
+   copie relancée par `-ss` retombe sur une image clé plus ancienne) ; limité au H.264 ≤ 2048×1088.
 3. **Vidéo convertie à la volée** sinon (HEVC, 10 bits, HDR, 4K, MPEG-4…) : HLS fMP4, segments de 6 s, H.264
    ≤ 1080p `yuv420p`, réduction de dynamique HDR → SDR (`zscale` + `tonemap`, taille réduite **avant**), son AAC
    stéréo. La liste de lecture complète est connue d'avance (durée) ; un segment demandé et absent (re)lance
    ffmpeg à sa position ; une seule conversion par film et piste audio, partagée par tous les spectateurs ;
    ffmpeg tourne en `nice` `CANAPE_TRANSCODAGE_PRIORITE`, s'arrête quand plus personne ne lit depuis 60 s, et
    choisit son préréglage x264 d'après la vitesse mesurée pour rester au-dessus du temps réel.
+   *Réalisé (1.0)* : relance seulement si le segment demandé est avant la position de ffmpeg ou plus de 4 segments
+   devant ; chaque lancement écrit à part et chaque segment terminé est recalé sur le temps du film (`tfdt`) avant
+   publication, avec un `init.mp4` unique sans `edts` ; pas d'images B, paramètres x264 fixés (préréglages
+   `superfast` à `faster`, repli automatique sous 1,15× le temps réel, 4K HDR toujours en `superfast`) ;
+   `tonemap=mobius` ; un segment absent est attendu au plus 50 s (puis 503). Dolby Vision profil 5 : couleurs
+   approximatives sans carte graphique, signalé dans `raison`.
 4. **Préparation** : conversion complète en MP4 lisible partout (mêmes réglages, `crf` 20, `+faststart`), à basse
    priorité, une à la fois ; automatique pour les films qui ne peuvent pas être lus directement si
    `CANAPE_PREPARATION_AUTO=1`, quand aucune conversion à la volée ne tourne. Dès qu'une version préparée existe,
-   la lecture passe en direct dessus.
+   la lecture passe en direct dessus. *Réalisé (1.0)* : préréglage `fast`, `nice 19`, préparations automatiques
+   seulement quand la charge est sous 0,8 par cœur, suspendues pendant toute conversion à la volée ; fichiers dans
+   `CANAPE_FILMS/<id>/preparations/<audio>.mp4`. Les adresses `/media/*` répondent 404 sans session.
 5. Sous-titres texte intégrés extraits en WebVTT à la demande (cache) ; pistes image (PGS, VobSub) signalées comme
    non lisibles. Libellés : langue, « forcés », « SDH ».
 

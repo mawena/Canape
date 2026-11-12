@@ -9,7 +9,7 @@
     "canape": "bin/canape"
   },
   "engines": {
-    "node": ">=24"
+    "node": ">=26"
   },
   "workspaces": [
     "serveur",
