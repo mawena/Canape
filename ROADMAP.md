@@ -123,3 +123,14 @@ Ajouter un film par un lien magnet ou un fichier `.torrent` et suivre son télé
 - [x] Facilité d'usage : premiers pas guidés, textes d'aide, messages d'erreur clairs, retours visuels, cibles tactiles
 - [x] Captures avant / après (ordinateur et téléphone), DESIGN.md à jour, essais Playwright verts
 - [x] Release du nouveau design (version mineure : rien d'incompatible) : 1.2.0
+
+## Phase 16 — Transmission pour les torrents
+
+Les trackers privés (C411…) refusent WebTorrent mais acceptent Transmission : Canapé pilote `transmission-daemon` sur
+le VPS pour tous les torrents. Contrat : [docs/CONCEPTION.md](docs/CONCEPTION.md), « Moteur Transmission ».
+
+- [x] Diagnostic (torrent privé C411 : seul son tracker donne des pairs, il n'accepte pas WebTorrent) et contrat
+- [ ] Serveur : moteur Transmission par RPC (ajout, choix des fichiers, pause, reprise, retrait, suivi, messages des trackers), lien physique vers la galerie, partage des privés jusqu'au retrait, WebTorrent en secours
+- [ ] Interface : torrent privé signalé, « En partage » avec ratio, « Arrêter de partager », réponse du tracker en clair
+- [ ] Installation : `transmission-daemon` installé et configuré par l'installateur (RPC local, mot de passe, groupe, port), guide
+- [ ] Essais (Transmission réel en local, faux RPC), release, mise en production

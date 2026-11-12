@@ -9,6 +9,9 @@
  * - `erreur` : voir `erreur` (pas de vidéo, quota dépassé, torrent illisible…) ;
  * - `annule` : retiré par son propriétaire (les données partielles sont effacées).
  */
+/** Moteur de téléchargement. */
+export type MoteurTorrent = 'transmission' | 'webtorrent';
+
 export type EtatTorrent = 'metadonnees' | 'telechargement' | 'pause' | 'import' | 'termine' | 'erreur' | 'annule';
 
 export interface FichierTorrent {
@@ -52,6 +55,16 @@ export interface Telechargement {
   filmIds: string[];
   /** Message en français si `etat === 'erreur'`. */
   erreur: string | null;
+  /** Torrent privé (drapeau `private` : ni DHT ni échange de pairs, seulement ses trackers). */
+  prive: boolean;
+  /** Le fichier est encore partagé (après `termine`) ; « Retirer » arrête le partage, le film reste. */
+  enPartage: boolean;
+  /** Ratio envoyé / reçu, `null` si inconnu. */
+  ratio: number | null;
+  /** Dernière réponse des trackers quand elle explique un problème (refus, erreur), en clair ; sinon `null`. */
+  messageTracker: string | null;
+  /** Moteur qui télécharge : Transmission sur le serveur, ou WebTorrent intégré (secours). */
+  moteur: MoteurTorrent;
   creeLe: string;
   termineLe: string | null;
 }
