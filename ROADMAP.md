@@ -78,7 +78,7 @@ main, séances, chat et réactions, reprise, PWA, mise en production automatique
 - [ ] Comptes : connexion Argon2id, sessions, invitations, réinitialisation, administration, quotas
 - [ ] Médiathèque : téléversement tus, analyse, fiches automatiques (titre, année, image, TMDB), partage, sous-titres, import 0.1
 - [ ] Lecture universelle : direct, son seul converti, vidéo convertie à la volée (HLS), HDR → SDR, préparation, sous-titres intégrés
-- [ ] Séances (serveur) : séances et liens, WebSocket, synchro, chat, réactions, reprise et historique, TURN
+- [x] Séances (serveur) : séances et liens, WebSocket, synchro, chat, réactions, reprise et historique, TURN
 - [ ] Salle (client) : lecteur synchronisé, appel vidéo, langue et sous-titres partagés, chat, réactions, compte à rebours
 - [ ] Interface : direction artistique, kit d'interface, accueil « Ce soir », historique, navigation, PWA
 
