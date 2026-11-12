@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# Commande forcée de la clé SSH de déploiement (ligne de ~canape-deploiement/.ssh/authorized_keys) :
+#   command="/opt/canape/deploiement/recevoir",restrict ssh-ed25519 AAAA… canape-deploiement
+# Le client (GitHub Actions) lance :  ssh canape-deploiement@serveur "deployer <sha256>" < canape-<version>.tar.gz
+# Seule cette forme est acceptée. Le paquet est lu sur l'entrée standard (taille bornée), son SHA-256 est vérifié,
+# puis mettre-a-jour (en root, par sudo) l'installe ; sa sortie est renvoyée au client et son code de sortie aussi.
+# Rien d'autre n'est possible avec cette clé : pas de shell, pas de redirection de ports (« restrict »).
+set -euo pipefail
+
+# Variables réservées aux essais (deploiement/essais/essai-mise-a-jour.sh).
+METTRE_A_JOUR="${CANAPE_ESSAI_METTRE_A_JOUR:-/opt/canape/deploiement/mettre-a-jour}"
+SUDO=(${CANAPE_ESSAI_SUDO:-sudo -n})
+TAILLE_MAX="${CANAPE_ESSAI_TAILLE_MAX:-419430400}"     # 400 Mo
+RACINE_TMP="${CANAPE_ESSAI_TMP:-/var/tmp}"
+
+refus() { printf 'Refusé : %s\n' "$*" >&2; exit 2; }
+
+commande="${SSH_ORIGINAL_COMMAND:-}"
+[[ "$commande" =~ ^deployer\ ([0-9a-fA-F]{64})$ ]] || refus "seule la commande « deployer <sha256 en hexadécimal> » est acceptée."
+sha="${BASH_REMATCH[1],,}"
+
+# Un dossier à nous, 0700, retiré à la fin.
+tmp="$(mktemp -d "$RACINE_TMP/canape-recevoir.XXXXXX")"
+trap 'rm -rf "${tmp:?}"' EXIT
+fichier="$tmp/paquet.tar.gz"
+
+# On lit au plus TAILLE_MAX + 1 octets : un octet de plus que la limite prouve que le paquet est trop gros.
+head -c "$((TAILLE_MAX + 1))" > "$fichier" || refus "lecture du paquet impossible."
+taille="$(stat -c %s "$fichier")"
+[ "$taille" -gt 0 ] || refus "paquet vide."
+[ "$taille" -le "$TAILLE_MAX" ] || refus "paquet trop gros (plus de $TAILLE_MAX octets)."
+echo "Paquet reçu : $taille octets."
+
+calcule="$(sha256sum "$fichier" | cut -d' ' -f1)"
+[ "$calcule" = "$sha" ] || refus "le SHA-256 du paquet reçu ($calcule) ne correspond pas à celui annoncé ($sha)."
+echo "SHA-256 vérifié."
+
+# Pas de « exec » : le dossier temporaire doit être retiré ensuite. Le code de sortie de mettre-a-jour est renvoyé.
+set +e
+"${SUDO[@]}" "$METTRE_A_JOUR" "$fichier" "$sha"
+code=$?
+exit "$code"
