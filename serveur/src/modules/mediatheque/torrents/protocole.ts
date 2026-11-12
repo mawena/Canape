@@ -34,6 +34,10 @@ export interface EtatTorrentEnfant {
   debit: number;
   debitEnvoi: number;
   pairs: number;
+  /** Transmission seulement : torrent privé, ratio envoyé / reçu (`null` si inconnu), dernière réponse refusée d'un tracker. */
+  prive?: boolean;
+  ratio?: number | null;
+  messageTracker?: string | null;
 }
 
 /** Parent → enfant. */
@@ -44,14 +48,16 @@ export type VersEnfant =
       /** Lien magnet ou chemin absolu d'un fichier `.torrent`. */
       magnet?: string;
       fichier?: string;
+      /** Empreinte connue (Transmission retrouve ainsi le torrent déjà présent). */
+      infoHash?: string;
       /** Dossier des données de ce torrent (`<telechargements>/<id>`). */
       dossier: string;
       /** Fichiers à télécharger, si le choix est déjà fait (reprise). */
       choix?: number[];
     }
   | { t: 'choisir'; id: string; fichiers: number[] }
-  /** Garder le torrent partagé jusqu'à ce ratio, puis envoyer `partage_fini`. */
-  | { t: 'partager'; id: string; ratio: number; delaiMs: number }
+  /** Garder le torrent partagé jusqu'à ce ratio (`null` = sans limite), au plus `delaiMs` ms (`null` = sans limite), puis envoyer `partage_fini`. */
+  | { t: 'partager'; id: string; ratio: number | null; delaiMs: number | null }
   /** Arrête le torrent ; `effacer` supprime aussi son dossier. Réponse : `retire`. */
   | { t: 'retirer'; id: string; effacer: boolean }
   | { t: 'arreter' };
@@ -59,7 +65,7 @@ export type VersEnfant =
 /** Enfant → parent. */
 export type DeEnfant =
   | { t: 'pret' }
-  | { t: 'metadonnees'; id: string; infoHash: string; nom: string; fichiers: FichierMeta[] }
+  | { t: 'metadonnees'; id: string; infoHash: string; nom: string; fichiers: FichierMeta[]; prive?: boolean }
   | { t: 'etat'; torrents: EtatTorrentEnfant[] }
   /** Tous les fichiers choisis sont reçus (une seule fois par ajout). */
   | { t: 'termine'; id: string }

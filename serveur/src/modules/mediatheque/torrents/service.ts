@@ -1,22 +1,26 @@
 // Règles des téléchargements par torrent : base, droits, quota, file d'attente, choix des fichiers, import final.
 // Le moteur (processus enfant) ne fait que télécharger ; tout ce qui décide est ici.
-import { mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import { chmod, mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { FastifyInstance } from 'fastify';
-import { TAILLE_MAX_SOUS_TITRES, type CorpsModifTorrent, type EtatTorrent, type FichierTorrent, type Telechargement } from '@canape/partage';
+import { TAILLE_MAX_SOUS_TITRES, type CorpsModifTorrent, type EtatTorrent, type FichierTorrent, type MoteurTorrent, type Telechargement } from '@canape/partage';
 import type { UtilisateurConnecte } from '../../../commun/auth.ts';
 import { ErreurHttp, interdit, introuvable, requeteInvalide } from '../../../commun/erreurs.ts';
 import { idBase32, maintenantIso } from '../../../commun/identifiants.ts';
 import type { Mediatheque } from '../mediatheque.ts';
 import { octetsUtilises } from '../televersement.ts';
 import { appliquerChoix, associerSousTitres, choixParDefaut, decrire, FICHIERS_MAX } from './fichiers.ts';
-import { Moteur } from './moteur.ts';
+import { Moteur, type MoteurTorrents } from './moteur.ts';
+import { MoteurTransmission } from './moteur-transmission.ts';
 import type { DeEnfant, EtatTorrentEnfant } from './protocole.ts';
+import { securiserMagnet, securiserTorrent } from './securite.ts';
 
 export interface LigneTelechargement {
   id: string; proprietaire_id: number; info_hash: string; source: string; nom: string | null; etat: EtatTorrent;
   fichiers: string | null; octets_total: number | null; octets_recus: number; films: string; erreur: string | null;
   cree_le: string; termine_le: string | null;
+  moteur: MoteurTorrent; prive: number; en_partage: number; ratio: number | null; message_tracker: string | null;
 }
 
 /** Ce qui est ajouté : un lien déjà validé, ou un `.torrent` déjà lu. */
@@ -38,7 +42,11 @@ const jsonOu = <T>(texte: string | null, defaut: T): T => {
 };
 
 export class Torrents {
+  /** Moteur WebTorrent (processus enfant) : le secours quand Transmission ne répond pas. */
   readonly moteur: Moteur;
+  /** Moteur Transmission (RPC JSON). */
+  readonly transmission: MoteurTransmission;
+  private readonly moteurs: Record<MoteurTorrent, MoteurTorrents>;
   /** Torrents confiés au moteur (au plus `torrentSimultanes` en téléchargement). */
   private readonly envoyes = new Set<string>();
   private readonly debutMeta = new Map<string, number>();
@@ -57,9 +65,13 @@ export class Torrents {
     this.app = app;
     this.med = med;
     this.moteur = new Moteur(app.config, app.log);
-    this.moteur.on('message', (m) => this.suivre(Promise.resolve().then(() => this.surMessage(m))));
-    this.moteur.on('demarre', () => this.surDemarrage());
-    this.moteur.on('mort', () => this.surMort());
+    this.transmission = new MoteurTransmission(app.config, app.log);
+    this.moteurs = { webtorrent: this.moteur, transmission: this.transmission };
+    for (const [nom, m] of Object.entries(this.moteurs) as Array<[MoteurTorrent, MoteurTorrents]>) {
+      m.on('message', (msg) => this.suivre(Promise.resolve().then(() => this.surMessage(msg, nom))));
+      m.on('demarre', () => this.surDemarrage(nom));
+      m.on('mort', () => this.surMort(nom));
+    }
   }
 
   private get config() { return this.app.config; }
@@ -82,8 +94,16 @@ export class Torrents {
     await mkdir(path.join(this.config.telechargements, DOSSIER_TORRENTS), { recursive: true });
     await this.nettoyer();
     if (!this.actif) return;
+    if (this.transmissionVoulu()) {
+      // Transmission partage et écrit dans ces dossiers (groupe canape) : le dossier doit être ouvert au groupe.
+      await chmod(this.config.telechargements, 0o2770).catch(() => undefined);
+      this.transmission.demarrer();
+      // Le moteur est connu avant d'accepter des ajouts (`auto` : Transmission s'il répond, sinon WebTorrent).
+      await Promise.race([this.transmission.premiereReponse, new Promise((r) => setTimeout(r, 4000).unref())]);
+    }
     // Un import interrompu est refait ; les téléchargements reprennent (les morceaux reçus sont revérifiés).
     for (const l of this.lignesParEtat('import')) this.suivre(this.importer(l.id));
+    this.reprendrePartages();
     this.planifier();
     this.minuteur = setInterval(() => this.verifierDelais(), 30_000);
     this.minuteur.unref();
@@ -94,21 +114,77 @@ export class Torrents {
     if (this.minuteur) clearInterval(this.minuteur);
     await Promise.allSettled([...this.travaux]);
     await this.moteur.arreter();
+    await this.transmission.arreter();
+  }
+
+  /** Transmission est-il à surveiller ? (mode `auto` ou `transmission`, ou des lignes déjà confiées à lui). */
+  private transmissionVoulu(): boolean {
+    if (this.config.torrentMoteur !== 'webtorrent') return true;
+    return !!this.db.prepare("SELECT 1 FROM telechargements WHERE moteur = 'transmission' AND (en_partage = 1 OR etat IN ('metadonnees','telechargement','pause','import'))").get();
+  }
+
+  private moteurDe(l: Pick<LigneTelechargement, 'moteur'>): MoteurTorrents { return this.moteurs[l.moteur]; }
+
+  /** Moteur qui doit porter cette ligne : Transmission dès qu'il répond (`auto`), ou toujours (`transmission`). */
+  private moteurPour(l: Pick<LigneTelechargement, 'moteur'>): MoteurTorrent {
+    if (l.moteur === 'transmission') return 'transmission';
+    const mode = this.config.torrentMoteur;
+    if (mode === 'transmission' || (mode === 'auto' && this.transmission.actif)) return 'transmission';
+    return 'webtorrent';
+  }
+
+  /** Les torrents privés (ou partagés) finis reprennent leur partage dans Transmission au démarrage de Canapé. */
+  private reprendrePartages(): void {
+    for (const l of this.db.prepare("SELECT * FROM telechargements WHERE en_partage = 1 AND etat = 'termine'").all() as unknown as LigneTelechargement[]) {
+      if (l.moteur !== 'transmission' || !existsSync(this.dossier(l.id))) {
+        // Plus de données à partager (effacées à la main ?) : le partage s'arrête, le film reste.
+        this.db.prepare('UPDATE telechargements SET en_partage = 0 WHERE id = ?').run(l.id);
+        continue;
+      }
+      this.partages.add(l.id);
+      this.enregistrerTransmission(l);
+      this.demanderPartage(l);
+    }
+  }
+
+  /** Donne (ou redonne) un torrent à Transmission ; sans effet s'il le connaît déjà. */
+  private enregistrerTransmission(l: LigneTelechargement): void {
+    const fichiers = jsonOu<FichierTorrent[]>(l.fichiers, []);
+    const choix = fichiers.filter((f) => f.choisi).map((f) => f.index);
+    this.transmission.demarrer();
+    this.transmission.envoyer({
+      t: 'ajouter', id: l.id, infoHash: l.info_hash, dossier: this.dossier(l.id),
+      ...(l.source.startsWith('magnet:') ? { magnet: l.source } : { fichier: path.join(this.config.telechargements, l.source) }),
+      ...(choix.length ? { choix } : {}),
+    });
+  }
+
+  private veutPartager(l: LigneTelechargement): boolean {
+    return l.prive ? this.config.torrentPartagePrives !== 0 : this.config.torrentPartage > 0;
+  }
+
+  private demanderPartage(l: LigneTelechargement): void {
+    if (l.prive) this.transmission.envoyer({ t: 'partager', id: l.id, ratio: this.config.torrentPartagePrives, delaiMs: null });
+    else {
+      const ecoule = l.termine_le ? Date.now() - Date.parse(l.termine_le) : 0;
+      this.transmission.envoyer({ t: 'partager', id: l.id, ratio: this.config.torrentPartage, delaiMs: Math.max(1000, DUREE_PARTAGE_MAX_MS - ecoule) });
+    }
   }
 
   /** Efface les dossiers et `.torrent` dont plus personne n'a besoin (arrêt brutal, partage interrompu…). */
   private async nettoyer(): Promise<void> {
     const racine = this.config.telechargements;
-    const lignes = new Map((this.db.prepare('SELECT id, etat FROM telechargements').all() as Array<{ id: string; etat: EtatTorrent }>).map((l) => [l.id, l.etat]));
+    const lignes = new Map((this.db.prepare('SELECT id, etat, en_partage FROM telechargements').all() as Array<{ id: string; etat: EtatTorrent; en_partage: number }>).map((l) => [l.id, l]));
+    // Un torrent encore partagé garde son dossier (les données) et son `.torrent`.
+    const utile = (id: string): boolean => { const l = lignes.get(id); return !!l && (EN_COURS.includes(l.etat) || (l.etat === 'termine' && l.en_partage === 1)); };
     for (const nom of await readdir(racine).catch(() => [] as string[])) {
       if (nom === DOSSIER_TORRENTS) continue;
-      const etat = lignes.get(nom);
-      if (!etat || etat === 'termine' || etat === 'annule') await rm(path.join(racine, nom), { recursive: true, force: true });
+      const l = lignes.get(nom);
+      if (!l || ((l.etat === 'termine' || l.etat === 'annule') && !utile(nom))) await rm(path.join(racine, nom), { recursive: true, force: true });
     }
     const gardes = path.join(racine, DOSSIER_TORRENTS);
     for (const nom of await readdir(gardes).catch(() => [] as string[])) {
-      const etat = lignes.get(nom.replace(/\.torrent$/, ''));
-      if (!etat || !EN_COURS.includes(etat)) await rm(path.join(gardes, nom), { force: true });
+      if (!utile(nom.replace(/\.torrent$/, ''))) await rm(path.join(gardes, nom), { force: true });
     }
   }
 
@@ -151,7 +227,7 @@ export class Torrents {
   /** Base + dernier état connu du moteur. */
   vue(l: LigneTelechargement): Telechargement {
     const fichiers = jsonOu<FichierTorrent[]>(l.fichiers, []);
-    const v = ACTIFS.includes(l.etat) ? this.vivant.get(l.id) : undefined;
+    const v = ACTIFS.includes(l.etat) || (l.etat === 'termine' && l.en_partage) ? this.vivant.get(l.id) : undefined;
     const proprio = this.db.prepare('SELECT prenom FROM utilisateurs WHERE id = ?').get(l.proprietaire_id) as { prenom: string } | undefined;
     const termine = l.etat === 'termine' || l.etat === 'import';
     const octetsTotal = l.octets_total;
@@ -163,8 +239,19 @@ export class Torrents {
       etat: l.etat, progression, octetsRecus, octetsTotal, debit, debitEnvoi: v?.debitEnvoi ?? 0, pairs: v?.pairs ?? 0,
       resteSecondes: l.etat === 'telechargement' && octetsTotal !== null && debit > 0 ? Math.ceil(Math.max(0, octetsTotal - octetsRecus) / debit) : null,
       fichiers, filmIds: jsonOu<string[]>(l.films, []), erreur: l.etat === 'erreur' ? l.erreur : null,
+      prive: l.prive === 1, enPartage: l.etat === 'termine' && l.en_partage === 1, ratio: v?.ratio ?? l.ratio,
+      messageTracker: this.messageDe(l, v), moteur: l.moteur,
       creeLe: l.cree_le, termineLe: l.termine_le,
     };
+  }
+
+  /** Réponse d'un tracker qui refuse, ou (Transmission en panne) l'explication de l'attente. */
+  private messageDe(l: LigneTelechargement, v: EtatTorrentEnfant | undefined): string | null {
+    if (l.etat === 'termine' || l.etat === 'annule') return null;
+    if (l.moteur === 'transmission' && ACTIFS.includes(l.etat) && !this.transmission.actif && this.transmission.derniereErreur) {
+      return `${this.transmission.derniereErreur} Le téléchargement reprendra dès que Transmission répondra.`;
+    }
+    return (v ? v.messageTracker : undefined) ?? l.message_tracker ?? null;
   }
 
   // ----- Ajout -----
@@ -172,20 +259,22 @@ export class Torrents {
   async ajouter(u: UtilisateurConnecte, source: SourceAjout): Promise<Telechargement> {
     if (!this.actif) throw interdit('Les torrents sont désactivés sur ce serveur.');
     this.exigerDroit(u);
-    const doublon = this.db.prepare(`SELECT 1 FROM telechargements WHERE info_hash = ? AND etat IN (${EN_COURS.map(() => '?').join(',')})`)
+    const doublon = this.db.prepare(`SELECT 1 FROM telechargements WHERE info_hash = ? AND (etat IN (${EN_COURS.map(() => '?').join(',')}) OR en_partage = 1)`)
       .get(source.infoHash, ...EN_COURS);
     if (doublon) throw new ErreurHttp(409, 'conflit', 'Ce torrent est déjà en cours de téléchargement.');
     const id = idBase32(12);
     let ref: string;
-    if ('magnet' in source) ref = source.magnet;
+    if ('magnet' in source) ref = await securiserMagnet(source.magnet);
     else {
+      let octets: Buffer;
+      try { octets = await securiserTorrent(source.fichier); } catch { throw requeteInvalide("Ce fichier n'est pas un .torrent lisible."); }
       ref = path.posix.join(DOSSIER_TORRENTS, `${id}.torrent`);
       await mkdir(path.dirname(this.fichierTorrent(id)), { recursive: true });
-      await writeFile(this.fichierTorrent(id), source.fichier);
+      await writeFile(this.fichierTorrent(id), octets);
     }
     this.db.prepare(
-      `INSERT INTO telechargements (id, proprietaire_id, info_hash, source, nom, etat, cree_le) VALUES (?, ?, ?, ?, ?, 'metadonnees', ?)`,
-    ).run(id, u.id, source.infoHash, ref, source.nom, maintenantIso());
+      `INSERT INTO telechargements (id, proprietaire_id, info_hash, source, nom, etat, moteur, cree_le) VALUES (?, ?, ?, ?, ?, 'metadonnees', ?, ?)`,
+    ).run(id, u.id, source.infoHash, ref, source.nom, this.moteurPour({ moteur: 'webtorrent' }), maintenantIso());
     this.planifier();
     // Pas de place tout de suite : le contrat veut « telechargement » avec 0 pair et 0 de débit, jusqu'à son tour.
     if (!this.envoyes.has(id)) this.db.prepare("UPDATE telechargements SET etat = 'telechargement' WHERE id = ? AND etat = 'metadonnees'").run(id);
@@ -201,39 +290,62 @@ export class Torrents {
       if (this.envoyes.size >= this.config.torrentSimultanes) break;
       if (this.envoyes.has(l.id)) continue;
       this.envoyes.add(l.id);
-      this.confier(l);
+      this.suivre(this.confier(l));
     }
   }
 
-  private confier(l: LigneTelechargement): void {
+  private async confier(l: LigneTelechargement): Promise<void> {
+    // Transmission répond (ou revient) : une ligne qui était sur WebTorrent passe à Transmission, dans le même dossier
+    // (il revérifie les morceaux déjà reçus).
+    const cible = this.moteurPour(l);
+    if (cible !== l.moteur) {
+      this.db.prepare('UPDATE telechargements SET moteur = ? WHERE id = ?').run(cible, l.id);
+      this.app.log.info({ id: l.id, de: l.moteur, vers: cible }, 'téléchargement confié à un autre moteur');
+      await this.moteurs[l.moteur].retirer(l.id, false);
+      this.vivant.delete(l.id);
+      l = { ...l, moteur: cible };
+    }
     if (!l.fichiers) {
       // Son tour est venu : on cherche les informations du torrent.
       this.db.prepare("UPDATE telechargements SET etat = 'metadonnees' WHERE id = ? AND etat = 'telechargement'").run(l.id);
       this.debutMeta.set(l.id, Date.now());
     }
-    this.moteur.demarrer();
-    const fichiers = jsonOu<FichierTorrent[]>(l.fichiers, []);
-    const choix = fichiers.filter((f) => f.choisi).map((f) => f.index);
-    const magnet = l.source.startsWith('magnet:');
+    const moteur = this.moteurDe(l);
+    moteur.demarrer();
+    if (l.moteur === 'transmission') await this.preparerDossier(l.id);
     // Si le moteur n'est pas encore prêt, `surDemarrage` renverra tout.
-    this.moteur.envoyer({
-      t: 'ajouter', id: l.id, dossier: this.dossier(l.id),
-      ...(magnet ? { magnet: l.source } : { fichier: path.join(this.config.telechargements, l.source) }),
-      ...(choix.length ? { choix } : {}),
-    });
-  }
-
-  private surDemarrage(): void {
-    for (const id of this.envoyes) {
-      const l = this.ligne(id);
-      if (l && ACTIFS.includes(l.etat)) this.confier(l);
+    if (l.moteur === 'transmission') this.enregistrerTransmission(l);
+    else {
+      const fichiers = jsonOu<FichierTorrent[]>(l.fichiers, []);
+      const choix = fichiers.filter((f) => f.choisi).map((f) => f.index);
+      const magnet = l.source.startsWith('magnet:');
+      moteur.envoyer({
+        t: 'ajouter', id: l.id, dossier: this.dossier(l.id),
+        ...(magnet ? { magnet: l.source } : { fichier: path.join(this.config.telechargements, l.source) }),
+        ...(choix.length ? { choix } : {}),
+      });
     }
   }
 
-  /** Le moteur est mort : les états connus ne valent plus, les partages en cours s'arrêtent. */
-  private surMort(): void {
-    this.vivant.clear();
-    for (const id of [...this.partages]) this.suivre(this.finPartage(id));
+  /** Dossier du torrent ouvert au groupe (`2770`) : Transmission (groupe canape) y écrit, Canapé y lit et y lie. */
+  private async preparerDossier(id: string): Promise<void> {
+    await mkdir(this.dossier(id), { recursive: true });
+    await chmod(this.dossier(id), 0o2770).catch(() => undefined);
+  }
+
+  private surDemarrage(nom: MoteurTorrent): void {
+    for (const id of [...this.envoyes]) {
+      const l = this.ligne(id);
+      if (!l || !ACTIFS.includes(l.etat)) continue;
+      if (l.moteur === nom || (nom === 'transmission' && this.moteurPour(l) === 'transmission')) this.suivre(this.confier(l));
+    }
+    this.planifier();
+  }
+
+  /** Le moteur est mort : les états connus ne valent plus (WebTorrent : les partages en cours s'arrêtent). */
+  private surMort(nom: MoteurTorrent): void {
+    for (const id of [...this.vivant.keys()]) if (this.ligne(id)?.moteur === nom) this.vivant.delete(id);
+    if (nom === 'webtorrent') for (const id of [...this.partages]) if (this.ligne(id)?.moteur === 'webtorrent') this.suivre(this.finPartage(id));
   }
 
   private verifierDelais(): void {
@@ -242,19 +354,21 @@ export class Torrents {
       const l = this.ligne(id);
       if (!l || l.fichiers || l.etat !== 'metadonnees') { this.debutMeta.delete(id); continue; }
       if (maintenant - debut > DELAI_METADONNEES_MS) {
-        this.suivre(this.echec(id, "Aucun pair n'a répondu : impossible de récupérer les informations du torrent."));
+        const mt = this.vivant.get(id)?.messageTracker ?? l.message_tracker;
+        this.suivre(this.echec(id, `Aucun pair n'a répondu : impossible de récupérer les informations du torrent.${mt ? ` ${mt}` : ''}`));
       }
     }
   }
 
   // ----- Messages du moteur -----
 
-  private surMessage(m: DeEnfant): Promise<void> | void {
+  private surMessage(m: DeEnfant, nom: MoteurTorrent): Promise<void> | void {
     switch (m.t) {
       case 'metadonnees': return this.surMetadonnees(m);
       case 'etat': this.surEtat(m.torrents); return;
       case 'termine': return this.surTermine(m.id);
-      case 'erreur': return this.echec(m.id, this.messageMoteur(m.message), { moteurDejaRetire: true });
+      // WebTorrent retire lui-même le torrent en erreur ; Transmission donne déjà un message complet.
+      case 'erreur': return this.echec(m.id, nom === 'webtorrent' ? this.messageMoteur(m.message) : m.message, { moteurDejaRetire: nom === 'webtorrent' });
       case 'partage_fini': return this.finPartage(m.id);
       default: return;
     }
@@ -268,9 +382,15 @@ export class Torrents {
     const maj = this.db.prepare('UPDATE telechargements SET octets_recus = ? WHERE id = ? AND octets_recus <> ?');
     for (const e of liste) {
       const l = this.ligne(e.id);
-      if (!l || !ACTIFS.includes(l.etat)) continue;
+      const partage = l?.etat === 'termine' && l.en_partage === 1;
+      if (!l || !(ACTIFS.includes(l.etat) || partage)) continue;
       this.vivant.set(e.id, e);
-      if (e.octetsTotal > 0) maj.run(e.octetsRecus, e.id, e.octetsRecus);
+      if (e.octetsTotal > 0 && !partage) maj.run(e.octetsRecus, e.id, e.octetsRecus);
+      const ratio = e.ratio ?? null;
+      const mt = e.messageTracker ?? null;
+      if (ratio !== l.ratio || mt !== l.message_tracker) {
+        this.db.prepare('UPDATE telechargements SET ratio = ?, message_tracker = ? WHERE id = ?').run(ratio, mt, e.id);
+      }
     }
   }
 
@@ -293,9 +413,9 @@ export class Torrents {
     if (this.quotaDepasse(l.proprietaire_id, l.id, total)) {
       return this.echec(m.id, 'Ton espace est plein : ce téléchargement dépasse ton quota.');
     }
-    this.db.prepare("UPDATE telechargements SET nom = ?, fichiers = ?, octets_total = ?, etat = 'telechargement' WHERE id = ?")
-      .run(m.nom || l.nom, JSON.stringify(fichiers), total, m.id);
-    this.moteur.envoyer({ t: 'choisir', id: m.id, fichiers: fichiers.filter((f) => f.choisi).map((f) => f.index) });
+    this.db.prepare("UPDATE telechargements SET nom = ?, fichiers = ?, octets_total = ?, etat = 'telechargement', prive = ? WHERE id = ?")
+      .run(m.nom || l.nom, JSON.stringify(fichiers), total, m.prive ? 1 : l.prive, m.id);
+    this.moteurDe(l).envoyer({ t: 'choisir', id: m.id, fichiers: fichiers.filter((f) => f.choisi).map((f) => f.index) });
   }
 
   private tailleChoisie(fichiers: FichierTorrent[]): number {
@@ -315,7 +435,8 @@ export class Torrents {
     if (!l || !EN_COURS.includes(l.etat)) return;
     this.db.prepare("UPDATE telechargements SET etat = 'erreur', erreur = ?, termine_le = ? WHERE id = ?").run(message, maintenantIso(), id);
     this.liberer(id);
-    if (!o.moteurDejaRetire) await this.moteur.retirer(id, !o.garderDonnees);
+    this.partages.delete(id);
+    if (!o.moteurDejaRetire) await this.moteurDe(l).retirer(id, !o.garderDonnees);
     else if (!o.garderDonnees) await rm(this.dossier(id), { recursive: true, force: true });
     await rm(this.fichierTorrent(id), { force: true });
     this.planifier();
@@ -343,12 +464,22 @@ export class Torrents {
     if (this.imports.has(id)) return;
     this.imports.add(id);
     try {
-      const partage = this.config.torrentPartage > 0 && enLigne;
-      if (partage) {
-        this.partages.add(id);
-        this.moteur.envoyer({ t: 'partager', id, ratio: this.config.torrentPartage, delaiMs: DUREE_PARTAGE_MAX_MS });
-      } else if (enLigne) {
-        await this.moteur.retirer(id, false);
+      const l = this.ligne(id);
+      if (!l) return;
+      let partage: boolean;
+      if (l.moteur === 'transmission') {
+        // Le fichier reste en place (le film en est un lien physique) : le torrent est retiré ou partagé après l'import.
+        if (!enLigne) this.enregistrerTransmission(l); // reprise après un arrêt : Transmission le retrouve par son empreinte
+        partage = this.veutPartager(l);
+        if (partage) { this.partages.add(id); this.demanderPartage(l); }
+      } else {
+        partage = this.config.torrentPartage > 0 && enLigne;
+        if (partage) {
+          this.partages.add(id);
+          this.moteur.envoyer({ t: 'partager', id, ratio: this.config.torrentPartage, delaiMs: DUREE_PARTAGE_MAX_MS });
+        } else if (enLigne) {
+          await this.moteur.retirer(id, false);
+        }
       }
       await this.importerFichiers(id, partage);
     } catch (e) {
@@ -360,9 +491,11 @@ export class Torrents {
     }
   }
 
-  private async importerFichiers(id: string, copier: boolean): Promise<void> {
+  private async importerFichiers(id: string, partage: boolean): Promise<void> {
     const l = this.ligne(id);
     if (!l || l.etat !== 'import') return;
+    const tm = l.moteur === 'transmission';
+    const copier = !tm && partage;
     const fichiers = jsonOu<FichierTorrent[]>(l.fichiers, []);
     const dossier = this.dossier(id);
     const dedans = (chemin: string): string => {
@@ -382,7 +515,7 @@ export class Torrents {
         throw new Error(`le fichier ${path.posix.basename(v.chemin)} est introuvable`);
       }
       const filmId = await this.med.creerFilm({
-        proprietaireId: l.proprietaire_id, nomOrigine: path.posix.basename(v.chemin), source, copier, taille: v.taille,
+        proprietaireId: l.proprietaire_id, nomOrigine: path.posix.basename(v.chemin), source, copier, lier: tm, taille: v.taille,
       });
       filmIds.push(filmId);
       this.db.prepare('UPDATE telechargements SET films = ? WHERE id = ?').run(JSON.stringify(filmIds), id);
@@ -397,17 +530,28 @@ export class Torrents {
       }
     }
     if (!filmIds.length) throw new Error('aucune vidéo à ajouter');
-    this.db.prepare("UPDATE telechargements SET etat = 'termine', films = ?, termine_le = ?, erreur = NULL WHERE id = ?")
-      .run(JSON.stringify(filmIds), maintenantIso(), id);
+    this.db.prepare("UPDATE telechargements SET etat = 'termine', films = ?, termine_le = ?, erreur = NULL, en_partage = ? WHERE id = ?")
+      .run(JSON.stringify(filmIds), maintenantIso(), tm && partage ? 1 : 0, id);
+    if (tm) {
+      if (partage) return; // le torrent et ses données restent pour le partage ; `.torrent` gardé pour la reprise
+      // Pas de partage : Transmission l'oublie avec ses données, le film reste (lien physique).
+      await this.transmission.retirer(id, true);
+      await rm(dossier, { recursive: true, force: true });
+      await rm(this.fichierTorrent(id), { force: true });
+      return;
+    }
     await rm(this.fichierTorrent(id), { force: true });
     if (!copier) await rm(dossier, { recursive: true, force: true });
   }
 
-  /** Ratio de partage atteint (ou durée maximale) : le torrent s'arrête, ses données sont effacées. */
+  /** Ratio de partage atteint (ou durée maximale, ou torrent retiré de Transmission) : le partage s'arrête, les données sont effacées. */
   private async finPartage(id: string): Promise<void> {
     if (!this.partages.delete(id)) return;
-    await this.moteur.retirer(id, true);
+    const l = this.ligne(id);
+    if (l) await this.moteurDe(l).retirer(id, true);
+    this.db.prepare('UPDATE telechargements SET en_partage = 0 WHERE id = ?').run(id);
     await rm(this.dossier(id), { recursive: true, force: true });
+    await rm(this.fichierTorrent(id), { force: true });
   }
 
   // ----- Modification et annulation par le propriétaire -----
@@ -437,13 +581,13 @@ export class Torrents {
         throw new ErreurHttp(507, 'quota_depasse', 'Ton espace est plein : ce choix dépasse ton quota.');
       }
       this.db.prepare('UPDATE telechargements SET fichiers = ?, octets_total = ? WHERE id = ?').run(JSON.stringify(fichiers), total, id);
-      if (this.envoyes.has(id)) this.moteur.envoyer({ t: 'choisir', id, fichiers: choix });
+      if (this.envoyes.has(id) || (l.etat === 'pause' && l.moteur === 'transmission')) this.moteurDe(l).envoyer({ t: 'choisir', id, fichiers: choix });
     }
 
     if (corps.pause === true && l.etat !== 'pause') {
       this.db.prepare("UPDATE telechargements SET etat = 'pause' WHERE id = ?").run(id);
       this.liberer(id);
-      await this.moteur.retirer(id, false);
+      await this.moteurDe(l).pause(id);
       this.planifier();
     } else if (corps.pause === false && l.etat === 'pause') {
       this.db.prepare('UPDATE telechargements SET etat = ? WHERE id = ?').run(fichiers ? 'telechargement' : 'metadonnees', id);
@@ -459,11 +603,17 @@ export class Torrents {
     if (['metadonnees', 'telechargement', 'pause'].includes(l.etat)) {
       this.db.prepare("UPDATE telechargements SET etat = 'annule', termine_le = ?, erreur = NULL WHERE id = ?").run(maintenantIso(), id);
       this.liberer(id);
-      await this.moteur.retirer(id, true);
+      await this.moteurDe(l).retirer(id, true);
       await rm(this.dossier(id), { recursive: true, force: true });
       await rm(this.fichierTorrent(id), { force: true });
       this.planifier();
       return;
+    }
+    // Ligne finie, encore partagée : le torrent s'arrête et ses données partent, le film reste (lien physique).
+    if (l.en_partage || this.partages.has(id)) {
+      this.partages.delete(id);
+      this.vivant.delete(id);
+      await this.moteurDe(l).retirer(id, true);
     }
     // Ligne finie : retirée de la liste (les données gardées d'une erreur d'import partent avec elle).
     this.db.prepare('DELETE FROM telechargements WHERE id = ?').run(id);

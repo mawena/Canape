@@ -29,8 +29,9 @@ même temps, chacun avec son volume. Les caméras et les micros circulent direct
 - Téléversement par morceaux (protocole tus) : pause, reprise, coupure de connexion sans tout recommencer.
 - Lecture de tous les formats sans conversion à la main : lecture directe quand c'est possible, sinon conversion du
   son, ou de l'image à la volée en HLS (HDR converti en SDR), et préparation à l'avance des films lourds.
-- Ajout d'un film par lien magnet ou fichier `.torrent` : téléchargement suivi, plus gros film et sous-titres choisis,
-  moteur à part (processus enfant, `nice`, débits plafonnés) pour ne gêner ni les séances ni les autres sites.
+- Ajout d'un film par lien magnet ou fichier `.torrent` : téléchargement suivi, plus gros film et sous-titres choisis.
+  **Transmission** (`transmission-daemon`, sur le serveur) télécharge tous les torrents, y compris ceux des trackers
+  privés, et les partage ; WebTorrent (processus enfant) ne sert plus qu'en secours. Voir « Torrents et Transmission ».
 - Sous-titres intégrés extraits à la demande ; choix de la langue et des sous-titres.
 
 **Séances et salle**
@@ -191,10 +192,13 @@ Réglages dans `/etc/canape/canape.conf` (format `CLÉ=valeur`, `#` pour un comm
 | `CANAPE_TELEVERSEMENTS` | `./televersements` | téléversements en cours |
 | `CANAPE_TORRENTS` | `1` | `0` désactive l'ajout par torrent |
 | `CANAPE_TELECHARGEMENTS` | à côté de `CANAPE_TELEVERSEMENTS` (VPS : `/srv/canape/telechargements`) | données des torrents en cours et `.torrent` gardés |
+| `CANAPE_TORRENT_MOTEUR` | `auto` | `auto` : Transmission s'il répond, sinon WebTorrent ; `transmission` ; `webtorrent` |
+| `CANAPE_TRANSMISSION_URL` | `http://127.0.0.1:9091/transmission/rpc` | RPC de Transmission (avec `CANAPE_TRANSMISSION_UTILISATEUR` et `CANAPE_TRANSMISSION_MOT_DE_PASSE`) |
+| `CANAPE_TORRENT_PARTAGE_PRIVES` | `toujours` | torrents privés : partagés jusqu'à ce qu'on les retire (`toujours`) ou jusqu'à un ratio |
 | `CANAPE_TORRENT_SIMULTANES` | `2` | téléchargements actifs en même temps (les autres attendent) |
 | `CANAPE_TORRENT_DEBIT_MAX` | `0` | octets/s reçus au plus (`0` = sans limite ; `20M` accepté) |
 | `CANAPE_TORRENT_ENVOI_MAX` | `1M` | octets/s envoyés au plus |
-| `CANAPE_TORRENT_PARTAGE` | `0` | ratio de partage après la fin (`0` = arrêt dès la fin ; sinon les fichiers sont copiés et gardés jusqu'au ratio, 24 h au plus) |
+| `CANAPE_TORRENT_PARTAGE` | `0` | torrents publics : ratio de partage après la fin (`0` = retiré de Transmission dès la fin ; sinon gardé jusqu'au ratio, 24 h au plus) |
 | `CANAPE_TORRENT_PORT` | `0` | port d'écoute des pairs (`0` = au hasard ; un port fixe ouvert dans le pare-feu aide) |
 | `CANAPE_TELEVERSEMENT_MAX` | `100G` | taille maximale d'un téléversement |
 | `CANAPE_QUOTA_DEFAUT` | `100G` | quota par défaut d'un compte |
@@ -209,6 +213,23 @@ Réglages dans `/etc/canape/canape.conf` (format `CLÉ=valeur`, `#` pour un comm
 | `CANAPE_TLS_CERT`, `CANAPE_TLS_CLE` | vides | HTTPS servi directement par Node (inutile derrière nginx) |
 
 Le contrat complet est dans [`docs/CONCEPTION.md`](docs/CONCEPTION.md), section « Configuration ».
+
+## Torrents et Transmission
+
+Les trackers privés n'acceptent que des logiciels connus : Canapé **pilote Transmission** (RPC JSON, en local) pour tous
+les torrents. À la fin, le film est un **lien physique** du fichier téléchargé (aucune place en plus) ; un torrent privé
+reste partagé jusqu'à ce que l'utilisateur le retire (« Retirer » arrête le partage et efface les données, le film
+reste) ; un torrent public est retiré dès l'import (`CANAPE_TORRENT_PARTAGE` pour le partager un peu). Les sources web
+(`url-list`, `httpseeds`) et les trackers qui pointent vers le serveur lui-même ou son réseau sont retirés avant de
+donner un torrent à Transmission. Sans Transmission (développement), le moteur WebTorrent intégré prend le relais.
+
+Installer Transmission sur un serveur où Canapé est déjà installé (une commande, idempotente, `--essai` pour voir) :
+
+```bash
+sudo /opt/canape/actuelle/deploiement/installer-transmission.sh
+```
+
+Détails, vérifications et ouverture du port dans le pare-feu : `docs/DEPLOIEMENT.md`.
 
 ## Ligne de commande `canape`
 

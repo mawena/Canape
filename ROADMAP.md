@@ -144,7 +144,9 @@ le VPS pour tous les torrents. Contrat : [docs/CONCEPTION.md](docs/CONCEPTION.md
 `feature/transmission`).
 
 - [x] Diagnostic (torrent privé C411 : seul son tracker donne des pairs, il n'accepte pas WebTorrent) et contrat
-- [ ] Serveur : moteur Transmission par RPC (ajout, choix des fichiers, pause, reprise, retrait, suivi, messages des trackers), lien physique vers la galerie, partage des privés jusqu'au retrait, WebTorrent en secours
+- [x] Serveur : moteur Transmission par RPC (ajout, choix des fichiers, pause, reprise, retrait, suivi, messages des trackers), lien physique vers la galerie, partage des privés jusqu'au retrait, WebTorrent en secours
 - [x] Interface : torrent privé signalé, « En partage » avec ratio, « Arrêter de partager », réponse du tracker en clair
-- [ ] Installation : `transmission-daemon` installé et configuré par l'installateur (RPC local, mot de passe, groupe, port), guide
-- [ ] Essais (Transmission réel en local, faux RPC), release, mise en production
+- [x] Installation : `transmission-daemon` installé et configuré par l'installateur (RPC local, mot de passe, groupe, port), guide
+- [x] Essais (Transmission réel en local, faux RPC, vrai journal ; Playwright Chromium et Firefox)
+- [x] Release 1.4.0 (version mineure : nouvelles fonctions compatibles, WebTorrent en secours sans Transmission)
+- [ ] Mise en production de la 1.4.0 et installation de Transmission sur https://canape.mawena.cloud

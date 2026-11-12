@@ -158,7 +158,7 @@ process.on('message', (m: VersEnfant) => {
     }
     case 'partager': {
       const e = entrees.get(m.id);
-      if (e) e.partage = { ratio: m.ratio, limite: Date.now() + m.delaiMs };
+      if (e) e.partage = { ratio: m.ratio ?? 1, limite: Date.now() + (m.delaiMs ?? 24 * 3600_000) };
       break;
     }
     case 'retirer': retirer(m.id, m.effacer); break;
