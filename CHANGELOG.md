@@ -2,6 +2,24 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) ; versions selon [SemVer](https://semver.org/lang/fr/).
 
+## [1.4.1] — 2026-11-12
+
+Correctif : Transmission peut écrire dans les dossiers de téléchargement.
+
+### Corrigé
+
+- **« Transmission n'a pas le droit d'écrire dans le dossier des téléchargements (… Permission denied) »** : en
+  production, le durcissement du service (`RestrictSUIDSGID=true`) refusait à Canapé le `chmod 2770` du dossier de
+  chaque téléchargement, qui restait en `2750`, fermé à Transmission. Canapé crée maintenant ce dossier directement
+  en `2770` (sous un umask `007`, le bit setgid hérité du dossier parent), sans chmod ; vérifié dans le même bac à
+  sable systemd que le service.
+- Un dossier de téléchargement qui existe déjà (laissé par la 1.4.0, ou commencé par WebTorrent avant le passage à
+  Transmission) est rouvert au groupe avant d'être confié à Transmission ; WebTorrent écrit désormais ses fichiers
+  ouverts au groupe.
+- `mettre-a-jour` ne remet plus `/srv/canape/telechargements` en `0750` : il le garde en `2770` et rouvre au groupe
+  les dossiers et fichiers laissés fermés par la 1.4.0.
+- Canapé signale dans son journal un dossier des téléchargements qui n'est pas en `2770`.
+
 ## [1.4.0] — 2026-11-12
 
 Les torrents passent par **Transmission** : les trackers privés (qui refusaient WebTorrent) marchent, et les torrents

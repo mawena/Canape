@@ -356,7 +356,13 @@ torrents ; WebTorrent (processus enfant) ne sert plus qu'en secours, quand Trans
   127.0.0.1 seulement, identifiant et mot de passe générés et écrits dans `canape.conf`, `umask` 2,
   `download-dir` `/srv/canape/telechargements`, port des pairs, sans limite de ratio globale) et met l'utilisateur
   `debian-transmission` dans le groupe `canape` (dossiers `2770` groupe `canape`), sans toucher à nginx ; `mettre-a-jour`
-  ne touche pas à Transmission.
+  ne touche pas à Transmission (il garde seulement `telechargements` en `2770` et rouvre au groupe ce qui ne l'est pas).
+- **Droits des dossiers (1.4.1)** : le service tourne avec `UMask=0027` et `RestrictSUIDSGID=true`, qui refuse tout
+  `chmod` posant le bit setgid (la 1.4.0 laissait ainsi chaque dossier en `2750`, fermé en écriture à Transmission :
+  « Permission denied »). Canapé crée donc le dossier d'un téléchargement sous un umask `007` (`dossiers.ts`) : il naît
+  en `0770` et hérite du bit setgid de `telechargements` (posé en `2770` par l'installateur, en root), sans chmod. Un
+  dossier qui existe déjà est rouvert au groupe (dossiers `770`, fichiers `660`) ; le processus WebTorrent écrit sous
+  un umask `007` pour que Transmission puisse reprendre ses fichiers.
 
 ## Inscription libre (phase 15)
 
