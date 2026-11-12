@@ -37,32 +37,96 @@ sudo apt install nodejs npm      # si la version obtenue est inférieure à 18 :
 
 ## Déploiement
 
-### Avec le script `deployer.sh`
+### Sur le VPS : `installer-serveur.sh` (méthode conseillée)
 
-Depuis votre poste, dans une copie du dépôt :
+Sur le serveur, clonez le dépôt puis lancez le script en root. Il copie le code vers `/opt/canape` (le clone n'est
+jamais le code qui tourne) :
 
 ```sh
-deploiement/deployer.sh moi@mon-serveur.exemple.fr --domaine canape.exemple.fr
+git clone https://github.com/mawena/Canape.git ~/Canape && cd ~/Canape
+sudo ./deploiement/installer-serveur.sh --domaine canape.mawena.cloud
+# mise à jour :
+cd ~/Canape && git pull && sudo ./deploiement/installer-serveur.sh --domaine canape.mawena.cloud
 ```
 
-- `--essai` affiche tout ce qui serait fait (commandes et script exécuté sur le serveur) sans rien lancer ;
-- sans `--domaine`, nginx n'est pas touché ; `SSH_OPTS="-p 2222 -i ~/.ssh/vps"` passe des options à ssh.
+Options : `--domaine <nom>` (site nginx et certificat Let's Encrypt), `--port <N>` (port local de Node),
+`--node <chemin>` (Node.js 18+ à copier dans `/opt/canape/node`), `--essai` (affiche ce qui serait fait, sans rien
+modifier ni root), `--desinstaller`. Sans `--domaine`, nginx n'est pas touché.
 
-Le script est **idempotent** : il envoie le code (`bin/`, `src/`, `public/`, `package*.json`, `deploiement/`) par
-`rsync` dans `/opt/canape`, fait `npm ci --omit=dev` sur le serveur et redémarre le service. Il vérifie
-`/api/etat` sur le serveur à la fin. La première fois, il :
+- **Port** : 8080 par défaut. S'il est déjà pris (par n'importe quel programme, sur n'importe quelle adresse), le
+  premier déploiement choisit tout seul un port libre (8780 et suivants), le dit, et l'écrit dans `CANAPE_PORT` et
+  dans le `proxy_pass` de nginx. Aux mises à jour, le port de `/etc/canape/canape.conf` est gardé.
+- **Node.js** : le script n'installe ni ne remplace jamais Node.js. S'il en trouve un (18+) pour root, il l'utilise.
+  Si `node` n'existe que pour votre utilisateur (nvm : `sudo node` répond « command not found »), donnez-le avec
+  `--node` ; il est **copié** dans `/opt/canape/node` (le service ne peut pas lancer un Node placé dans un dossier
+  personnel) et réutilisé aux mises à jour :
 
-1. vérifie Node.js 18+ (sinon il dit comment l'installer) ;
-2. crée l'utilisateur système `canape` et le dossier des films `/srv/canape/films` (inscriptible par le groupe
-   `canape`, setgid ; votre compte SSH est ajouté à ce groupe) ;
-3. crée `/etc/canape/canape.conf` depuis l'exemple, avec un **mot de passe lisible et un secret générés** : le mot
-   de passe est affiché une seule fois à la fin, et le fichier n'est **jamais réécrit** ensuite ;
-4. installe et active le service systemd `canape` ;
-5. avec `--domaine` : installe le site nginx, obtient le certificat avec certbot (s'il est installé, sinon il
-   explique quoi faire), passe `nginx -t` et recharge nginx.
+  ```sh
+  sudo ./deploiement/installer-serveur.sh --domaine canape.mawena.cloud --node "$(command -v node)"
+  ```
 
-Les commandes d'administration passent par `sudo` sur le serveur (le mot de passe sudo est demandé dans votre
-terminal).
+  (le `$(command -v node)` est évalué par votre shell, avant `sudo`).
+- Votre compte (`$SUDO_USER`) est ajouté au groupe `canape` : il peut copier des films dans `/srv/canape/films`
+  (après une reconnexion).
+
+### À côté d'autres sites
+
+Le serveur peut déjà héberger d'autres sites : le script est écrit pour ne rien leur faire.
+
+- **Il touche seulement** : `/opt/canape`, `/etc/canape` (créé une fois, jamais réécrit sauf `CANAPE_PORT` si le port
+  change), `/etc/systemd/system/canape.service`, `/usr/local/bin/canape-convertir`, l'utilisateur `canape`, et **un
+  seul fichier nginx nommé d'après le domaine** (`sites-available/canape.mawena.cloud.conf` et son lien dans
+  `sites-enabled`, ou `conf.d/` sans ce découpage), marqué `# Géré par Canapé`. Les films ne sont jamais touchés.
+- **Il ne touche pas** : les autres fichiers nginx, `nginx.conf`, les autres certificats, Node.js du système,
+  les autres services.
+- **Avant** de toucher à nginx : `nginx -t` doit réussir sur la configuration actuelle (le code de sortie compte ;
+  des avertissements déjà présents n'empêchent rien et sont notés pour être comparés ensuite). S'il échoue déjà,
+  le script s'arrête sans rien modifier : le problème est antérieur. Il refuse aussi d'écraser un fichier du même
+  nom sans marqueur, et de continuer si un autre fichier déclare déjà `server_name` pour ce domaine (il le nomme,
+  sans le toucher : retirez-le vous-même s'il est obsolète).
+- **Pendant** : si `nginx -t` échoue après la pose du fichier de Canapé, ou si certbot échoue après le bloc HTTP
+  provisoire, l'état d'avant est remis exactement (ancien fichier restauré, ou fichier et lien supprimés) et nginx
+  n'est jamais rechargé dans un état invalide. Seulement `reload`, jamais `restart`. Certificat par
+  `certbot certonly --nginx -d <domaine>` (qui ne réécrit aucun fichier), avec `--deploy-hook` seulement si aucun
+  hook de rechargement n'existe déjà. Après la pose, les nouveaux avertissements de `nginx -t` sont signalés.
+- **Port** : vérifié avec `ss -ltnp` avant tout (voir plus haut).
+- **IPv6** : le gabarit déclare `listen [::]:80` et `listen [::]:443`, mais le script ne les garde que si un autre
+  fichier nginx écoute déjà en IPv6 sur ce port ; sinon Canapé deviendrait, en IPv6, le site par défaut de tous
+  les autres domaines. Sur un serveur où nginx écoute déjà en IPv6, Canapé y est donc aussi joignable.
+- **Sans certbot** : le site reste en HTTP seulement (sans caméra), avec la marche à suivre.
+
+Vérifier soi-même ensuite :
+
+```sh
+sudo nginx -t
+systemctl status canape
+curl -I https://canape.mawena.cloud
+curl http://127.0.0.1:8080/api/etat       # avec votre port si ce n'est pas 8080
+```
+
+**Désinstaller** : arrête et retire le service, retire le fichier nginx de Canapé (`nginx -t` puis `reload`, retour
+arrière si besoin) et `/opt/canape` ; garde `/etc/canape`, les films et le certificat (le script donne les
+commandes pour les supprimer à la main, dont `sudo certbot delete --cert-name canape.mawena.cloud`).
+
+```sh
+sudo ./deploiement/installer-serveur.sh --desinstaller --domaine canape.mawena.cloud
+```
+
+L'essai de la partie nginx (sans root, avec un faux `/etc/nginx` et le nginx du poste) :
+`deploiement/essais/essai-nginx.sh`.
+
+### Depuis le poste : `deployer.sh`
+
+Même installation, lancée depuis votre poste : le script envoie le code (`rsync`) dans un dossier temporaire du
+serveur et y lance `sudo ./deploiement/installer-serveur.sh` par `ssh -t` (le mot de passe sudo est demandé dans votre
+terminal). Il n'a pas sa propre copie de l'installation : tout est dans `installer-serveur.sh`.
+
+```sh
+deploiement/deployer.sh moi@mon-serveur.exemple.fr --domaine canape.exemple.fr [--port N] [--node /chemin/node]
+```
+
+`--essai` affiche les commandes et la simulation de l'installation sans rien exécuter ;
+`SSH_OPTS="-p 2222 -i ~/.ssh/vps"` passe des options à ssh. `--node` désigne ici un chemin **du serveur**.
 
 ### Pas à pas, à la main
 
@@ -102,14 +166,14 @@ sudo systemctl enable --now canape
 curl http://127.0.0.1:8080/api/etat        # {"version":…,"connecte":false,"motDePasseRequis":true,…}
 ```
 
-nginx : copiez `deploiement/nginx/canape.conf`, remplacez `canape.exemple.fr` par votre domaine. Le fichier
+nginx : copiez `deploiement/nginx/canape.conf`, remplacez `canape.exemple.fr` par votre domaine et `CANAPE_PORT_A_REMPLACER` par le port de Node. Le fichier
 référence le certificat Let's Encrypt, qui n'existe pas encore : obtenez-le d'abord.
 
 ```sh
 # 1. un site HTTP minimal (le premier bloc « server » du fichier) pour que certbot valide le domaine
-sudo cp /opt/canape/deploiement/nginx/canape.conf /etc/nginx/sites-available/canape.conf   # à réduire au bloc du port 80
-sudo sed -i 's/canape\.exemple\.fr/canape.mondomaine.fr/g' /etc/nginx/sites-available/canape.conf
-sudo ln -s /etc/nginx/sites-available/canape.conf /etc/nginx/sites-enabled/
+sudo cp /opt/canape/deploiement/nginx/canape.conf /etc/nginx/sites-available/canape.mondomaine.fr.conf   # à réduire au bloc du port 80
+sudo sed -i 's/canape\.exemple\.fr/canape.mondomaine.fr/g; s/CANAPE_PORT_A_REMPLACER/8080/g' /etc/nginx/sites-available/canape.mondomaine.fr.conf
+sudo ln -s /etc/nginx/sites-available/canape.mondomaine.fr.conf /etc/nginx/sites-enabled/
 # 2. le certificat (renouvelé tout seul par le minuteur de certbot)
 sudo certbot certonly --nginx -d canape.mondomaine.fr --deploy-hook "systemctl reload nginx"
 # 3. le fichier complet, puis
@@ -117,7 +181,7 @@ sudo nginx -t && sudo systemctl reload nginx
 ```
 
 Ce que fait la configuration nginx : redirection du port 80 vers HTTPS (et `/.well-known/acme-challenge/` pour
-certbot), HTTP/2, `proxy_pass` vers `127.0.0.1:8080` avec `Host`, `X-Forwarded-For` et `X-Forwarded-Proto` ;
+certbot), HTTP/2, `proxy_pass` vers `127.0.0.1:<port de Node>` avec `Host`, `X-Forwarded-For` et `X-Forwarded-Proto` ;
 `/ws` avec `Upgrade`/`Connection` et un délai de lecture de 6 heures (un film dure) ; `/films/` sans mise en mémoire
 tampon (`proxy_buffering off`, `proxy_request_buffering off`) pour les gros fichiers et les requêtes `Range`. Les
 en-têtes de sécurité (HSTS, `Permissions-Policy` avec caméra et micro pour `self`, CSP) sont envoyés par Canapé
@@ -131,11 +195,14 @@ Journal : `journalctl -u canape -f`.
 
 ## Mise à jour
 
-Relancez le script : il renvoie le code, refait `npm ci --omit=dev` et redémarre le service, sans toucher à
+Relancez le script : il recopie le code, refait `npm ci --omit=dev` et redémarre le service, sans toucher à
 `/etc/canape/canape.conf` ni aux films.
 
 ```sh
-git pull && deploiement/deployer.sh moi@mon-serveur.exemple.fr
+# sur le VPS
+cd ~/Canape && git pull && sudo ./deploiement/installer-serveur.sh --domaine canape.mawena.cloud
+# ou depuis le poste
+git pull && deploiement/deployer.sh moi@mon-serveur.exemple.fr --domaine canape.mawena.cloud
 ```
 
 ## Ajouter des films
