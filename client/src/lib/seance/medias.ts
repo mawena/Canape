@@ -46,7 +46,12 @@ export async function lirePeripheriques(): Promise<Peripheriques> {
   const vide: Peripheriques = { micros: [], cameras: [], sorties: [] };
   if (!navigator.mediaDevices?.enumerateDevices) return vide;
   try {
-    const tous = await navigator.mediaDevices.enumerateDevices();
+    // Sur certains navigateurs (Firefox avec des périphériques simulés, pilotes capricieux) la liste n'arrive jamais :
+    // on n'attend pas plus de 3 s pour ne pas bloquer l'entrée dans la salle.
+    const tous = await Promise.race([
+      navigator.mediaDevices.enumerateDevices(),
+      new Promise<MediaDeviceInfo[]>((resolve) => setTimeout(() => resolve([]), 3000)),
+    ]);
     return {
       micros: tous.filter((d) => d.kind === 'audioinput'),
       cameras: tous.filter((d) => d.kind === 'videoinput'),
