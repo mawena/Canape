@@ -93,18 +93,64 @@ démarre, puis vérifie `/api/etat` (version attendue) pendant 30 s. En cas d'é
 redémarrage, code de sortie non nul. Verrou contre deux mises à jour simultanées. Ne touche jamais nginx.
 Codes : 0 réussi, 1 échec (retour arrière fait), 2 usage, 3 SHA-256 faux, 4 paquet invalide, 70 retour arrière en échec, 75 déjà en cours.
 
-## Torrents (1.1)
+## Torrents (1.1) et Transmission (phase 16)
 
-Le moteur (WebTorrent) tourne dans un processus enfant du service, en `nice` ; ses données sont dans
-`/srv/canape/telechargements` (créé par l'installation et par `mettre-a-jour`, `CANAPE_TELECHARGEMENTS` ajouté à
-`canape.conf`). L'unité systemd laisse passer le TCP et l'UDP et n'autorise l'écriture que sous `/srv/canape`.
+Transmission (`transmission-daemon`) télécharge tous les torrents ; Canapé le pilote par son RPC (127.0.0.1). Le moteur
+WebTorrent intégré (processus enfant, `nice`) ne sert plus qu'en secours (`CANAPE_TORRENT_MOTEUR=auto` : Transmission
+tant qu'il répond). Les données sont dans `/srv/canape/telechargements` (`2770`, groupe `canape`). L'unité systemd de
+Canapé n'autorise l'écriture que sous `/srv/canape`.
 
-- **Pare-feu** : sans port ouvert, Canapé télécharge quand même (connexions sortantes) mais trouve moins de pairs. Fixer
-  `CANAPE_TORRENT_PORT=51413`, puis `sudo ufw allow 51413` (TCP et UDP), puis `sudo systemctl restart canape`.
+### Installer Transmission sur un serveur déjà installé
+
+Après la mise à jour de Canapé vers la version qui porte cette fonction, une seule commande (en root) :
+
+```bash
+sudo /opt/canape/actuelle/deploiement/installer-transmission.sh --essai   # ce qu'elle ferait, sans rien modifier
+sudo /opt/canape/actuelle/deploiement/installer-transmission.sh
+```
+
+Elle est idempotente (on peut la relancer ; le mot de passe du RPC est gardé) et ne touche ni à nginx ni au pare-feu :
+`apt-get install transmission-daemon`, arrêt du démon (il réécrit `settings.json` en s'arrêtant), réglages (RPC sur
+127.0.0.1 seulement, liste blanche 127.0.0.1, identifiant `canape` et mot de passe générés, `umask` 2, dossier des
+téléchargements, port des pairs `CANAPE_TORRENT_PORT` ou 51413, DHT/PEX/LPD actifs pour les torrents publics, pas de
+limite de ratio globale), `debian-transmission` dans le groupe `canape`, dossier en `2770`, `CANAPE_TORRENT_MOTEUR=transmission`
+et `CANAPE_TRANSMISSION_*` dans `canape.conf`, ordre systemd (Canapé après Transmission), redémarrage de Transmission puis
+de Canapé, vérification du RPC. `installer-serveur.sh` l'appelle aussi (`--sans-transmission` pour l'éviter).
+Si un Transmission est déjà installé et réglé par quelqu'un d'autre, elle s'arrête sans rien changer et l'explique ;
+`--remplacer` accepte de remplacer ses réglages (ancien `settings.json` gardé à côté).
+
+### Vérifier
+
+```bash
+systemctl is-active transmission-daemon canape
+sudo grep ^CANAPE_TORRENT /etc/canape/canape.conf            # moteur transmission, port des pairs
+ss -ltn | grep 9091                                            # le RPC n'écoute qu'en 127.0.0.1
+journalctl -u canape -n 30 | grep -i transmission             # « Transmission répond »
+```
+
+Puis ajouter un torrent dans l'interface : sa ligne affiche le moteur « Transmission ».
+
+### Pare-feu
+
+Le script affiche le port des pairs sans l'ouvrir. Ouvrir ce port (51413 par défaut) en **TCP et UDP**, entrant :
+`sudo ufw allow 51413/tcp && sudo ufw allow 51413/udp`, et aussi dans le pare-feu du fournisseur. Pour les trackers privés,
+un port joignable de l'extérieur compte beaucoup (ratio). Le port RPC (9091) ne doit jamais être ouvert.
+
+### Droits des fichiers
+
+Transmission tourne sous `debian-transmission` (groupe `canape`, `umask` 2) ; Canapé sous `canape` (`UMask=0027`). Le film
+est un **lien physique** du fichier téléchargé : il faut que `canape` ait lecture et écriture dessus
+(`fs.protected_hardlinks=1`, par défaut sur Ubuntu) et que les deux dossiers soient sur le même disque. Sinon Canapé copie le
+fichier (message dans le journal) : le film prend alors de la place en plus tant que le torrent est gardé.
+
+### Divers
+
 - **Hébergeur** : beaucoup d'hébergeurs interdisent ou surveillent le téléchargement de torrents (courriers d'abus). Lire les
-  conditions avant d'activer la fonction ; `CANAPE_TORRENTS=0` la coupe. Ne télécharger que des contenus dont on a le droit.
+  conditions ; `CANAPE_TORRENTS=0` coupe la fonction. Ne télécharger que des contenus dont on a le droit.
 - **Ménagement des autres sites** : `CANAPE_TORRENT_SIMULTANES`, `CANAPE_TORRENT_DEBIT_MAX` et `CANAPE_TORRENT_ENVOI_MAX`
-  plafonnent le moteur ; il faut de la place pour le film en cours (le quota du compte compte les téléchargements).
+  sont appliqués à Transmission ; il faut de la place pour le film en cours (le quota du compte compte les téléchargements).
+- **Transmission en panne** : les téléchargements attendent (message « Transmission ne répond plus… » dans la ligne) et
+  reprennent dès qu'il revient ; Canapé ne plante pas. `mettre-a-jour` ne touche pas à Transmission.
 
 ## Inscription libre (phase 15)
 
@@ -156,5 +202,5 @@ sont **gardés** ; le script affiche la commande pour les supprimer. Le déploie
 
 ## Essais sans root
 
-`deploiement/essais/essai-mise-a-jour.sh`, `essai-installation.sh` et `essai-nginx.sh` rejouent les scripts avec de faux chemins et de
+`deploiement/essais/essai-mise-a-jour.sh`, `essai-installation.sh`, `essai-transmission.sh` et `essai-nginx.sh` rejouent les scripts avec de faux chemins et de
 fausses commandes (variables `CANAPE_ESSAI_*`) : rien n'est modifié sur le poste.

@@ -36,8 +36,16 @@ CANAPE_TELECHARGEMENTS=/srv/canape/telechargements
 # Octets par seconde (0 = sans limite) ; 20M accepté.
 #CANAPE_TORRENT_DEBIT_MAX=0
 #CANAPE_TORRENT_ENVOI_MAX=1M
-# Ratio de partage après la fin (0 = on arrête dès que le film est reçu).
+# Torrents publics : ratio de partage après la fin (0 = retiré de Transmission dès que le film est reçu).
 #CANAPE_TORRENT_PARTAGE=0
+# Torrents privés : « toujours » (partagés jusqu'à ce que l'utilisateur les retire) ou un ratio.
+#CANAPE_TORRENT_PARTAGE_PRIVES=toujours
+# Moteur : auto (Transmission s'il répond, sinon WebTorrent), transmission ou webtorrent. Écrits par
+# deploiement/installer-transmission.sh, avec l'identifiant et le mot de passe du RPC (127.0.0.1 seulement).
+#CANAPE_TORRENT_MOTEUR=auto
+#CANAPE_TRANSMISSION_URL=http://127.0.0.1:9091/transmission/rpc
+#CANAPE_TRANSMISSION_UTILISATEUR=canape
+#CANAPE_TRANSMISSION_MOT_DE_PASSE=
 # Port des pairs (0 = au hasard) : un port fixe, ouvert dans le pare-feu (TCP et UDP), aide beaucoup.
 #CANAPE_TORRENT_PORT=51413
 

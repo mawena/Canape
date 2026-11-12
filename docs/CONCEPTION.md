@@ -400,6 +400,26 @@ champs, 409/403/429 traduits) et `/regles`, composant `ChercherCompte` (partage 
 réglages et origine des comptes dans l'administration ; essais `e2e/inscription.spec.ts` (Chromium et Firefox) et captures
 à la demande (`CANAPE_CAPTURES_INSCRIPTION=<dossier>`, clair/sombre, ordinateur/téléphone).
 
+*Réalisé (phase 16, serveur)* : `serveur/src/modules/mediatheque/torrents/` : `moteur-transmission.ts` (même vocabulaire de
+messages que le moteur WebTorrent : le service garde une seule logique), `transmission-rpc.ts`, `securite.ts` +
+`bencode.ts`, migration `051_transmission.sql` (`moteur`, `prive`, `en_partage`, `ratio`, `message_tracker`).
+`GET /api/torrents` donne le moteur de chaque ligne (pas de changement de `/api/etat`). Précisions :
+- Le torrent est ajouté **en pause** (`.torrent`) puis démarré après le choix des fichiers ; un lien magnet démarre
+  tout de suite, et dès ses métadonnées tous les fichiers sont décochés tant que le choix n'est pas fait (rien d'inutile
+  n'est téléchargé). Pause = `torrent-stop` (le torrent reste dans Transmission), reprise = `torrent-start`.
+- `messageTracker` sert aussi à expliquer l'attente quand Transmission ne répond pas (« Transmission est injoignable… »),
+  tant que la ligne est active ; « Le tracker n'a pas répondu : … » pour une panne réseau, « Le tracker a refusé : … » sinon.
+- Les trackers d'un torrent ou d'un magnet sont aussi vérifiés par DNS (un nom qui mène à une adresse interne est retiré) ;
+  les noms sans point et `.local`/`.internal`/`.lan` sont refusés.
+- Un torrent déjà présent dans Transmission dans un autre dossier (ajouté hors Canapé) n'est jamais repris : `erreur`.
+- Au démarrage, les partages (`termine` + `en_partage`) sont redonnés à Transmission ; un torrent disparu de Transmission
+  (retiré à la main) met fin au partage, le film reste. Une ligne WebTorrent non finie passe à Transmission dès qu'il
+  répond (`auto` ou `transmission`). `CANAPE_TORRENT_MOTEUR=transmission` est écrit par l'installateur : sans Transmission,
+  les téléchargements attendent au lieu de passer à WebTorrent (qui ne sait pas faire les trackers privés).
+- Installation : `deploiement/installer-transmission.sh` (essais : `deploiement/essais/essai-transmission.sh`) ; tests :
+  `serveur/tests/torrents/{transmission,securite}.test.ts` (faux RPC) et `transmission-reel.test.ts` (vrai Transmission,
+  `CANAPE_ESSAI_TRANSMISSION=<binaire>`).
+
 ## Torrents (1.1)
 
 Ajouter un film par un lien magnet ou un fichier `.torrent`, et suivre son téléchargement. Partie du module
