@@ -117,11 +117,13 @@ test.describe('Salle à deux : lecture synchronisée', () => {
     const { a, b } = await deuxDansLaSalle(monde, ouvrir);
     await a.getByTestId('lecture').click();
     await expect(b.getByTestId('salle')).toHaveAttribute('data-lecture', 'true');
-    // Chez Camille, le film « charge » plus d'une seconde : Alix voit qu'on l'attend.
-    await b.getByTestId('film').evaluate((v: HTMLVideoElement) => { v.pause(); v.dispatchEvent(new Event('waiting')); });
+    // Chez Camille, le film « charge » plus d'une seconde (readyState simulé : un vrai film de 25 s est déjà tout en mémoire) : Alix voit qu'on l'attend.
+    await b.getByTestId('film').evaluate((v: HTMLVideoElement) => { Object.defineProperty(v, 'readyState', { configurable: true, get: () => 1 }); v.dispatchEvent(new Event('waiting')); });
     await expect(a.getByTestId('attente')).toBeVisible({ timeout: 10_000 });
     await expect(a.getByTestId('attente')).toContainText(monde.viewer.prenom);
-    await b.getByTestId('film').evaluate((v: HTMLVideoElement) => { v.dispatchEvent(new Event('canplay')); });
+    await expect(b.getByTestId('attente')).toContainText('Ton film charge');
+    // Alix ne veut plus attendre : le voile disparaît chez elle, et l'annonce le dit.
+    await a.getByTestId('ne-plus-attendre').click();
     await expect(a.getByTestId('attente')).toHaveCount(0, { timeout: 10_000 });
   });
 
