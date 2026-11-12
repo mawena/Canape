@@ -59,6 +59,7 @@ export class GestionnairePreparations {
   /** Reprise propre : ce qui était en cours au dernier arrêt repart de zéro. */
   demarrer(): void {
     this.db.prepare("UPDATE preparations SET etat = 'attente', progression = 0 WHERE etat = 'encours'").run();
+    if (this.minuteur) clearInterval(this.minuteur);
     this.minuteur = setInterval(() => this.tic(), 1000);
     this.minuteur.unref();
   }

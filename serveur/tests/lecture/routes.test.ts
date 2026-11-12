@@ -104,7 +104,7 @@ describe('lecture : routes (sans ffmpeg)', () => {
     const hors = await requete(t.app, 'GET', `/media/${direct}/original`, { utilisateur: proprio, entetes: { range: 'bytes=5000-' } });
     assert.equal(hors.statusCode, 416);
     assert.equal(hors.headers['content-range'], 'bytes */1000');
-    const tete = await requete(t.app, 'HEAD', `/media/${direct}/original`, { utilisateur: proprio });
+    const tete = await t.app.inject({ method: 'HEAD', url: `/media/${direct}/original`, headers: proprio.entetes });
     assert.equal(tete.statusCode, 200);
   });
 
