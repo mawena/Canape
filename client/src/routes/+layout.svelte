@@ -49,6 +49,8 @@
       void navigator.serviceWorker.getRegistration().then((reg) => {
         if (!reg) return;
         const prevenir = (sw: ServiceWorker) => {
+          // Dans la salle, le toast permanent recouvrirait « Entrer dans la salle » : on le montrera à la sortie.
+          if (page.url.pathname.startsWith('/seances/') && !page.url.pathname.endsWith('/nouvelle')) return;
           toast.info('Une nouvelle version est prête.', -1, {
             libelle: 'Recharger',
             surClic: () => {
