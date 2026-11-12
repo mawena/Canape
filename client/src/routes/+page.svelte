@@ -237,7 +237,7 @@
     background: var(--hero-degrade); border-color: transparent; color: #fff;
     box-shadow: 0 24px 56px -16px rgba(55, 48, 163, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.25);
   }
-  .hero :global(.badge) { background: rgba(255, 255, 255, 0.2); color: #fff; }
+  .hero .puces :global(.badge) { background: rgba(255, 255, 255, 0.2); color: #fff; }
   .hero .compte { color: #fff; }
   .hero :global(.bouton.primaire) { background: #fff; color: #1e3a8a; box-shadow: 0 10px 24px -8px rgba(15, 23, 42, 0.5); }
   .hero :global(.bouton.primaire:hover:not(:disabled)) { background: #eef2ff; box-shadow: 0 14px 30px -8px rgba(15, 23, 42, 0.6); }

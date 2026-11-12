@@ -15,6 +15,68 @@ Sommaire : **Version 2 (phase 14)** · 1 Positionnement · 2 Recherche · 3 Syst
 `docs/maquettes/canape.html` reste celle de la 1.0). Demande : une application plus attirante, plus professionnelle et plus
 facile à utiliser, couleurs comprises.
 
+### Révision des couleurs : thème clair bleu par défaut, thème sombre en option
+
+Retour de l'utilisateur sur la première version 2 : « trop sombre et pas attractif ». **Les couleurs et la luminosité
+changent ; la structure, le kit, Figtree, les premiers pas et les écrans restent.** Cette révision **remplace la palette
+ambre/encre** du tableau plus bas (gardé pour mémoire) : le nom des jetons ne change pas (`--lampe` est désormais le bleu
+d'action), seules les valeurs changent. Les jetons sont dans `client/src/lib/ui/jetons.css`, un bloc par thème.
+
+**Principes.** Clair par défaut : fond bleuté très clair, cartes blanches, texte bleu nuit, **bleu `#1f5ce0` comme seule couleur
+d'action**, dégradé bleu → indigo → violet réservé aux éléments vedettes (carte « Ce soir », fond de la connexion et de
+l'invitation, bouton principal), ombres douces teintées de bleu, rayons inchangés. L'autre personne reste en rose/magenta.
+La lueur des affiches (ombre colorée d'après `film.couleur`) reste. **La salle, le sas, le lecteur seul et les pastilles posées
+sur une affiche restent sombres dans les deux thèmes** (`data-theme="sombre"` posé sur l'élément) avec les accents bleus.
+
+**Palette claire** (ratios WCAG calculés ; seuils AA : texte 4,5 : 1, UI et contours 3 : 1) :
+
+| Jeton | Valeur | Rôle | sur `--fond` | sur `--s1` | sur `--s3` |
+|---|---|---|---|---|---|
+| `--fond` | `#f5f7fb` | page | n.a. | | |
+| `--s1` | `#ffffff` | cartes, barres | | | |
+| `--s2` / `--s3` | `#f1f4f9` / `#e5eaf3` | champs, survols, onglet inactif | | | |
+| `--bord` / `--bord-vif` | `#e2e8f1` / `#cdd6e4` | séparateurs / carte en avant (décoratifs) | | | |
+| `--bord-champ` | `#70829c` | contour des champs et boutons | 3,7 | 3,9 | 3,2 |
+| `--texte` | `#0f172a` | texte principal | 16,6 | 17,9 | 14,8 |
+| `--doux` | `#475569` | texte secondaire | 7,1 | 7,6 | 6,3 |
+| `--discret` | `#54647c` | aides, légendes | 5,6 | 6,0 | 5,0 |
+| `--lampe` | `#1f5ce0` | action, lien, focus | 5,3 | 5,7 | 4,7 |
+| `--lampe-vive` | `#1b4fd1` | survol, anneau de focus | 6,8 avec texte blanc dessus | | |
+| `--lampe-sur` | `#ffffff` | texte sur le bleu | 5,7 sur `--lampe` ; 6,3 sur l'indigo `#4f46e5` | | |
+| `--rose` | `#c4165f` | l'autre personne | 5,4 | 5,8 | 4,8 |
+| `--ok` | `#13753a` | réussite | 5,4 | 5,8 | 4,8 |
+| `--alerte` | `#8f4a06` | attention | 6,2 | 6,7 | 5,5 |
+| `--mal` | `#c62222` | erreur, danger (5,7 avec texte blanc dessus) | 5,4 | 5,7 | 4,8 |
+| `--info` | `#0369a1` | information | 5,5 | 5,9 | 4,9 |
+
+Dégradés : `--lampe-degrade` `#2f6df0 → #4f46e5` (bouton principal) ; `--hero-degrade` `#1d4ed8 → #3b3fe0 → #6d3df0`
+(carte vedette, connexion). Sur le dégradé, texte blanc (≥ 5,9 : 1 au plus clair, mesuré au milieu) ; les boutons y deviennent blancs à texte
+`#1e3a8a`. Ombres : `--ombre-1` à `--ombre-4` en `rgba(30,58,138,…)` (halo bleu), `--halo-lampe` sous le bouton principal.
+
+**Palette sombre** (bleu nuit, fini l'encre violette) :
+
+| Jeton | Valeur | sur `--fond` | sur `--s1` | sur `--s3` |
+|---|---|---|---|---|
+| `--fond` / `--s1` / `--s2` / `--s3` | `#0b1220` / `#111a2e` / `#16213a` / `#1e2b4a` | | | |
+| `--bord-champ` | `#6b7fa3` | 4,6 | 4,3 | 3,5 |
+| `--texte` | `#f1f5ff` | 17,2 | 15,9 | 12,8 |
+| `--doux` | `#b4c0d8` | 10,2 | 9,5 | 7,6 |
+| `--discret` | `#94a3c4` | 7,4 | 6,8 | 5,5 |
+| `--lampe` (bleu d'action) | `#60a5fa` | 7,4 | 6,8 | 5,5 |
+| `--lampe-vive` | `#93c5fd` | | | |
+| `--lampe-sur` | `#071226` | 7,4 sur `--lampe`, 8,9 sur `#7ab6ff` | | |
+| `--rose` | `#ff8fc0` | 8,9 | 8,2 | 6,6 |
+| `--ok` / `--alerte` / `--mal` / `--info` | `#4ade80` / `#fbbf24` / `#ff7b72` / `#7dd3fc` | 10,7 / 11,2 / 7,4 / 11,2 | 10,0 / 10,4 / 6,9 / 10,4 | 8,0 / 8,4 / 5,6 / 8,4 |
+
+**Choix du thème.** Trois valeurs : *Clair* (défaut), *Sombre*, *Comme mon appareil* (`prefers-color-scheme`, suivi en direct).
+Menu du compte (trois lignes « Thème : … » et, sur téléphone, un sélecteur en segments dans la feuille « Moi ») et page « Mon compte »
+(carte « Apparence »). Mémorisé dans `localStorage` (`canape.theme`, lecture et écriture protégées par try/catch) ; l'attribut
+`data-theme` de `<html>` est posé **avant le premier rendu** par un court script en ligne de `client/src/app.html` (aucun flash) ;
+`client/src/lib/interface/theme.svelte.ts` le relit et le change. `<meta name="theme-color">` suit le thème (`#f5f7fb` / `#0b1220`) ;
+manifeste PWA, icônes (dégradé bleu → violet) et écrans de démarrage iOS passent au clair.
+**CSP** : le serveur hache les scripts en ligne d'`index.html` (`hachagesScriptsEnLigne`, regex sur tous les `<script>` sans `src`) ; le script de thème
+est donc haché comme celui de SvelteKit et s'exécute sans changement côté serveur (vérifié par un essai Playwright sans erreur console).
+
 **Constat.** La 1.0 avait la bonne idée (la lampe, la lueur, le film au centre) mais restait artisanale : surfaces violettes
 un peu ternes et toutes au même niveau, boutons en pastille, titres de cartes en serif qui se mélangeaient aux noms de films,
 pages sans hiérarchie (colonnes étroites, doubles marges), états vides sans guide. Recherche : les interfaces de streaming 2026
@@ -27,7 +89,7 @@ devant le film, une lampe ambre plus lumineuse qui guide l'œil vers la seule ac
 (barres, chat, voiles), des reflets fins qui donnent du volume. Le serif ne sert plus qu'aux **grands titres et aux affiches**
 (le nom d'un film, « Bonjour Alix »), l'interface passe tout entière en sans-serif.
 
-**Palette** (contrastes calculés par script, formule WCAG 2.x ; seuils AA : texte 4,5 : 1, UI et contours 3 : 1) :
+**Palette ambre/encre d'origine, remplacée par la révision ci-dessus** (contrastes calculés par script, formule WCAG 2.x ; seuils AA : texte 4,5 : 1, UI et contours 3 : 1) :
 
 | Jeton | Valeur | Rôle | sur `--fond` | sur `--s1` | sur `--s2` | sur `--s3` |
 |---|---|---|---|---|---|---|
