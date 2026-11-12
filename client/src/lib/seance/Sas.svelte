@@ -8,10 +8,12 @@
   import VideoOff from '@lucide/svelte/icons/video-off';
   import Headphones from '@lucide/svelte/icons/headphones';
   import { Bouton } from '$lib/ui/index.ts';
+  import InviterSeance from './InviterSeance.svelte';
   import { libelleAppareil, mesurerMicro, ouvrirMedias, type RaisonSansMedias } from './medias.ts';
   import type { Salle } from './salle.svelte.ts';
 
-  let { salle, surQuitter }: { salle: Salle; surQuitter: () => void } = $props();
+  let { salle, surQuitter, peutInviter = false }: { salle: Salle; surQuitter: () => void; peutInviter?: boolean } = $props();
+  let inviterOuvert = $state(false);
 
   let flux: MediaStream | null = $state(null);
   let raison: RaisonSansMedias | null = $state(null);
@@ -142,6 +144,10 @@
     </label>
     <p class="conseil">Un casque évite l’écho : sans casque, le film repart dans le micro.</p>
 
+    {#if peutInviter}
+      <div class="inviter-sas"><InviterSeance seanceId={salle.seanceId} seance={salle.seance} bind:ouvert={inviterOuvert} variante="bouton" /></div>
+    {/if}
+
     <div class="actions">
       <Bouton variante="discret" onclick={surQuitter}>Retour</Bouton>
       <Bouton onclick={entrer} chargement={ouvertureEnCours} data-test="entrer-salle">Entrer dans la salle</Bouton>
@@ -171,5 +177,6 @@
   .casque { display: flex; align-items: center; gap: 8px; color: var(--texte, #f7f3ee); font-size: 0.95rem; }
   .conseil { margin: -8px 0 0; font-size: 0.85rem; color: var(--discret, #9f99ad); }
   .actions { display: flex; justify-content: space-between; gap: 12px; margin-top: 4px; }
+  .inviter-sas { display: flex; }
   @media (max-width: 480px) { .champs { grid-template-columns: 1fr; } }
 </style>

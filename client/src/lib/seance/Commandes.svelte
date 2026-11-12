@@ -18,6 +18,7 @@
   import Timer from '@lucide/svelte/icons/timer';
   import { EMOJIS } from '@canape/partage';
   import BarreTemps from './BarreTemps.svelte';
+  import InviterSeance from './InviterSeance.svelte';
   import { libelleAppareil } from './medias.ts';
   import type { Salle } from './salle.svelte.ts';
 
@@ -27,8 +28,10 @@
     surPleinEcran: () => void;
     /** Menu ouvert (le parent en a besoin pour ne pas masquer les commandes). */
     menu: string | null;
+    /** L'hôte peut inviter pendant le film. */
+    peutInviter?: boolean;
   }
-  let { salle, pleinEcran, surPleinEcran, menu = $bindable() }: Props = $props();
+  let { salle, pleinEcran, surPleinEcran, menu = $bindable(), peutInviter = false }: Props = $props();
 
   const basculer = (nom: string): void => { menu = menu === nom ? null : nom; };
   const casqueConseille = $derived(!salle.prefs.casque && !salle.casqueDetecte);
@@ -127,6 +130,9 @@
         aria-label={salle.moi?.camera ? 'Couper la caméra' : 'Réactiver la caméra'} title="Caméra (V)" data-test="camera">
         {#if salle.moi?.camera}<Video size={22} />{:else}<VideoOff size={22} />{/if}
       </button>
+      {#if peutInviter}
+        <InviterSeance seanceId={salle.seanceId} seance={salle.seance} bind:ouvert={() => menu === 'inviter', (v) => { menu = v ? 'inviter' : null; }} />
+      {/if}
       <button type="button" class="rond" class:actif={salle.chatOuvert} onclick={() => salle.ouvrirChat(!salle.chatOuvert)} aria-label="Discussion"
         aria-pressed={salle.chatOuvert} title="Discussion (C)" data-test="bouton-chat">
         <MessageCircle size={22} />{#if salle.nonLus}<span class="pastille" aria-label="{salle.nonLus} nouveaux messages"></span>{/if}

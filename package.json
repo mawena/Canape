@@ -1,6 +1,6 @@
 {
   "name": "canape",
-  "version": "1.4.1",
+  "version": "1.5.0",
   "description": "Regarder un film à deux, chacun chez soi : comptes, galeries, lecture synchronisée, caméras et voix en WebRTC.",
   "license": "MIT",
   "private": true,

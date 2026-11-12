@@ -70,6 +70,11 @@ test('captures des écrans principaux', async ({ ouvrir, monde }, info) => {
   await expect(page.getByTestId('sas')).toBeVisible();
   await page.waitForTimeout(1200);
   await page.screenshot({ path: path.join(sortie, `${nom}-sas.png`) });
+  await page.getByTestId('inviter-seance').click();
+  await expect(page.getByTestId('lien-seance')).toHaveValue(/\/rejoindre\//);
+  await page.waitForTimeout(400);
+  await page.screenshot({ path: path.join(sortie, `${nom}-sas-inviter.png`) });
+  await page.getByTestId('inviter-seance').click();
   const b = await ouvrir(monde.viewer);
   await entrerDansLaSalle(page, seanceId);
   await entrerDansLaSalle(b.page, seanceId);
@@ -93,4 +98,19 @@ test('captures des écrans principaux', async ({ ouvrir, monde }, info) => {
   await page.waitForTimeout(900);
   await page.screenshot({ path: path.join(sortie, `${nom}-salle.png`) });
   await b.page.screenshot({ path: path.join(sortie, `${nom}-salle-viewer.png`) });
+
+  // « Inviter » pendant le film (hôte) ; en plein écran sur ordinateur.
+  await page.getByTestId('inviter-seance').click();
+  await expect(page.getByTestId('lien-seance')).toHaveValue(/\/rejoindre\//);
+  await page.waitForTimeout(500);
+  await page.screenshot({ path: path.join(sortie, `${nom}-salle-inviter.png`) });
+  await page.keyboard.press('Escape');
+  if (nom !== 'telephone') {
+    await page.getByTestId('plein-ecran').click();
+    await expect.poll(() => page.evaluate(() => document.fullscreenElement !== null)).toBe(true);
+    await page.getByTestId('inviter-seance').click();
+    await expect(page.getByTestId('lien-seance')).toHaveValue(/\/rejoindre\//);
+    await page.waitForTimeout(500);
+    await page.screenshot({ path: path.join(sortie, `${nom}-salle-inviter-plein-ecran.png`) });
+  }
 });

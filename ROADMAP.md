@@ -123,7 +123,7 @@ Ajouter un film par un lien magnet ou un fichier `.torrent` et suivre son télé
 - [x] Facilité d'usage : premiers pas guidés, textes d'aide, messages d'erreur clairs, retours visuels, cibles tactiles
 - [x] Captures avant / après (ordinateur et téléphone), DESIGN.md à jour, essais Playwright verts
 - [x] Release du nouveau design (version mineure : rien d'incompatible) : 1.2.0
-- [ ] Mise en production de la 1.2.0 sur https://canape.mawena.cloud
+- [x] Mise en production de la 1.2.0 sur https://canape.mawena.cloud (avec la 1.4.0)
 
 ## Phase 15 — Inscription libre
 
@@ -135,7 +135,7 @@ N'importe qui peut venir sur https://canape.mawena.cloud, créer son compte et a
 - [x] Interface : pages `/inscription` et `/regles`, lien « Créer un compte », réglages et comptes de l'administration, partage et invitation par identifiant
 - [x] Essais de bout en bout (inscription, droits, vie privée ; Chromium et Firefox), captures, README et guide de déploiement
 - [x] Release 1.3.0 (version mineure : nouvelles fonctions compatibles)
-- [ ] Mise en production de la 1.3.0 sur https://canape.mawena.cloud
+- [x] Mise en production de la 1.3.0 sur https://canape.mawena.cloud (avec la 1.4.0)
 
 ## Phase 16 — Transmission pour les torrents
 
@@ -149,4 +149,21 @@ le VPS pour tous les torrents. Contrat : [docs/CONCEPTION.md](docs/CONCEPTION.md
 - [x] Installation : `transmission-daemon` installé et configuré par l'installateur (RPC local, mot de passe, groupe, port), guide
 - [x] Essais (Transmission réel en local, faux RPC, vrai journal ; Playwright Chromium et Firefox)
 - [x] Release 1.4.0 (version mineure : nouvelles fonctions compatibles, WebTorrent en secours sans Transmission)
-- [ ] Mise en production de la 1.4.0 et installation de Transmission sur https://canape.mawena.cloud
+- [x] Mise en production de la 1.4.0 et installation de Transmission sur https://canape.mawena.cloud (torrent privé C411 vérifié par l'utilisateur)
+- [x] Correctif 1.4.1 : dossiers de téléchargement ouverts au groupe sans chmod setgid (refusé par `RestrictSUIDSGID` : « Permission denied » chez Transmission), `mettre-a-jour` garde `telechargements` en `2770`
+- [x] Mise en production de la 1.4.1 : le torrent privé C411 se télécharge (vérifié par l'utilisateur)
+- [ ] Premier film privé arrivé dans la galerie (lien physique, partage qui continue)
+
+---
+
+# Canapé 1.5 — inviter pendant la séance
+
+## Phase 17 — Lien de la séance à tout moment
+
+L'hôte peut retrouver et envoyer le lien de la séance quand elle est déjà lancée, film en cours : la personne invitée
+arrive dans la salle au bon moment du film.
+
+- [x] Interface : bouton « Inviter » dans la salle (pendant le film, plein écran compris, sans pause) et dans le sas : lien, « Copier le lien », « Partager » sur téléphone ; « Copier le lien » dans la liste des séances ; seulement pour l'hôte
+- [x] Arrivée en cours de film : la personne qui rejoint par le lien est synchronisée au bon moment (corrigé si besoin)
+- [x] Essais (unitaires, Playwright : invitation pendant le film, troisième personne qui rejoint, invité sans le bouton), captures
+- [ ] Release 1.5.0 et mise en production

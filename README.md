@@ -35,7 +35,7 @@ même temps, chacun avec son volume. Les caméras et les micros circulent direct
 - Sous-titres intégrés extraits à la demande ; choix de la langue et des sous-titres.
 
 **Séances et salle**
-- Séance créée en choisissant un film, avec un lien à envoyer aux invités.
+- Séance créée en choisissant un film, avec un lien à envoyer aux invités ; l'hôte retrouve ce lien à tout moment, même film lancé (bouton « Inviter » de la salle et du sas, « Copier le lien » dans la liste des séances) sans interrompre la lecture.
 - Lecture synchronisée, appel vidéo WebRTC, chat, réactions qui flottent, compte à rebours, indicateur de synchro.
 - Langue et sous-titres partagés par tous.
 - Reprise là où l'on s'était arrêté, historique des séances.
