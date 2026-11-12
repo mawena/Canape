@@ -1,7 +1,7 @@
 // Règles des téléchargements par torrent : base, droits, quota, file d'attente, choix des fichiers, import final.
 // Le moteur (processus enfant) ne fait que télécharger ; tout ce qui décide est ici.
-import { existsSync } from 'node:fs';
-import { chmod, mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
+import { existsSync, statSync } from 'node:fs';
+import { mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { FastifyInstance } from 'fastify';
 import { TAILLE_MAX_SOUS_TITRES, type CorpsModifTorrent, type EtatTorrent, type FichierTorrent, type MoteurTorrent, type Telechargement } from '@canape/partage';
@@ -10,6 +10,7 @@ import { ErreurHttp, interdit, introuvable, requeteInvalide } from '../../../com
 import { idBase32, maintenantIso } from '../../../commun/identifiants.ts';
 import type { Mediatheque } from '../mediatheque.ts';
 import { octetsUtilises } from '../televersement.ts';
+import { creerDossierGroupe, ouvertAuGroupe, ouvrirAuGroupe } from './dossiers.ts';
 import { appliquerChoix, associerSousTitres, choixParDefaut, decrire, FICHIERS_MAX } from './fichiers.ts';
 import { Moteur, type MoteurTorrents } from './moteur.ts';
 import { MoteurTransmission } from './moteur-transmission.ts';
@@ -95,8 +96,9 @@ export class Torrents {
     await this.nettoyer();
     if (!this.actif) return;
     if (this.transmissionVoulu()) {
-      // Transmission partage et écrit dans ces dossiers (groupe canape) : le dossier doit être ouvert au groupe.
-      await chmod(this.config.telechargements, 0o2770).catch(() => undefined);
+      // Transmission écrit dans ces dossiers (groupe canape) : le dossier doit être en 2770. Canapé ne peut pas le
+      // corriger lui-même en production (RestrictSUIDSGID refuse le bit setgid) : il le signale.
+      this.verifierDossierTelechargements();
       this.transmission.demarrer();
       // Le moteur est connu avant d'accepter des ajouts (`auto` : Transmission s'il répond, sinon WebTorrent).
       await Promise.race([this.transmission.premiereReponse, new Promise((r) => setTimeout(r, 4000).unref())]);
@@ -327,10 +329,35 @@ export class Torrents {
     }
   }
 
-  /** Dossier du torrent ouvert au groupe (`2770`) : Transmission (groupe canape) y écrit, Canapé y lit et y lie. */
+  /**
+   * Dossier du torrent ouvert au groupe (`2770`) : Transmission (groupe canape) y écrit, Canapé y lit et y lie. Créé
+   * sans chmod (voir dossiers.ts) ; un dossier qui existe déjà (version précédente, ou WebTorrent avant le passage à
+   * Transmission) est ouvert au groupe avec son contenu.
+   */
   private async preparerDossier(id: string): Promise<void> {
-    await mkdir(this.dossier(id), { recursive: true });
-    await chmod(this.dossier(id), 0o2770).catch(() => undefined);
+    const dossier = this.dossier(id);
+    if (existsSync(dossier)) {
+      const n = ouvrirAuGroupe(dossier);
+      if (n) this.app.log.info({ id, entrees: n }, 'dossier du téléchargement ouvert au groupe canape pour Transmission');
+    } else {
+      creerDossierGroupe(dossier);
+    }
+    if (!ouvertAuGroupe(statSync(dossier).mode, true)) {
+      this.app.log.warn({ id, dossier }, "le dossier du téléchargement n'est pas ouvert au groupe canape : Transmission ne pourra pas y écrire");
+    }
+  }
+
+  /** Signale un dossier des téléchargements qui n'est pas en 2770 (groupe canape, setgid) : à corriger par l'installateur. */
+  private verifierDossierTelechargements(): void {
+    try {
+      const mode = statSync(this.config.telechargements).mode;
+      if (!ouvertAuGroupe(mode, true) || (mode & 0o2000) === 0) {
+        this.app.log.warn({ dossier: this.config.telechargements, mode: (mode & 0o7777).toString(8) },
+          "le dossier des téléchargements n'est pas en 2770 : Transmission risque de ne pas pouvoir y écrire (sudo deploiement/installer-transmission.sh le corrige)");
+      }
+    } catch {
+      // Dossier absent : créé au premier téléchargement.
+    }
   }
 
   private surDemarrage(nom: MoteurTorrent): void {
