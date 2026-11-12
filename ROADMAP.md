@@ -134,7 +134,8 @@ N'importe qui peut venir sur https://canape.mawena.cloud, créer son compte et a
 - [x] Serveur : inscription avec jeton anti-robot et limites, réglages de l'admin, droit aux torrents par compte, liste des comptes restreinte et recherche par identifiant
 - [x] Interface : pages `/inscription` et `/regles`, lien « Créer un compte », réglages et comptes de l'administration, partage et invitation par identifiant
 - [x] Essais de bout en bout (inscription, droits, vie privée ; Chromium et Firefox), captures, README et guide de déploiement
-- [ ] Release 1.3.0 et mise en production
+- [x] Release 1.3.0 (version mineure : nouvelles fonctions compatibles)
+- [ ] Mise en production de la 1.3.0 sur https://canape.mawena.cloud
 
 ## Phase 16 — Transmission pour les torrents
 
