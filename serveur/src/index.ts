@@ -15,7 +15,7 @@ Commandes :
   serve                                       démarre le serveur
   admin inviter [--role admin|viewer] [--jours 7]   crée un lien d'invitation
   admin reinitialiser <identifiant>           crée un lien de réinitialisation de mot de passe
-  films importer <dossier> --proprietaire <identifiant>   importe des films existants
+  films importer <dossier> --proprietaire <identifiant> [--copier]   importe des films existants (déplacés, ou copiés avec --copier)
   --version, --aide
 
 Réglages : variables CANAPE_* ou fichier --config / CANAPE_CONFIG (voir docs/CONCEPTION.md).
@@ -41,6 +41,7 @@ async function main(argv: string[]): Promise<number> {
       role: { type: 'string' },
       jours: { type: 'string' },
       proprietaire: { type: 'string' },
+      copier: { type: 'boolean' },
     },
   });
   const configFichier = typeof values.config === 'string' ? values.config : undefined;
@@ -75,8 +76,8 @@ async function main(argv: string[]): Promise<number> {
   if (commande === 'films' && sous === 'importer') {
     const [dossier] = reste;
     const proprietaire = typeof values.proprietaire === 'string' ? values.proprietaire : '';
-    if (!dossier || !proprietaire) throw new Error('Utilisation : canape films importer <dossier> --proprietaire <identifiant>');
-    const n = await importerFilmsCli(ouvrirContexte(configFichier), { dossier, proprietaire });
+    if (!dossier || !proprietaire) throw new Error('Utilisation : canape films importer <dossier> --proprietaire <identifiant> [--copier]');
+    const n = await importerFilmsCli(ouvrirContexte(configFichier), { dossier, proprietaire, copier: values.copier === true });
     console.log(`${n} film(s) importé(s).`);
     return 0;
   }
