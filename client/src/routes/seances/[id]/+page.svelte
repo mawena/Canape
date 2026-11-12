@@ -5,7 +5,7 @@
     `film` (<video>), `titre-seance`, `synchro` (attribut `data-niveau` : ok|moyen|mal|neutre), `quitter`, `presents`
   - Commandes : `commandes`, `lecture`, `lancer-ensemble`, `reculer`, `avancer`, `barre-temps`, `volumes`, `vol-film`, `vol-voix`,
     `vol-personne`, `baisse-film`, `langue-st`, `menu-langue`, `langue-<index>`, `st-aucun`, `st-<cle>`, `micro`, `camera`,
-    `bouton-chat`, `je-reviens`, `plein-ecran`, `reaction-1` à `reaction-8`
+    `bouton-chat`, `je-reviens`, `inviter-seance` (hôte seulement ; ouvre `panneau-inviter`, `lien-seance`, `copier-lien-seance`, `partager-lien-seance`, `erreur-lien-seance`), `plein-ecran`, `reaction-1` à `reaction-8`
   - Vignettes : `vignettes`, `vignette` (attributs `data-cid`, `data-parle`, `data-moi`, `data-pair` : new|connecting|connected…), `menu-vignette`, `afficher-cameras`
   - Chat : `chat`, `saisie-chat`, `message` ; réactions flottantes : `reaction`
   - Voiles : `compte-a-rebours`, `attente`, `ne-plus-attendre`, `reprise`, `reprendre-position`, `depuis-le-debut`,
@@ -23,6 +23,7 @@
   import { Avatar, Bouton, Chargement } from '$lib/ui/index.ts';
   import Chat from '$lib/seance/Chat.svelte';
   import Commandes from '$lib/seance/Commandes.svelte';
+  import { peutInviter } from '$lib/seance/inviter.ts';
   import { lireMoi, urlConnexion } from '$lib/seance/moi.ts';
   import { coteChat } from '$lib/seance/prefs.ts';
   import { emojiDeTouche } from '$lib/seance/reactions.ts';
@@ -36,6 +37,7 @@
   const salle = new Salle(id, () => { void goto(urlConnexion(`/seances/${id}`)); });
 
   let pret = $state(false);
+  let moiId: number | null = $state(null);
   let erreur: string | null = $state(null);
   let conteneur: HTMLDivElement | undefined = $state();
   let video: HTMLVideoElement | undefined = $state();
@@ -53,6 +55,7 @@
     try {
       const moi = await lireMoi();
       if (!moi) { await goto(urlConnexion(`/seances/${id}`)); return; }
+      moiId = moi.id;
       await salle.chargerSeance();
       await salle.rafraichirPeripheriques();
       pret = true;
@@ -73,6 +76,7 @@
     if (v) return untrack(() => salle.lierVideo(v));
   });
 
+  const inviter = $derived(peutInviter(salle.seance, moiId));
   const portrait = $derived(largeur <= 640 && hauteur > largeur);
   const paysageTel = $derived(hauteur <= 520 && largeur > hauteur);
   const cote = $derived(coteChat(salle.prefs.coin));
@@ -172,7 +176,7 @@
 {:else if !pret}
   <main class="plein-ecran-message"><Chargement /></main>
 {:else if salle.phase === 'sas'}
-  <Sas {salle} surQuitter={quitter} />
+  <Sas {salle} surQuitter={quitter} peutInviter={inviter} />
 {:else}
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
@@ -237,7 +241,7 @@
       </p>
     {/if}
 
-    <footer class="bas"><Commandes {salle} {pleinEcran} surPleinEcran={basculerPleinEcran} bind:menu /></footer>
+    <footer class="bas"><Commandes {salle} {pleinEcran} surPleinEcran={basculerPleinEcran} bind:menu peutInviter={inviter} /></footer>
 
     {#if aide}
       <div class="aide" role="dialog" aria-label="Raccourcis clavier" data-test="raccourcis">
