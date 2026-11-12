@@ -148,5 +148,5 @@ le VPS pour tous les torrents. Contrat : [docs/CONCEPTION.md](docs/CONCEPTION.md
 - [x] Interface : torrent privé signalé, « En partage » avec ratio, « Arrêter de partager », réponse du tracker en clair
 - [x] Installation : `transmission-daemon` installé et configuré par l'installateur (RPC local, mot de passe, groupe, port), guide
 - [x] Essais (Transmission réel en local, faux RPC, vrai journal ; Playwright Chromium et Firefox)
-- [ ] Release 1.4.0
+- [x] Release 1.4.0 (version mineure : nouvelles fonctions compatibles, WebTorrent en secours sans Transmission)
 - [ ] Mise en production de la 1.4.0 et installation de Transmission sur https://canape.mawena.cloud
