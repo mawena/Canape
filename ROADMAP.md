@@ -53,3 +53,48 @@ Canapé est une application web déployée sur un serveur à soi, derrière ngin
 - [x] Version 0.1.0, CHANGELOG, tag, push de `main`, `develop` et des tags
 - [x] Release GitHub (v0.1.0)
 - [x] « About » GitHub : description sans dépôt APT, sans site GitHub Pages
+
+---
+
+# Canapé 1.0 — plateforme privée
+
+Comptes (admin, viewers), galeries, téléversement par morceaux, lecture de tous les formats sans conversion à la
+main, séances, chat et réactions, reprise, PWA, mise en production automatique. Contrat :
+[docs/CONCEPTION.md](docs/CONCEPTION.md).
+
+## Phase 7 — Conception et recherches
+
+- [x] Contrat commun 1.0 (`docs/CONCEPTION.md`)
+- [ ] Recherche produit et design : direction artistique (`docs/DESIGN.md`)
+- [ ] Recherche technique : conversion à la volée, synchro, tus, WebRTC, SQLite, SvelteKit (`docs/RECHERCHE-TECHNIQUE.md`)
+
+## Phase 8 — Socle
+
+- [ ] Espaces de travail npm, TypeScript exécuté par Node 26, Fastify, SQLite et migrations, SvelteKit, types partagés
+- [ ] Kit d'interface de base, client d'API, application de test, retrait du code 0.1
+
+## Phase 9 — Modules (en parallèle)
+
+- [ ] Comptes : connexion Argon2id, sessions, invitations, réinitialisation, administration, quotas
+- [ ] Médiathèque : téléversement tus, analyse, fiches automatiques (titre, année, image, TMDB), partage, sous-titres, import 0.1
+- [ ] Lecture universelle : direct, son seul converti, vidéo convertie à la volée (HLS), HDR → SDR, préparation, sous-titres intégrés
+- [ ] Séances (serveur) : séances et liens, WebSocket, synchro, chat, réactions, reprise et historique, TURN
+- [ ] Salle (client) : lecteur synchronisé, appel vidéo, langue et sous-titres partagés, chat, réactions, compte à rebours
+- [ ] Interface : direction artistique, kit d'interface, accueil « Ce soir », historique, navigation, PWA
+
+## Phase 10 — Livraison
+
+- [ ] Paquet, `installer-serveur.sh` 1.0 (mise à niveau depuis la 0.1), mise à jour atomique avec retour arrière
+- [ ] GitHub Actions : CI sur `develop`, déploiement automatique sur `main`, release GitHub du tag
+- [ ] Préparation du VPS pour le déploiement automatique (utilisateur, clé verrouillée, sudo limité, secrets du dépôt)
+
+## Phase 11 — Intégration et essais
+
+- [ ] Réunion des modules, corrections d'intégration
+- [ ] Essais de bout en bout Playwright (Chromium, Firefox, WebKit), caméras simulées
+- [ ] README 1.0
+
+## Phase 12 — Release 1.0.0
+
+- [ ] Version, CHANGELOG, tag, release GitHub
+- [ ] Premier déploiement automatique sur https://canape.mawena.cloud, vérifié
