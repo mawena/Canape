@@ -96,10 +96,9 @@ export class GestionnaireConversions {
   }
 
   lister() {
-    const maintenant = Date.now();
     const r = [];
     for (const c of this.conversions.values()) {
-      if (!c.proc && maintenant - c.derniereDemande > DELAI_INACTIVITE_MS) continue;
+      if (!c.proc && this.spectateurs(c) === 0) continue;
       r.push({
         filmId: c.cible.filmId,
         titre: c.cible.titre,
