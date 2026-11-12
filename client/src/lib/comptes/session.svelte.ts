@@ -4,8 +4,8 @@ import { goto } from '$app/navigation';
 import type { EtatApi, Utilisateur } from '@canape/partage';
 import { api, surNonConnecte } from '$lib/api/client.ts';
 
-const etat = $state<{ utilisateur: Utilisateur | null; installationRequise: boolean; charge: boolean; version: string }>({
-  utilisateur: null, installationRequise: false, charge: false, version: '',
+const etat = $state<{ utilisateur: Utilisateur | null; installationRequise: boolean; inscriptionOuverte: boolean; charge: boolean; version: string }>({
+  utilisateur: null, installationRequise: false, inscriptionOuverte: false, charge: false, version: '',
 });
 let promesse: Promise<void> | null = null;
 let branche = false;
@@ -26,6 +26,7 @@ export const session = {
   get utilisateur(): Utilisateur | null { return etat.utilisateur; },
   get estAdmin(): boolean { return etat.utilisateur?.role === 'admin'; },
   get installationRequise(): boolean { return etat.installationRequise; },
+  get inscriptionOuverte(): boolean { return etat.inscriptionOuverte; },
   get charge(): boolean { return etat.charge; },
   get version(): string { return etat.version; },
 
@@ -36,6 +37,7 @@ export const session = {
     promesse = api.get<EtatApi>('/api/etat').then((e) => {
       etat.utilisateur = e.utilisateur;
       etat.installationRequise = e.installationRequise;
+      etat.inscriptionOuverte = e.inscriptionOuverte === true;
       etat.version = e.version;
       etat.charge = true;
     }, (e: unknown) => { promesse = null; throw e; });

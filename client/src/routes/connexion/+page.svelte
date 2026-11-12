@@ -54,7 +54,11 @@
         <Champ libelle="Mot de passe" bind:value={motDePasse} type="password" autocomplete="current-password" required erreur={erreur} />
         <Bouton type="submit" chargement={envoi} disabled={!identifiant || !motDePasse}>Se connecter</Bouton>
       </form>
-      <p class="aide">Pas de compte ? Il faut une invitation.</p>
+      {#if session.inscriptionOuverte}
+        <p class="aide">Pas de compte ? <a href="/inscription" data-test="lien-inscription">Créer un compte</a></p>
+      {:else}
+        <p class="aide">Pas de compte ? Il faut une invitation.</p>
+      {/if}
     </Carte>
   {/if}
 </main>
@@ -69,4 +73,5 @@
   main :global(.carte) { width: min(420px, calc(100vw - 2 * var(--e-4))); text-align: left; box-shadow: var(--ombre-3); border-radius: var(--r-xl); padding: var(--e-7); }
   form { display: grid; gap: var(--e-4); }
   .aide { margin: 0; color: var(--doux); font-size: 0.9rem; }
+  .aide a { color: var(--lampe); font-weight: 600; }
 </style>

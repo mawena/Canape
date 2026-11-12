@@ -106,6 +106,22 @@ Le moteur (WebTorrent) tourne dans un processus enfant du service, en `nice` ; s
 - **Ménagement des autres sites** : `CANAPE_TORRENT_SIMULTANES`, `CANAPE_TORRENT_DEBIT_MAX` et `CANAPE_TORRENT_ENVOI_MAX`
   plafonnent le moteur ; il faut de la place pour le film en cours (le quota du compte compte les téléchargements).
 
+## Inscription libre (phase 15)
+
+N'importe qui peut créer un compte sur `/inscription` tant que c'est ouvert. Ouvrir ou fermer : page Réglages de
+l'administration, ou sur le VPS `sudo canape admin inscriptions ouvrir|fermer` (sans argument : affiche l'état).
+
+- **Limites** : 3 inscriptions par heure et par adresse IP, 30 par jour en tout, 100 comptes inscrits au plus
+  (`maxComptesInscrits` ; au-delà « Les inscriptions sont complètes »). Derrière nginx, `CANAPE_DERRIERE_PROXY=1` est indispensable pour que la limite par IP voie l'adresse du visiteur et non celle de nginx.
+- **Quotas** : chaque inscrit reçoit `quotaInscriptionOctets` (20 Go par défaut) ; surveille la page Stockage et
+  baisse la valeur si le disque est petit (elle ne s'applique qu'aux nouveaux comptes ; change les anciens dans Comptes).
+- **Torrents** : refusés aux inscrits par défaut (`torrentsInscrits` = non). Les ouvrir expose le VPS à des
+  téléchargements de contenu inconnu : mieux vaut donner le droit compte par compte (Comptes, « torrents »).
+- **Vie privée** : un inscrit ne voit que les comptes qu'il connaît (partages, séances, invitation) ; l'administrateur
+  voit tout et peut fermer ou supprimer un compte.
+- **Sauvegarde** : la base contient désormais des comptes d'inconnus ; garde la sauvegarde nocturne de
+  `/var/lib/canape` et teste la restauration.
+
 ## Retour arrière manuel
 
 ```bash

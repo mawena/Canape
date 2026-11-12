@@ -1,6 +1,6 @@
 import type { Config } from '../../config.ts';
 import type { Base } from '../../db/index.ts';
-import { creerInvitation, nombreComptes } from './service.ts';
+import { creerInvitation, ecrireReglages, lireReglages, nombreComptes } from './service.ts';
 
 export interface ContexteCli {
   config: Config;
@@ -25,4 +25,11 @@ export async function reinitialiserCli(ctx: ContexteCli, identifiant: string): P
   const u = ctx.db.prepare('SELECT id FROM utilisateurs WHERE identifiant = ?').get(identifiant) as { id: number } | undefined;
   if (!u) throw new Error(`Aucun compte avec l'identifiant « ${identifiant} ».`);
   return creerInvitation(ctx.db, ctx.config, { type: 'reinitialisation', utilisateurId: u.id }).lien;
+}
+
+/** `canape admin inscriptions [ouvrir|fermer]` : ouvre ou ferme l'inscription libre ; sans argument, dit l'état. */
+export async function inscriptionsCli(ctx: ContexteCli, action?: string): Promise<string> {
+  if (action !== undefined && action !== 'ouvrir' && action !== 'fermer') throw new Error('Utilisation : canape admin inscriptions [ouvrir|fermer]');
+  if (action) ecrireReglages(ctx.db, { inscriptionsOuvertes: action === 'ouvrir' });
+  return lireReglages(ctx.db, ctx.config).inscriptionsOuvertes ? 'Les inscriptions sont ouvertes.' : 'Les inscriptions sont fermées.';
 }

@@ -7,6 +7,8 @@ describe('routes', () => {
     assert.ok(estRouteLibre('/connexion'));
     assert.ok(estRouteLibre('/invitation/abc'));
     assert.ok(estRouteLibre('/rejoindre/xyz'));
+    assert.ok(estRouteLibre('/inscription'));
+    assert.ok(estRouteLibre('/regles'));
     assert.ok(!estRouteLibre('/galerie'));
     assert.ok(!estRouteLibre('/connexions-bidon'));
   });

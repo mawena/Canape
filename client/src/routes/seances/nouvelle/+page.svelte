@@ -4,6 +4,7 @@
   import { page } from '$app/state';
   import type { CorpsCreerSeance, Film, ReponseLienSeance, Seance, UtilisateurPublic } from '@canape/partage';
   import { api, ErreurApi } from '$lib/api/client.ts';
+  import ChercherCompte from '$lib/comptes/ChercherCompte.svelte';
   import { Avatar, Bouton, Carte, Champ, Chargement, toast } from '$lib/ui/index.ts';
   import { ceSoir21h, messageInvitation, versIso } from '$lib/seance/dates.ts';
   import { lireMoi, urlConnexion } from '$lib/seance/moi.ts';
@@ -41,6 +42,11 @@
 
   const filtres = $derived(films.filter((f) => f.titre.toLowerCase().includes(recherche.trim().toLowerCase())));
   const film = $derived(films.find((f) => f.id === filmId) ?? null);
+
+  function ajouterTrouve(u: UtilisateurPublic): void {
+    if (!comptes.some((c) => c.id === u.id)) comptes = [...comptes, u];
+    if (!invites.includes(u.id)) invites = [...invites, u.id];
+  }
 
   function basculerInvite(id: number): void {
     invites = invites.includes(id) ? invites.filter((x) => x !== id) : [...invites, id];
@@ -148,6 +154,7 @@
             {/each}
           </ul>
         {/if}
+        <ChercherCompte surTrouve={ajouterTrouve} exclus={comptes.map((c) => c.id)} />
         <p class="vide">Tu peux aussi inviter quelqu’un par lien : il apparaît après la création.</p>
       </section>
 
