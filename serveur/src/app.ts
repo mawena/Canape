@@ -37,7 +37,7 @@ const PREFIXES_API = ['/api/', '/media/', '/ws/'];
 
 /** Construit l'application Fastify : plugins communs, modules, service du client. N'écoute pas. */
 export async function creerApp(config: Config, options: OptionsApp = {}): Promise<FastifyInstance> {
-  for (const d of [config.donnees, config.films, config.cache, config.televersements]) mkdirSync(d, { recursive: true });
+  for (const d of [config.donnees, config.films, config.cache, config.televersements, config.telechargements]) mkdirSync(d, { recursive: true });
   const db = options.db ?? ouvrirBase(path.join(config.donnees, 'canape.sqlite'));
   if (!options.db) migrer(db);
 

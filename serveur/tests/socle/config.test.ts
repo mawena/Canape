@@ -53,3 +53,28 @@ test('valeurs invalides refusées', () => {
   assert.throws(() => chargerConfig({ CANAPE_ICE: '{' }), /CANAPE_ICE/);
   assert.throws(() => chargerConfig({ CANAPE_URL_PUBLIQUE: 'pas une url' }), /CANAPE_URL_PUBLIQUE/);
 });
+
+test('réglages des torrents : défauts et analyse', () => {
+  const c = chargerConfig({});
+  assert.equal(c.torrents, true);
+  assert.equal(c.telechargements, path.resolve('./telechargements'));
+  assert.equal(c.torrentSimultanes, 2);
+  assert.equal(c.torrentDebitMax, 0);
+  assert.equal(c.torrentEnvoiMax, 1024 ** 2);
+  assert.equal(c.torrentPartage, 0);
+  assert.equal(c.torrentPort, 0);
+  assert.equal(c.torrentIsole, false);
+  const d = chargerConfig({
+    CANAPE_TORRENTS: '0', CANAPE_TELECHARGEMENTS: '/srv/t', CANAPE_TORRENT_SIMULTANES: '3', CANAPE_TORRENT_DEBIT_MAX: '20M',
+    CANAPE_TORRENT_ENVOI_MAX: '512K', CANAPE_TORRENT_PARTAGE: '1.5', CANAPE_TORRENT_PORT: '51413',
+  });
+  assert.equal(d.torrents, false);
+  assert.equal(d.telechargements, '/srv/t');
+  assert.equal(d.torrentSimultanes, 3);
+  assert.equal(d.torrentDebitMax, 20 * 1024 ** 2);
+  assert.equal(d.torrentEnvoiMax, 512 * 1024);
+  assert.equal(d.torrentPartage, 1.5);
+  assert.equal(d.torrentPort, 51413);
+  assert.throws(() => chargerConfig({ CANAPE_TORRENT_PORT: '70000' }), /CANAPE_TORRENT_PORT/);
+  assert.throws(() => chargerConfig({ CANAPE_TORRENT_PARTAGE: 'beaucoup' }), /CANAPE_TORRENT_PARTAGE/);
+});

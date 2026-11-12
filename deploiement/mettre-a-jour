@@ -181,8 +181,8 @@ else
   NOUVEAU_NEUF=1
 fi
 touch "$NOUVEAU"
-install -d -m 0750 "$DONNEES" "$SAUVEGARDES" "$SRV/cache" "$SRV/televersements"
-[ "$SANS_ROOT" = 1 ] || chown canape:canape "$DONNEES" "$SAUVEGARDES" "$SRV/cache" "$SRV/televersements"
+install -d -m 0750 "$DONNEES" "$SAUVEGARDES" "$SRV/cache" "$SRV/televersements" "$SRV/telechargements"
+[ "$SANS_ROOT" = 1 ] || chown canape:canape "$DONNEES" "$SAUVEGARDES" "$SRV/cache" "$SRV/televersements" "$SRV/telechargements"
 
 # ------------------------------------------------------------------------------------------------------------
 # 3. Arrêt, sauvegarde, bascule, démarrage : à partir d'ici un échec déclenche le retour arrière
