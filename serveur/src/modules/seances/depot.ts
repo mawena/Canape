@@ -35,6 +35,8 @@ export function invitesDe(app: FastifyInstance, seanceId: string): UtilisateurPu
 }
 
 export function versSeance(app: FastifyInstance, l: LigneSeance, presents: number): Seance {
+  // Film supprimé (la clé étrangère a vidé `film_id`) : position et pistes n'ont plus de sens.
+  if (l.film_id === null) l = { ...l, position: 0, piste_audio: null, sous_titres: null };
   return {
     id: l.id, hoteId: l.hote_id, hotePrenom: l.hote_prenom, filmId: l.film_id, filmTitre: l.film_titre,
     titre: l.titre, prevueLe: l.prevue_le, aUnLien: l.lien_hash !== null, pisteAudio: l.piste_audio,

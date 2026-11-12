@@ -131,7 +131,7 @@ export class Salles {
       { film_id: string | null; position: number; piste_audio: number | null; sous_titres: string | null } | undefined;
     a = {
       id,
-      salle: new Salle({ filmId: l?.film_id ?? null, position: l?.position ?? 0, pisteAudio: l?.piste_audio ?? null, sousTitres: l?.sous_titres ?? null }, this.maintenant),
+      salle: new Salle(l?.film_id ? { filmId: l.film_id, position: l.position, pisteAudio: l.piste_audio, sousTitres: l.sous_titres } : { filmId: null, position: 0, pisteAudio: null, sousTitres: null }, this.maintenant),
       connexions: new Map(),
       minuteur: null,
     };
