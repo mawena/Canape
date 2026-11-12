@@ -1,0 +1,52 @@
+/* Jetons de design : salle de cinéma le soir (repris de la 0.1). Aucune ressource externe. */
+:root {
+  --fond: #0d0a0b;
+  --fond-2: #17100f;
+  --fond-3: #211716;
+  --bordure: #3b2d2a;
+  --velours: #5a1620;
+  --velours-vif: #8e2433;
+  --or: #e9b872;
+  --or-doux: #b98c52;
+  --creme: #f4e9d8;
+  --doux: #b9a99a;
+  --ok: #7fc98a;
+  --alerte: #e9b872;
+  --mal: #e4685d;
+
+  --titre: "Iowan Old Style", "Palatino Linotype", Palatino, "URW Palladio L", Georgia, serif;
+  --texte: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+
+  --rayon-s: 6px;
+  --rayon: 10px;
+  --rayon-l: 14px;
+  --ombre: 0 20px 50px rgba(0, 0, 0, 0.6);
+  --espace-1: 4px;
+  --espace-2: 8px;
+  --espace-3: 12px;
+  --espace-4: 16px;
+  --espace-5: 24px;
+  --espace-6: 40px;
+  --duree: 160ms;
+
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: var(--fond);
+  color: var(--creme);
+  font: 16px/1.45 var(--texte);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+[hidden] { display: none !important; }
+button, input, textarea, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+a { color: var(--or); }
+:focus-visible { outline: 2px solid var(--or); outline-offset: 2px; }
+h1, h2, h3 { font-family: var(--titre); font-weight: 400; margin: 0; }
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
