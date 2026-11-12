@@ -364,8 +364,16 @@ Routes (session obligatoire, contrôle d'`Origin` comme le reste de l'API) :
   déjà en cours (`infoHash`) ; limite 10 ajouts par minute.
 - `PATCH /api/torrents/:id` `CorpsModifTorrent` → `Telechargement` (fichiers : au moins une vidéo ; refusé une fois
   `import`/`termine`/`annule`)
-- `DELETE /api/torrents/:id` → 204 : arrête et efface les données partielles (les films déjà créés restent) ; une
-  ligne `termine`, `erreur` ou `annule` est simplement retirée de la liste.
+- `DELETE /api/torrents/:id` → 204 : sur un téléchargement actif, il passe en `annule` et ses données partielles sont
+  effacées (les films déjà créés restent) ; une ligne `termine`, `erreur` ou `annule` est retirée de la liste ; 409
+  pendant `import`.
+
+*Réalisé (1.1)* : `POST` multipart prend le `.torrent` dans le champ `fichier` (ou un champ `magnet`) ; les liens magnet
+sont reconstruits sans `xs`/`as`/`ws` et le client tourne sans sources web (le serveur ne va jamais chercher une adresse
+donnée par un utilisateur) ; `PATCH` répond 409 avant la réception des informations ou une fois fini, 400 sans vidéo,
+**507** si le nouveau choix dépasse le quota ; sans information reçue au bout de 15 min → `erreur` ; 2 000 fichiers au
+plus par torrent ; avec `CANAPE_TORRENT_PARTAGE` > 0 l'import copie et le partage dure au plus 24 h. Réglages internes
+aux essais : `CANAPE_TORRENT_ISOLE`, `CANAPE_TORRENT_PAIRS`.
 
 Interface (galerie) : « Ajouter un film » propose « Depuis mon ordinateur » ou « Par torrent » (coller un lien
 magnet, ou déposer un `.torrent`) ; un panneau « Téléchargements » suit chaque torrent (nom, barre de progression,
