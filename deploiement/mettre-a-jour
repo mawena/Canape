@@ -181,8 +181,14 @@ else
   NOUVEAU_NEUF=1
 fi
 touch "$NOUVEAU"
-install -d -m 0750 "$DONNEES" "$SAUVEGARDES" "$SRV/cache" "$SRV/televersements" "$SRV/telechargements"
+install -d -m 0750 "$DONNEES" "$SAUVEGARDES" "$SRV/cache" "$SRV/televersements"
+# Téléchargements en 2770 (groupe canape, setgid) : Transmission (membre du groupe) y écrit. Jamais rabaissé ici.
+install -d -m 2770 "$SRV/telechargements"
 [ "$SANS_ROOT" = 1 ] || chown canape:canape "$DONNEES" "$SAUVEGARDES" "$SRV/cache" "$SRV/televersements" "$SRV/telechargements"
+# Dossiers et fichiers laissés fermés au groupe par la 1.4.0 (Canapé ne peut pas poser le bit setgid lui-même) :
+# ouverts à Transmission, qui sinon répond « Permission denied ».
+find "$SRV/telechargements" -mindepth 1 -type d ! -perm -g=rwx -exec chmod g+rwxs {} + 2>/dev/null || true
+find "$SRV/telechargements" -mindepth 1 -type f ! -perm -g=rw -exec chmod g+rw {} + 2>/dev/null || true
 
 # ------------------------------------------------------------------------------------------------------------
 # 3. Arrêt, sauvegarde, bascule, démarrage : à partir d'ici un échec déclenche le retour arrière
