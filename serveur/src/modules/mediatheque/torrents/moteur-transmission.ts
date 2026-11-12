@@ -135,7 +135,9 @@ export class MoteurTransmission extends EventEmitter<EvenementsMoteur> implement
     } else if (!this.pret && this.derniereErreur !== message) {
       this.derniereErreur = message;
       const grave = e instanceof ErreurTransmission && ['authentification', 'interdit', 'reponse'].includes(e.code);
-      (grave ? this.journal.error : this.journal.info)({ err: message }, 'Transmission ne répond pas');
+      // Appels directs : une méthode de pino détachée de son objet (`(a ? j.error : j.info)(…)`) plante.
+      if (grave) this.journal.error({ err: message }, 'Transmission ne répond pas');
+      else this.journal.info({ err: message }, 'Transmission ne répond pas');
     }
   }
 
@@ -235,11 +237,13 @@ export class MoteurTransmission extends EventEmitter<EvenementsMoteur> implement
     if (t.error === 3) return this.signaler(s, this.messageLocal(t.errorString));
     const fichiers = t.files ?? [];
     if (!s.meta && fichiers.length > 0 && t.metadataPercentComplete >= 1) {
-      s.meta = true;
       s.nbFichiers = fichiers.length;
       // Rien n'est téléchargé tant que le choix n'est pas fait : tout est d'abord décoché (sauf reprise avec choix).
+      // `meta` ne passe à vrai qu'après cet appel : un choix reçu pendant ce temps est seulement retenu, puis appliqué
+      // juste après, jamais en parallèle (sinon « tout décocher » pourrait arriver à Transmission après le choix).
+      if (!s.choix) await this.client.appeler('torrent-set', { ids: [s.hash], 'files-unwanted': fichiers.map((_f, i) => i) });
+      s.meta = true;
       if (s.choix) await this.appliquerChoix(s);
-      else await this.client.appeler('torrent-set', { ids: [s.hash], 'files-unwanted': fichiers.map((_f, i) => i) });
       if (!s.pausee && t.status === 0) await this.client.appeler('torrent-start', { ids: [s.hash] });
       this.emit('message', {
         t: 'metadonnees', id: s.id, infoHash: s.hash!, nom: t.name, prive: !!t.isPrivate,
