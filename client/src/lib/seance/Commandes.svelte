@@ -35,6 +35,9 @@
   let { salle, pleinEcran, surPleinEcran, menu = $bindable(), peutInviter = false }: Props = $props();
 
   const basculer = (nom: string): void => { menu = menu === nom ? null : nom; };
+  // Le programme n'a plus qu'un film (l'hôte a retiré les autres) : son bouton disparaît, son panneau aussi ; le menu se
+  // ferme pour que la barre puisse de nouveau se masquer pendant la lecture.
+  $effect(() => { if (menu === 'programme' && !salle.estSoiree) menu = null; });
   const casqueConseille = $derived(!salle.prefs.casque && !salle.casqueDetecte);
   const emojisVisibles = $derived(EMOJIS);
 
