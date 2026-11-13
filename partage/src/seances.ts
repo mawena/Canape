@@ -56,6 +56,36 @@ export interface MessageChat {
   envoyeLe: string;
 }
 
+/** Note d'un mot, par personne et par séance. */
+export const NOTES_SEANCE = ['coeur', 'bien', 'bof'] as const;
+export type NoteSeance = (typeof NOTES_SEANCE)[number];
+
+/** Une personne du souvenir : elle est entrée dans la salle, ou elle a noté la séance après coup. */
+export interface PresentSouvenir {
+  utilisateur: UtilisateurPublic;
+  /** `true` si elle est entrée au moins une fois dans la salle. */
+  present: boolean;
+  note: NoteSeance | null;
+}
+
+/** Ce qu'on garde d'une séance : qui était là, combien de temps ensemble, ce que chacun en a pensé. */
+export interface Souvenir {
+  seanceId: string;
+  filmId: string | null;
+  filmTitre: string | null;
+  titre: string | null;
+  creeLe: string;
+  termineeLe: string | null;
+  /** Durée pendant laquelle au moins deux personnes étaient dans la salle en même temps. */
+  secondesEnsemble: number;
+  personnes: PresentSouvenir[];
+}
+
+/** `PUT /api/seances/:id/note` : `note: null` efface la note. */
+export interface CorpsNoterSeance {
+  note: NoteSeance | null;
+}
+
 export interface ProgressionFilm {
   film: Film;
   position: number;
@@ -63,6 +93,8 @@ export interface ProgressionFilm {
   seanceId: string | null;
   termine: boolean;
   vuLe: string;
+  /** Souvenir de la séance (historique seulement ; `null` si la séance n'existe plus ou n'est plus accessible). */
+  souvenir?: Souvenir | null;
 }
 
 /** `GET /api/ice` */

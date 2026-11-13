@@ -5,6 +5,7 @@ import type { FastifyInstance } from 'fastify';
 import type { Film, MessageChat, MessageChatWs, ProgressionFilm, Seance, UtilisateurPublic } from '@canape/partage';
 import type { UtilisateurConnecte } from '../../commun/auth.ts';
 import { introuvable } from '../../commun/erreurs.ts';
+import { estParticipant, souvenirDe } from './souvenirs.ts';
 
 export interface LigneSeance {
   id: string;
@@ -132,7 +133,11 @@ export function progressions(app: FastifyInstance, u: UtilisateurConnecte, filtr
       etat: l.etat, erreur: l.erreur, visibilite: l.visibilite, partages, aAffiche: l.affiche !== null, aFond: l.fond !== null,
       couleur: l.couleur, versionImages: versionImages(app.config.films, l), modifiable, ajouteLe: l.ajoute_le,
     };
-    sortie.push({ film, position: l.position, duree: l.duree, seanceId: l.seance_id, termine: l.termine === 1, vuLe: l.vu_le });
+    const entree: ProgressionFilm = { film, position: l.position, duree: l.duree, seanceId: l.seance_id, termine: l.termine === 1, vuLe: l.vu_le };
+    if (filtre === 'historique') {
+      entree.souvenir = l.seance_id !== null && estParticipant(app, l.seance_id, u.id) ? souvenirDe(app, l.seance_id) : null;
+    }
+    sortie.push(entree);
     if (sortie.length >= limite) break;
   }
   return sortie;

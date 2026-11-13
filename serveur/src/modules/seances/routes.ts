@@ -1,12 +1,13 @@
 // Routes REST du module séances.
 import type { FastifyInstance } from 'fastify';
-import type { ListeSeances, ReponseIce, ReponseLienSeance, Seance } from '@canape/partage';
+import type { ListeSeances, ReponseIce, ReponseLienSeance, Seance, Souvenir } from '@canape/partage';
 import { ErreurHttp, introuvable, requeteInvalide } from '../../commun/erreurs.ts';
 import { idBase32, jetonAleatoire, maintenantIso, sha256Hex } from '../../commun/identifiants.ts';
 import { transaction } from '../../db/index.ts';
 import { comptesCiblables } from '../comptes/connus.ts';
 import { accesSeance, ligneSeance, messagesDe, progressions, versSeance, type LigneSeance } from './depot.ts';
 import type { Salles } from './salles.ts';
+import { estNote, estParticipant, poserNote, souvenirDe } from './souvenirs.ts';
 import { serveursIce } from './turn.ts';
 
 type Corps = Record<string, unknown>;
@@ -136,6 +137,8 @@ export function enregistrerRoutes(app: FastifyInstance, salles: Salles): void {
       }
     });
     if (filmId !== undefined && filmId !== ligne.film_id) salles.changerFilm(ligne.id, filmId);
+    // L'hôte termine la séance : l'écran de fin s'ouvre dans la salle.
+    if (c['terminee'] === true && ligne.terminee_le === null) salles.diffuserSouvenir(ligne.id, true);
     return sortie(ligneSeance(app, ligne.id)!);
   });
 
@@ -186,6 +189,30 @@ export function enregistrerRoutes(app: FastifyInstance, salles: Salles): void {
       return { seanceId: l.id };
     },
   );
+
+  // ---- Souvenir et note d'un mot (réservés à l'hôte et aux personnes invitées) ----
+  function exigerParticipant(id: string, u: { id: number }): void {
+    // Même réponse qu'une séance inconnue : pas d'indice d'existence.
+    if (!/^[a-z2-7]{12}$/.test(id) || !estParticipant(app, id, u.id)) throw introuvable('Séance introuvable.');
+  }
+
+  app.get<{ Params: { id: string } }>('/api/seances/:id/souvenir', pre, async (req): Promise<Souvenir> => {
+    exigerParticipant(req.params.id, req.utilisateur);
+    salles.enregistrerSeance(req.params.id);
+    const s = souvenirDe(app, req.params.id);
+    if (!s) throw introuvable('Séance introuvable.');
+    return s;
+  });
+
+  app.put<{ Params: { id: string } }>('/api/seances/:id/note', pre, async (req): Promise<Souvenir> => {
+    exigerParticipant(req.params.id, req.utilisateur);
+    const c = corps(req);
+    const note = c['note'];
+    if (note !== null && !estNote(note)) throw requeteInvalide('Note invalide (coeur, bien ou bof).');
+    poserNote(app, req.params.id, req.utilisateur.id, note, maintenantIso());
+    salles.diffuserSouvenir(req.params.id, false);
+    return souvenirDe(app, req.params.id)!;
+  });
 
   // ---- Messages ----
   app.get<{ Params: { id: string }; Querystring: { avant?: string; limite?: string } }>('/api/seances/:id/messages', pre, async (req) => {
