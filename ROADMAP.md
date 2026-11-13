@@ -97,7 +97,7 @@ main, séances, chat et réactions, reprise, PWA, mise en production automatique
 ## Phase 12 — Release 1.0.0
 
 - [x] Version, CHANGELOG, tag, release GitHub
-- [ ] Premier déploiement automatique sur https://canape.mawena.cloud, vérifié
+- [ ] Premier déploiement automatique sur https://canape.mawena.cloud, vérifié (en attente : facturation GitHub Actions débloquée fin novembre 2026)
 
 ---
 
@@ -166,4 +166,4 @@ arrive dans la salle au bon moment du film.
 - [x] Interface : bouton « Inviter » dans la salle (pendant le film, plein écran compris, sans pause) et dans le sas : lien, « Copier le lien », « Partager » sur téléphone ; « Copier le lien » dans la liste des séances ; seulement pour l'hôte
 - [x] Arrivée en cours de film : la personne qui rejoint par le lien est synchronisée au bon moment (corrigé si besoin)
 - [x] Essais (unitaires, Playwright : invitation pendant le film, troisième personne qui rejoint, invité sans le bouton), captures
-- [ ] Release 1.5.0 et mise en production
+- [x] Release 1.5.0 et mise en production — en ligne le 13/11/2026
