@@ -23,7 +23,7 @@ class FauxLecteur implements LecteurVideo {
 }
 
 function etat(p: Partial<EtatSeance> = {}): EtatSeance {
-  return { filmId: 'f1', lecture: false, position: 0, instant: 0, version: 1, attente: [], pisteAudio: null, sousTitres: null, compteARebours: null, serveur: 0, ...p };
+  return { filmId: 'f1', lecture: false, position: 0, instant: 0, version: 1, attente: [], pisteAudio: null, sousTitres: null, compteARebours: null, entracteFin: null, serveur: 0, ...p };
 }
 
 let maintenant = 100_000;

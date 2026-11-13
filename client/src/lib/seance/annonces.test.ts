@@ -4,7 +4,7 @@ import { etatSynchro, indexPisteTexte, phraseAttente, retiresAttente, texteAnnon
 import type { EtatSeance } from './types.ts';
 
 const etat = (p: Partial<EtatSeance> = {}): EtatSeance => ({
-  filmId: 'f', lecture: false, position: 4440, instant: 0, version: 1, attente: [], pisteAudio: 2, sousTitres: 'p3', compteARebours: null, serveur: 0, ...p,
+  filmId: 'f', lecture: false, position: 4440, instant: 0, version: 1, attente: [], pisteAudio: 2, sousTitres: 'p3', compteARebours: null, entracteFin: null, serveur: 0, ...p,
 });
 const plan = {
   pistesAudio: [{ index: 2, langue: 'eng', libelle: 'Anglais (VO)', canaux: 2, parDefaut: false }],
@@ -56,4 +56,12 @@ test('piste de texte : par identifiant, libellé, puis rang', () => {
   assert.equal(indexPisteTexte([{ id: '', label: '?' }, { id: '', label: '?' }], plan, 'e1'), 1);
   assert.equal(indexPisteTexte([{ id: '', label: '?' }], plan, 'e1'), -1);
   assert.equal(indexPisteTexte([], plan, null), -1);
+});
+
+test('soirée : enchaînement nommé, « +5 min » annoncé, ouverture de l’entracte sans annonce (elle a son voile)', () => {
+  assert.equal(texteAnnonce(ctx('film', { nom: null, suite: 'Les Heures bleues' })), 'Fin de l’entracte : place à Les Heures bleues');
+  assert.equal(texteAnnonce(ctx('film', { suite: 'Les Heures bleues' })), 'Léa a lancé le film suivant : Les Heures bleues');
+  assert.equal(texteAnnonce(ctx('film')), 'Léa a changé de film. Tout le monde est en pause.');
+  assert.equal(texteAnnonce(ctx('entracte', { nom: null })), null);
+  assert.equal(texteAnnonce(ctx('entracte', { ajout: 300 })), 'Léa a rallongé l’entracte de 5 min');
 });

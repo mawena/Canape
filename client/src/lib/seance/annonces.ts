@@ -1,5 +1,6 @@
 // Textes des gestes partagés : chaque geste nomme son auteur (« Léa a mis en pause »). TS pur.
 import type { PlanDeLecture } from '@canape/partage';
+import { dureeCourte } from './programme.ts';
 import { formaterDuree } from './synchro.ts';
 import type { EtatSeance, RaisonEtat } from './types.ts';
 
@@ -13,6 +14,10 @@ export interface ContexteAnnonce {
   plan: Pick<PlanDeLecture, 'pistesAudio' | 'sousTitres'> | null;
   /** Prénoms des personnes retirées de l'attente (`attente-ignoree`). */
   retires?: string[];
+  /** `film` : titre du film suivant du programme quand c'est un enchaînement (fin de l'entracte, « Passer au film suivant »). */
+  suite?: string;
+  /** `entracte` : secondes ajoutées par l'hôte (« +5 min ») ; absent à l'ouverture de l'entracte. */
+  ajout?: number;
 }
 
 export function libelleLangue(plan: ContexteAnnonce['plan'], piste: number | null): string | null {
@@ -36,7 +41,9 @@ export function texteAnnonce(c: ContexteAnnonce): string | null {
       const sens = c.avant !== null && c.etat.position < c.avant ? 'reculé' : 'avancé';
       return `${nom} a ${sens} à ${formaterDuree(c.etat.position)}`;
     }
-    case 'film': return `${nom} a changé de film. Tout le monde est en pause.`;
+    case 'film':
+      if (c.suite !== undefined) return c.nom ? `${c.nom} a lancé le film suivant : ${c.suite}` : `Fin de l’entracte : place à ${c.suite}`;
+      return `${nom} a changé de film. Tout le monde est en pause.`;
     case 'audio': {
       const l = libelleLangue(c.plan, c.etat.pisteAudio);
       return `${nom} a changé la langue${l ? ` : ${l}` : ''}. Tout le monde est en pause.`;
@@ -50,6 +57,8 @@ export function texteAnnonce(c: ContexteAnnonce): string | null {
     case 'reprise': return 'Tout le monde est prêt, on reprend';
     case 'depart': return c.nom ? `${c.nom} a perdu la connexion. Tout le monde est en pause.` : null;
     case 'attente-ignoree': return c.retires?.length ? `On n’attend plus ${c.retires.join(', ')}.` : null;
+    // L'ouverture de l'entracte a son propre voile ; « +5 min » est annoncé.
+    case 'entracte': return c.ajout ? `${nom} a rallongé l’entracte de ${dureeCourte(c.ajout)}` : null;
     case 'tampon':
     case 'fin':
       return null;
