@@ -138,7 +138,7 @@
   .sq-ligne { display: flex; gap: var(--e-4); align-items: center; }
   .sq-textes { display: grid; gap: 10px; flex: 1; }
   @media (max-width: 640px) {
-    .souvenir .temps { flex-basis: 100%; }
+    .souvenir .temps { flex-basis: 100%; max-width: calc(100% - 104px); }
     .avance :global(.badge) { display: none; }
   }
 </style>
