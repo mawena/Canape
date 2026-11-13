@@ -151,7 +151,7 @@ mot de passe oublié : `sudo canape admin reinitialiser <identifiant>`.
 **Ajouter un film** : dans une galerie, glisser-déposer le fichier. Le téléversement peut être mis en pause et repris. La
 fiche du film permet de le partager, de choisir les pistes et de le préparer à l'avance.
 
-**Lancer une séance** : « Lancer une séance », choisir le film, puis envoyer le lien de la séance aux invités (ou les
+**Lancer une séance** : depuis l'accueil, toucher un film puis « Lancer » : la séance est créée et le lien est là (les réglages de date et d'invités sont dans « Plus d'options »). L'accueil montre d'abord la séance en cours ou la prochaine, les films à reprendre et les téléchargements en cours. Il suffit ensuite d'envoyer le lien de la séance aux invités (ou les
 inviter parmi les comptes). Chacun rejoint la salle, autorise sa caméra et son micro, et la lecture démarre pour tous.
 
 **Conseils**

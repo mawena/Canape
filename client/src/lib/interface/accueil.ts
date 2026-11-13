@@ -78,3 +78,20 @@ export function filmsARreprendre(liste: ProgressionFilm[]): ProgressionFilm[] {
     .filter((p) => !p.termine && p.position > 30)
     .sort((a, b) => new Date(b.vuLe).getTime() - new Date(a.vuLe).getTime());
 }
+
+/** Films qu'on peut lancer tout de suite : prêts seulement. Ceux commencés et ceux ajoutés le plus récemment passent d'abord. */
+export function filmsPourLancer<T extends { id: string; etat?: string }>(films: T[], reprises: ProgressionFilm[] = []): T[] {
+  const reprisId = new Set(reprises.map((p) => p.film.id));
+  const prets = films.filter((f) => f.etat === undefined || f.etat === 'pret');
+  return [...prets.filter((f) => reprisId.has(f.id)), ...prets.filter((f) => !reprisId.has(f.id))];
+}
+
+/** Téléchargements à montrer sur l'accueil : ceux qui ne sont ni finis, ni en erreur, ni annulés. */
+export function telechargementsAMontrer<T extends { etat: string }>(liste: T[]): T[] {
+  return liste.filter((t) => !['termine', 'erreur', 'annule'].includes(t.etat));
+}
+
+/** « 1 téléchargement en cours » / « 3 téléchargements en cours ». */
+export function titreTelechargements(n: number): string {
+  return n === 1 ? '1 téléchargement en cours' : `${n} téléchargements en cours`;
+}
