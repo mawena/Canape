@@ -1,5 +1,6 @@
 // Protocole WebSocket d'une séance : `GET /ws/seances/:id` (contrat : docs/CONCEPTION.md, « WebSocket d'une séance »).
 import type { UtilisateurPublic } from './comptes.ts';
+import type { Souvenir } from './seances.ts';
 
 /** Liste fermée des réactions. */
 export const EMOJIS = ['😂', '❤️', '😱', '😭', '🔥', '👏', '😮', '🍿'] as const;
@@ -111,6 +112,8 @@ export type MessageServeur =
       etat: EtatSeance;
       messages: MessageChatWs[];
     }
+  /** Le souvenir a changé (une note) ; `fin` : l'hôte vient de terminer la séance. */
+  | { t: 'souvenir'; souvenir: Souvenir; fin: boolean }
   | { t: 'etat'; etat: EtatSeance; raison: RaisonEtat; par: string | null }
   | { t: 'arrivee'; participant: Participant }
   | { t: 'depart'; cid: string }

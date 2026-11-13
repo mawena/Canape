@@ -9,7 +9,7 @@
   - Vignettes : `vignettes`, `vignette` (attributs `data-cid`, `data-parle`, `data-moi`, `data-pair` : new|connecting|connected…), `menu-vignette`, `afficher-cameras`
   - Chat : `chat`, `saisie-chat`, `message` ; réactions flottantes : `reaction`
   - Voiles : `compte-a-rebours`, `attente`, `ne-plus-attendre`, `reprise`, `reprendre-position`, `depuis-le-debut`,
-    `lecture-bloquee`, `reprendre-ici`, `erreur-lecture`, `sans-film`, `fin-seance`, `quitter-fin`
+    `lecture-bloquee`, `reprendre-ici`, `erreur-lecture`, `sans-film`, `fin-seance` (+ `temps-ensemble`, `present-fin`, `note-autre`, `note-coeur`, `note-bien`, `note-bof`, `revoir-fin`), `quitter-fin`
   - `annonce` (chaque geste partagé), `raccourcis`
 -->
 <script lang="ts">
@@ -107,6 +107,7 @@
     salle.quitter();
     void goto('/seances');
   }
+
   function choisirFilm(): void {
     void goto('/galerie');
   }
