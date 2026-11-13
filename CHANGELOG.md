@@ -2,6 +2,31 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) ; versions selon [SemVer](https://semver.org/lang/fr/).
 
+## [1.6.0] — 2026-11-13
+
+Un accueil qui va droit au but.
+
+### Ajouté
+
+- **Lancement rapide** : sur l'accueil, touche un film puis « Lancer » : la séance est créée tout de suite, avec son
+  lien, « Copier le lien », « Partager le message » et « Entrer dans la salle ». « Plus d'options » mène toujours au
+  formulaire complet (date, invités).
+- **Téléchargements en cours** sur l'accueil : nom, avancement, débit et temps restant de chaque torrent, avec un
+  lien vers la galerie ; rien ne s'affiche quand il n'y en a pas.
+- **« Reprendre » en un geste** : chaque film commencé a sa ligne avec miniature, « Arrêté à… », barre de progression
+  et bouton de lecture.
+
+### Modifié
+
+- L'accueil est réorganisé par ordre d'importance : la séance en cours (« Rejoindre ») ou la prochaine (« Entrer
+  dans la salle », « Copier le lien ») d'abord, ou le lancement rapide s'il n'y en a pas ; puis « Reprendre », les
+  téléchargements, les ajouts récents ; « Pour bien démarrer » passe en bas, sauf pour un compte neuf où il guide
+  les premiers pas.
+- Sur téléphone, la carte de la séance tient dans le premier écran (affiche réduite à côté du titre), et ses
+  boutons ne passent plus sous la barre du bas.
+
+Rien ne change côté serveur, base de données ou déploiement : la mise à jour se fait comme d'habitude.
+
 ## [1.5.0] — 2026-11-12
 
 Inviter quelqu'un pendant la séance, même quand le film est déjà lancé.
