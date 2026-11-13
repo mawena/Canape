@@ -177,9 +177,9 @@ Quatre fonctions choisies le 13/11/2026, dans cet ordre ; une phase et une relea
 Aller droit au but dès l'ouverture : la séance en cours ou la prochaine en avant, reprendre un film commencé, voir les
 téléchargements en cours, lancer une séance en deux clics ; une page claire sur téléphone.
 
-- [ ] Analyse de l'accueil actuel (ordinateur, téléphone, compte neuf, compte chargé) et nouvelle organisation
-- [ ] Interface : séance en cours ou à venir, « Reprendre », téléchargements en cours, lancement rapide d'une séance
-- [ ] Essais (unitaires, Playwright), captures ordinateur et téléphone, clair et sombre
+- [x] Analyse de l'accueil actuel (ordinateur, téléphone, compte neuf, compte chargé) et nouvelle organisation
+- [x] Interface : séance en cours ou à venir, « Reprendre », téléchargements en cours, lancement rapide d'une séance
+- [x] Essais (unitaires, Playwright), captures ordinateur et téléphone, clair et sombre
 - [ ] Release 1.6.0 et mise en production
 
 ## Phase 19 — Fin de séance et souvenir
