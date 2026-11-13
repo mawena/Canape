@@ -187,9 +187,9 @@ téléchargements en cours, lancer une séance en deux clics ; une page claire s
 À la fin du film : un petit résumé (« 1 h 52 ensemble », qui était là) et une note d'un mot (coup de cœur, bien, bof),
 gardés dans l'historique.
 
-- [ ] Serveur : durée passée ensemble, note de chaque personne (migration, API)
-- [ ] Interface : écran de fin de séance, note, souvenir visible dans l'historique
-- [ ] Essais (unitaires, Playwright), captures
+- [x] Serveur : durée passée ensemble, note de chaque personne (migration, API)
+- [x] Interface : écran de fin de séance, note, souvenir visible dans l'historique
+- [x] Essais (unitaires, Playwright), captures
 - [ ] Release 1.7.0 et mise en production
 
 ## Phase 20 — Agenda et notifications
