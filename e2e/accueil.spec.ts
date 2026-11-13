@@ -64,9 +64,9 @@ test.describe('Accueil', () => {
     expect(seances).toHaveLength(1);
     expect(seances[0]?.prevueLe).toBeNull();
 
-    await expect(page.getByTestId('seance-hero')).toBeVisible();                   // l'accueil a suivi : la séance est en avant
-    await page.getByTestId('lancement-entrer').click();
-    await expect(page).toHaveURL(/\/seances\/[\w-]+/);
+    await page.reload();                                                           // au prochain passage, la séance est en avant
+    await expect(page.getByTestId('seance-hero')).toBeVisible();
+    await expect(page.getByTestId('rejoindre')).toBeVisible();
   });
 
   test('séance en cours : en avant, avec « Rejoindre »', async ({ ouvrir, monde }) => {

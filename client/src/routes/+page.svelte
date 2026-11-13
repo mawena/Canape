@@ -34,10 +34,6 @@
     charge = true;
   }
 
-  async function apresLancement(): Promise<void> {
-    try { seances = await api.get<ListeSeances>('/api/seances'); } catch { /* l'accueil se met à jour au prochain chargement */ }
-  }
-
   onMount(() => {
     void charger();
     const minuteur = setInterval(() => { maintenant = new Date(); }, 30_000);
@@ -127,7 +123,6 @@
     {/if}
     <Telechargements />
   {:else}
-    <PremiersPas films={films.length} seances={toutesSeances.length} estAdmin={session.estAdmin} />
     <!-- 1. La séance en cours ou la prochaine ; sinon le lancement rapide -->
     {#if ceSoir}
       <section class="hero ce-soir" aria-labelledby="titre-ce-soir" data-test="seance-hero" data-etat={enCours ? 'en-cours' : 'prevue'}>
@@ -165,7 +160,7 @@
         </div>
       </section>
     {:else}
-      <LancementRapide films={pretsALancer} onCree={apresLancement} />
+      <LancementRapide films={pretsALancer} />
     {/if}
 
     {#if erreurs.seances}
@@ -198,7 +193,7 @@
     <Telechargements />
 
     <!-- 4. Lancer une séance (quand une séance est déjà là, plus bas) -->
-    {#if ceSoir}<LancementRapide films={pretsALancer} titre="Lancer une autre séance" onCree={apresLancement} />{/if}
+    {#if ceSoir}<LancementRapide films={pretsALancer} titre="Lancer une autre séance" />{/if}
 
     <!-- 5. Ajoutés récemment -->
     {#if recents.length > 0}
@@ -218,6 +213,8 @@
         {#snippet actions()}<Bouton icone="televerser" href={liens.ajouterFilm}>Ajouter un film</Bouton>{/snippet}
       </EtatVide>
     {/if}
+    <!-- 6. Pour bien démarrer : en bas tant qu'il reste des étapes, le reste de l'accueil passe d'abord -->
+    <PremiersPas films={films.length} seances={toutesSeances.length} estAdmin={session.estAdmin} />
     {#if erreurs.films || erreurs.reprises}
       <p class="alerte" role="status"><Icone nom="alerte" taille={16} /> Une partie de l’accueil n’a pas pu se charger. <button type="button" class="lien-bouton" onclick={charger}>Réessayer</button></p>
     {/if}
@@ -275,7 +272,7 @@
   .reprise:focus-visible { outline: 3px solid var(--lampe); outline-offset: 2px; }
   @media (hover: hover) { .reprise:hover { border-color: var(--lampe); } }
   .reprise .texte { display: grid; gap: 6px; min-width: 0; flex: 1; }
-  .reprise .nom { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .reprise .nom { font-weight: 600; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
   .reprise .sous { color: var(--doux); font-size: 14px; }
   .reprise .jouer { flex: none; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: var(--lampe); color: #fff; }
   .alerte { display: flex; align-items: center; gap: 8px; color: var(--alerte); font-size: 14px; }

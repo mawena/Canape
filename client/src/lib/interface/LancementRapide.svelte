@@ -3,7 +3,7 @@
    * Lancement rapide d'une séance (phase 18) : on touche un film, puis « Lancer » : la séance est créée tout de suite (sans date,
    * donc maintenant) par `POST /api/seances`, et le lien d'invitation est là, prêt à copier. Les réglages fins (date, invités)
    * restent sur la page « Nouvelle séance », proposée en « Plus d'options ».
-   * - `films` : films prêts, dans l'ordre à montrer. `titre` : intitulé de la section. `onCree` : prévient l'accueil pour qu'il se rafraîchisse.
+   * - `films` : films prêts, dans l'ordre à montrer. `titre` : intitulé de la section.
    */
   import type { Film, ReponseLienSeance, Seance } from '@canape/partage';
   import { api, ErreurApi } from '$lib/api/client.ts';
@@ -11,8 +11,8 @@
   import { liens } from '$lib/interface/liens.ts';
   import { messageInvitation } from '$lib/seance/dates.ts';
 
-  interface Props { films: Film[]; titre?: string; onCree?: () => void }
-  let { films, titre = 'Lancer une séance', onCree }: Props = $props();
+  interface Props { films: Film[]; titre?: string }
+  let { films, titre = 'Lancer une séance' }: Props = $props();
 
   let choisi = $state<string | null>(null);
   let envoi = $state(false);
@@ -31,7 +31,6 @@
       const l = await api.post<ReponseLienSeance>(`/api/seances/${seance.id}/lien`);
       const lien = l.lien.startsWith('http') ? l.lien : `${location.origin}${l.lien}`;
       creee = { seance, lien, filmTitre: film.titre };
-      onCree?.();
     } catch (e) {
       erreur = e instanceof ErreurApi ? e.message : 'Impossible de créer la séance. Réessaie.';
     } finally {
@@ -78,7 +77,7 @@
       <div class="films" role="group" aria-label="Choisis un film">
         {#each proposes as f (f.id)}
           <button type="button" class="film" class:choisi={choisi === f.id} aria-pressed={choisi === f.id} onclick={() => (choisi = choisi === f.id ? null : f.id)} data-test="lancement-film">
-            <MiniAffiche film={f} largeur={84} />
+            <MiniAffiche film={f} largeur={96} />
             <span class="nom">{f.titre}</span>
           </button>
         {/each}
@@ -101,7 +100,7 @@
   .aide a { color: var(--lampe); font-weight: 600; }
   .films { display: flex; gap: 14px; overflow-x: auto; padding: 6px 4px 10px; margin: 0 -4px; scroll-snap-type: x proximity; scrollbar-width: thin; }
   .film {
-    flex: none; width: 96px; display: grid; justify-items: center; align-content: start; gap: 8px; padding: 6px 6px 8px; min-height: 44px;
+    flex: none; width: 112px; display: grid; justify-items: center; align-content: start; gap: 8px; padding: 6px 6px 8px; min-height: 44px;
     background: none; border: 2px solid transparent; border-radius: var(--r-m); color: var(--texte); font: inherit; cursor: pointer; scroll-snap-align: start;
   }
   .film :global(.mini) { box-shadow: var(--ombre-2); }
