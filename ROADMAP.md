@@ -167,3 +167,45 @@ arrive dans la salle au bon moment du film.
 - [x] Arrivée en cours de film : la personne qui rejoint par le lien est synchronisée au bon moment (corrigé si besoin)
 - [x] Essais (unitaires, Playwright : invitation pendant le film, troisième personne qui rejoint, invité sans le bouton), captures
 - [x] Release 1.5.0 et mise en production — en ligne le 13/11/2026
+
+# Canapé 1.6 à 1.9 — accueil, souvenirs, agenda, soirées
+
+Quatre fonctions choisies le 13/11/2026, dans cet ordre ; une phase et une release chacune.
+
+## Phase 18 — Accueil plus pratique
+
+Aller droit au but dès l'ouverture : la séance en cours ou la prochaine en avant, reprendre un film commencé, voir les
+téléchargements en cours, lancer une séance en deux clics ; une page claire sur téléphone.
+
+- [ ] Analyse de l'accueil actuel (ordinateur, téléphone, compte neuf, compte chargé) et nouvelle organisation
+- [ ] Interface : séance en cours ou à venir, « Reprendre », téléchargements en cours, lancement rapide d'une séance
+- [ ] Essais (unitaires, Playwright), captures ordinateur et téléphone, clair et sombre
+- [ ] Release 1.6.0 et mise en production
+
+## Phase 19 — Fin de séance et souvenir
+
+À la fin du film : un petit résumé (« 1 h 52 ensemble », qui était là) et une note d'un mot (coup de cœur, bien, bof),
+gardés dans l'historique.
+
+- [ ] Serveur : durée passée ensemble, note de chaque personne (migration, API)
+- [ ] Interface : écran de fin de séance, note, souvenir visible dans l'historique
+- [ ] Essais (unitaires, Playwright), captures
+- [ ] Release 1.7.0 et mise en production
+
+## Phase 20 — Agenda et notifications
+
+Ajouter une séance à son agenda ; être prévenu quand quelqu'un entre dans la salle (avec l'accord de chacun).
+
+- [ ] Fichier agenda (.ics) d'une séance prévue
+- [ ] Notifications Web Push « Camille est dans la salle » : accord par appareil dans le compte, envoi par le serveur
+- [ ] Essais (sans contacter de vrai service de notifications), captures
+- [ ] Release 1.8.0 et mise en production
+
+## Phase 21 — Soirée à plusieurs films
+
+Enchaîner plusieurs films dans une même séance (liste d'attente), avec un entracte de 5 minutes entre deux.
+
+- [ ] Serveur : liste des films d'une séance, passage synchronisé au film suivant, entracte
+- [ ] Interface : liste à la création et dans la salle (hôte), entracte avec compte à rebours
+- [ ] Essais (unitaires, Playwright), captures
+- [ ] Release 1.9.0 et mise en production
