@@ -19,6 +19,7 @@
   import { EMOJIS } from '@canape/partage';
   import BarreTemps from './BarreTemps.svelte';
   import InviterSeance from './InviterSeance.svelte';
+  import ProgrammeSoiree from './ProgrammeSoiree.svelte';
   import { libelleAppareil } from './medias.ts';
   import type { Salle } from './salle.svelte.ts';
 
@@ -34,6 +35,9 @@
   let { salle, pleinEcran, surPleinEcran, menu = $bindable(), peutInviter = false }: Props = $props();
 
   const basculer = (nom: string): void => { menu = menu === nom ? null : nom; };
+  // Le programme n'a plus qu'un film (l'hôte a retiré les autres) : son bouton disparaît, son panneau aussi ; le menu se
+  // ferme pour que la barre puisse de nouveau se masquer pendant la lecture.
+  $effect(() => { if (menu === 'programme' && !salle.estSoiree) menu = null; });
   const casqueConseille = $derived(!salle.prefs.casque && !salle.casqueDetecte);
   const emojisVisibles = $derived(EMOJIS);
 
@@ -130,6 +134,9 @@
         aria-label={salle.moi?.camera ? 'Couper la caméra' : 'Réactiver la caméra'} title="Caméra (V)" data-test="camera">
         {#if salle.moi?.camera}<Video size={22} />{:else}<VideoOff size={22} />{/if}
       </button>
+      {#if salle.estSoiree}
+        <ProgrammeSoiree {salle} bind:ouvert={() => menu === 'programme', (v) => { menu = v ? 'programme' : null; }} />
+      {/if}
       {#if peutInviter}
         <InviterSeance seanceId={salle.seanceId} seance={salle.seance} bind:ouvert={() => menu === 'inviter', (v) => { menu = v ? 'inviter' : null; }} />
       {/if}

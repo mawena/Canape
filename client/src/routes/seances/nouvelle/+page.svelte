@@ -1,20 +1,33 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  // Nouvelle séance. Un film comme avant ; « Ajouter un autre film » en fait une soirée (programme ordonné, boutons
+  // monter / descendre / retirer). `data-test` : `film-<id>` (choix), `ajouter-film-programme`, `programme`, `programme-film`,
+  // `programme-monter`, `programme-descendre`, `programme-retirer`, `creer-seance`, `seance-creee`, `resume-programme`.
+  import { onMount, tick } from 'svelte';
+  import ChevronUp from '@lucide/svelte/icons/chevron-up';
+  import ChevronDown from '@lucide/svelte/icons/chevron-down';
+  import X from '@lucide/svelte/icons/x';
   import BoutonAgenda from '$lib/seance/BoutonAgenda.svelte';
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
-  import type { CorpsCreerSeance, Film, ReponseLienSeance, Seance, UtilisateurPublic } from '@canape/partage';
+  import { MAX_FILMS_PROGRAMME, phraseProgramme, type CorpsCreerSeance, type Film, type ReponseLienSeance, type Seance, type UtilisateurPublic } from '@canape/partage';
   import { api, ErreurApi } from '$lib/api/client.ts';
   import ChercherCompte from '$lib/comptes/ChercherCompte.svelte';
-  import { Avatar, Bouton, Carte, Champ, Chargement, toast } from '$lib/ui/index.ts';
+  import { Avatar, Bouton, Carte, Champ, Chargement, MiniAffiche, toast } from '$lib/ui/index.ts';
   import { ceSoir21h, messageInvitation, versIso } from '$lib/seance/dates.ts';
   import { lireMoi, urlConnexion } from '$lib/seance/moi.ts';
+  import { ajouterFilm, deplacerFilm, filmsDuCorps, retirerFilm, titresEnchaines } from '$lib/seance/programme.ts';
 
   let films: Film[] = $state([]);
   let comptes: UtilisateurPublic[] = $state([]);
   let chargement = $state(true);
   let erreur: string | null = $state(null);
-  let filmId: string | null = $state(page.url.searchParams.get('film'));
+  const filmDemande = page.url.searchParams.get('film');
+  /** Les films de la séance, dans l'ordre (un seul : une séance ordinaire). */
+  let programme: string[] = $state(filmDemande ? [filmDemande] : []);
+  /** « Ajouter un autre film » : la liste devient des cases à cocher, l'ordre se règle au-dessus. */
+  let soiree = $state(false);
+  let statut = $state('');
+  let listeProgramme: HTMLOListElement | undefined = $state();
   let recherche = $state('');
   let titre = $state('');
   let maintenant = $state(true);
@@ -42,7 +55,34 @@
   });
 
   const filtres = $derived(films.filter((f) => f.titre.toLowerCase().includes(recherche.trim().toLowerCase())));
-  const film = $derived(films.find((f) => f.id === filmId) ?? null);
+  const filmParId = $derived(new Map(films.map((f) => [f.id, f])));
+  const choisis = $derived(programme.map((id) => filmParId.get(id)).filter((f): f is Film => !!f));
+  const film = $derived(choisis[0] ?? null);
+  const plein = $derived(programme.length >= MAX_FILMS_PROGRAMME);
+
+  function choisirSeul(id: string): void { programme = [id]; }
+  function basculerFilm(f: Film, coche: boolean): void {
+    if (coche && plein) return;
+    programme = coche ? ajouterFilm(programme, f.id) : retirerFilm(programme, f.id);
+    statut = coche ? `${f.titre} ajouté, ${programme.length}e film de la soirée.` : `${f.titre} retiré de la soirée.`;
+    if (!programme.length) soiree = false;
+  }
+  function passerEnSoiree(): void {
+    soiree = true;
+    statut = 'Coche les autres films : ils passent dans l’ordre où tu les choisis.';
+  }
+  async function deplacer(f: Film, sens: -1 | 1): Promise<void> {
+    programme = deplacerFilm(programme, f.id, sens);
+    statut = `${f.titre} : ${programme.indexOf(f.id) + 1}e film.`;
+    await tick();
+    const ligne = listeProgramme?.querySelector(`[data-film="${CSS.escape(f.id)}"]`);
+    const meme = ligne?.querySelector<HTMLButtonElement>(`[data-test="programme-${sens < 0 ? 'monter' : 'descendre'}"]`);
+    const autre = ligne?.querySelector<HTMLButtonElement>(`[data-test="programme-${sens < 0 ? 'descendre' : 'monter'}"]`);
+    (meme && !meme.disabled ? meme : autre)?.focus();
+  }
+  function retirer(f: Film): void {
+    basculerFilm(f, false);
+  }
 
   function ajouterTrouve(u: UtilisateurPublic): void {
     if (!comptes.some((c) => c.id === u.id)) comptes = [...comptes, u];
@@ -55,11 +95,11 @@
 
   async function creer(e: Event): Promise<void> {
     e.preventDefault();
-    if (!filmId) { erreur = 'Choisis un film.'; return; }
+    if (!programme.length) { erreur = 'Choisis un film.'; return; }
     envoi = true;
     erreur = null;
     try {
-      const corps: CorpsCreerSeance = { filmId, invites };
+      const corps: CorpsCreerSeance = { ...filmsDuCorps(programme), invites };
       if (titre.trim()) corps.titre = titre.trim();
       if (!maintenant) corps.prevueLe = versIso(quand);
       creee = await api.post<Seance>('/api/seances', corps);
@@ -82,7 +122,7 @@
   }
   async function partager(): Promise<void> {
     if (!lien || !film) return;
-    const texte = messageInvitation(film.titre, creee?.prevueLe ?? null, lien);
+    const texte = messageInvitation(titresEnchaines(choisis.map((f) => f.titre)), creee?.prevueLe ?? null, lien);
     if (navigator.share) {
       try { await navigator.share({ text: texte }); } catch { /* annulé */ }
     } else {
@@ -98,6 +138,7 @@
     <Carte doree>
       <div class="succes" data-test="seance-creee">
         <h1>C’est prêt.</h1>
+        {#if phraseProgramme(choisis.map((f) => f.titre))}<p class="resume" data-test="resume-programme">{phraseProgramme(choisis.map((f) => f.titre))}</p>{/if}
         <p>Envoie ce lien à qui tu veux inviter.</p>
         <div class="lien">
           <input readonly value={lien} aria-label="Lien d’invitation" data-test="lien-invitation" onfocus={(e) => e.currentTarget.select()} />
@@ -116,22 +157,60 @@
     <h1>Nouvelle séance</h1>
     <form onsubmit={creer}>
       <section>
-        <h2><span class="num" aria-hidden="true">1</span>Le film</h2>
-        <Champ libelle="Chercher un film" bind:value={recherche} type="search" />
+        <h2><span class="num" aria-hidden="true">1</span>{soiree ? 'Les films de la soirée' : 'Le film'}</h2>
+        {#if soiree}
+          <p class="vide">Ils passent dans cet ordre, avec un entracte de 5 minutes entre deux.</p>
+          <ol class="programme" bind:this={listeProgramme} aria-label="Ordre des films" data-test="programme">
+            {#each choisis as f, i (f.id)}
+              <li class="ligne-programme" data-test="programme-film" data-film={f.id}>
+                <span class="rang tn" aria-hidden="true">{i + 1}</span>
+                <MiniAffiche film={f} largeur={32} />
+                <span class="titre-film">{f.titre}{#if f.annee}<span class="annee">{f.annee}</span>{/if}</span>
+                <span class="gestes">
+                  <button type="button" class="petit" onclick={() => deplacer(f, -1)} disabled={i === 0} aria-label="Monter {f.titre}" title="Monter" data-test="programme-monter"><ChevronUp size={18} aria-hidden="true" /></button>
+                  <button type="button" class="petit" onclick={() => deplacer(f, 1)} disabled={i === choisis.length - 1} aria-label="Descendre {f.titre}" title="Descendre" data-test="programme-descendre"><ChevronDown size={18} aria-hidden="true" /></button>
+                  <button type="button" class="petit" onclick={() => retirer(f)} aria-label="Retirer {f.titre}" title="Retirer" data-test="programme-retirer"><X size={18} aria-hidden="true" /></button>
+                </span>
+              </li>
+            {/each}
+          </ol>
+        {/if}
+        <Champ libelle={soiree ? 'Ajouter un film' : 'Chercher un film'} bind:value={recherche} type="search" />
         {#if !films.length}
           <p class="vide">Aucun film prêt pour l’instant.</p>
+        {:else if soiree}
+          <ul class="films" role="group" aria-label="Films de la soirée">
+            {#each filtres as f (f.id)}
+              {@const coche = programme.includes(f.id)}
+              <li>
+                <label class="film case-film" class:choisi={coche}>
+                  <input type="checkbox" checked={coche} disabled={!coche && plein} onchange={(e) => basculerFilm(f, e.currentTarget.checked)} data-test="film-{f.id}" />
+                  <span>{f.titre}{f.annee ? ` (${f.annee})` : ''}</span>
+                  {#if coche}<span class="position tn">{programme.indexOf(f.id) + 1}</span>{/if}
+                </label>
+              </li>
+            {/each}
+          </ul>
         {:else}
           <ul class="films" role="radiogroup" aria-label="Film">
             {#each filtres as f (f.id)}
               <li>
-                <label class="film" class:choisi={filmId === f.id}>
-                  <input type="radio" name="film" value={f.id} bind:group={filmId} data-test="film-{f.id}" />
+                <label class="film" class:choisi={programme[0] === f.id}>
+                  <input type="radio" name="film" value={f.id} checked={programme[0] === f.id} onchange={() => choisirSeul(f.id)} data-test="film-{f.id}" />
                   <span>{f.titre}{f.annee ? ` (${f.annee})` : ''}</span>
                 </label>
               </li>
             {/each}
           </ul>
         {/if}
+        {#if !soiree && film && films.length > 1}
+          <div class="ajout">
+            <Bouton variante="secondaire" icone="plus" onclick={passerEnSoiree} data-test="ajouter-film-programme">Ajouter un autre film</Bouton>
+            <span class="vide">Pour enchaîner plusieurs films, avec un entracte entre deux.</span>
+          </div>
+        {/if}
+        {#if plein}<p class="vide">Une soirée compte {MAX_FILMS_PROGRAMME} films au plus.</p>{/if}
+        <p class="lu" role="status">{statut}</p>
       </section>
 
       <section>
@@ -163,7 +242,7 @@
       {#if erreur}<p class="erreur" role="alert">{erreur}</p>{/if}
       <div class="actions">
         <Bouton variante="discret" href="/seances">Annuler</Bouton>
-        <Bouton type="submit" chargement={envoi} disabled={!filmId} data-test="creer-seance">Créer la séance</Bouton>
+        <Bouton type="submit" chargement={envoi} disabled={!programme.length} data-test="creer-seance">{programme.length > 1 ? 'Créer la soirée' : 'Créer la séance'}</Bouton>
       </div>
     </form>
   {/if}
@@ -182,6 +261,22 @@
   .film.choisi { border-color: var(--lampe); background: var(--lampe-fond); }
   .film.choisi::before { border-color: var(--lampe); background: radial-gradient(circle, var(--lampe) 0 4px, transparent 5px); }
   .film input { position: absolute; opacity: 0; }
+  .case-film::before { border-radius: 5px; }
+  .case-film.choisi::before { background: var(--lampe); box-shadow: inset 0 0 0 3px var(--lampe-fond); }
+  .position { margin-left: auto; display: grid; place-items: center; min-width: 26px; height: 26px; padding: 0 6px; border-radius: 999px; background: var(--lampe); color: var(--lampe-sur, #fff); font-size: 13px; font-weight: 700; }
+  .programme { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+  .ligne-programme { display: flex; align-items: center; gap: var(--e-3); min-height: 60px; padding: 6px 8px 6px 12px; border-radius: var(--r-m); background: var(--s2); border: 1px solid var(--bord); }
+  .rang { flex: none; width: 20px; font-weight: 700; color: var(--lampe); text-align: center; }
+  .titre-film { flex: 1; min-width: 0; font: 400 1.25rem / 1.15 var(--titre); overflow-wrap: anywhere; }
+  .annee { margin-left: 8px; font: 500 0.85rem var(--texte-police); color: var(--discret); }
+  .gestes { display: flex; gap: 2px; flex: none; }
+  .petit { display: grid; place-items: center; width: 40px; height: 40px; border: 0; border-radius: 10px; background: transparent; color: var(--doux); }
+  .petit:hover:not(:disabled) { background: var(--s3); color: var(--texte); }
+  .petit:disabled { opacity: 0.3; cursor: not-allowed; }
+  .petit:focus-visible { outline: 3px solid var(--lampe-vive); outline-offset: 1px; }
+  .ajout { display: flex; align-items: center; gap: var(--e-3); flex-wrap: wrap; }
+  .lu { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; margin: 0; }
+  .resume { margin: 0; font-weight: 600; }
   .film:focus-within { outline: 3px solid var(--lampe-vive); outline-offset: 2px; }
   @media (hover: hover) { .film:not(.choisi):hover { background: var(--s3); } }
   .case { display: flex; gap: 10px; align-items: center; min-height: 44px; cursor: pointer; }

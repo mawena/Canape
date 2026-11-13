@@ -2,6 +2,17 @@
 import type { UtilisateurPublic } from './comptes.ts';
 import type { Film } from './films.ts';
 
+/** Un film du programme d'une soirée. `rang` ordonne le programme (il peut y avoir des trous) ; le film en cours est celui de `Seance.rangCourant`. */
+export interface FilmProgramme {
+  rang: number;
+  filmId: string;
+  titre: string;
+  annee: number | null;
+  aAffiche: boolean;
+  versionImages: number;
+  couleur: string | null;
+}
+
 export interface Seance {
   id: string;
   hoteId: number;
@@ -18,6 +29,10 @@ export interface Seance {
   creeLe: string;
   termineeLe: string | null;
   invites: UtilisateurPublic[];
+  /** Les films de la soirée, dans l'ordre (un seul pour une séance ordinaire). */
+  programme: FilmProgramme[];
+  /** `rang` du film en cours dans `programme`. */
+  rangCourant: number;
   /** Nombre de connexions actuellement dans la salle. */
   presents: number;
 }
@@ -31,10 +46,18 @@ export interface ListeSeances {
 
 /** `POST /api/seances` */
 export interface CorpsCreerSeance {
-  filmId: string;
+  /** Un seul film (séance ordinaire). Ignoré si `filmIds` est donné. */
+  filmId?: string;
+  /** Les films de la soirée, dans l'ordre (de 1 à `MAX_FILMS_PROGRAMME`) : le premier est lancé d'abord. */
+  filmIds?: string[];
   titre?: string;
   prevueLe?: string;
   invites?: number[];
+}
+
+/** `PUT /api/seances/:id/programme` (hôte) : remplace les films **à venir** (après le film en cours). */
+export interface CorpsProgramme {
+  filmIds: string[];
 }
 
 /** `PATCH /api/seances/:id` */
@@ -78,6 +101,8 @@ export interface Souvenir {
   termineeLe: string | null;
   /** Durée pendant laquelle au moins deux personnes étaient dans la salle en même temps. */
   secondesEnsemble: number;
+  /** Films de la soirée déjà lancés (au moins 1 s'il y a un film ; plus d'un : une soirée). */
+  nbFilms: number;
   personnes: PresentSouvenir[];
 }
 

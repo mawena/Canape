@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
-  import type { ListeSeances, ReponseLienSeance, Seance } from '@canape/partage';
+  import { phraseProgramme, programmeTrie, type ListeSeances, type ReponseLienSeance, type Seance } from '@canape/partage';
   import { api, ErreurApi } from '$lib/api/client.ts';
   import { session } from '$lib/interface/session.svelte.ts';
   import { Avatar, Bouton, Carte, Chargement, EtatVide, toast } from '$lib/ui/index.ts';
@@ -39,6 +39,8 @@
     }
   }
   const titre = (s: Seance): string => s.titre ?? s.filmTitre ?? 'Séance';
+  /** Soirée : « 3 films : A, B, C » à la place du titre du film ; `null` pour un seul film. */
+  const programme = (s: Seance): string | null => phraseProgramme(programmeTrie(s.programme ?? []).map((f) => f.titre));
   const quand = (s: Seance): Date => new Date(s.prevueLe ?? s.creeLe);
   const jour = (s: Seance): string => String(quand(s).getDate());
   const mois = (s: Seance): string => quand(s).toLocaleDateString('fr-FR', { month: 'short' }).replace('.', '');
@@ -69,13 +71,15 @@
     <ul>
       {#each visibles as s (s.id)}
         {@const enCours = s.presents > 0}
+        {@const soiree = programme(s)}
         <li>
           <Carte doree={enCours}>
             <div class="ligne" data-test="seance">
               <div class="date-bloc" aria-hidden="true"><b class="tn">{jour(s)}</b><span>{mois(s)}</span></div>
               <div class="infos">
                 <strong>{titre(s)}</strong>
-                {#if s.titre && s.filmTitre}<span class="film">{s.filmTitre}</span>{/if}
+                {#if soiree}<span class="film" data-test="resume-programme">{soiree}</span>
+                {:else if s.titre && s.filmTitre}<span class="film">{s.filmTitre}</span>{/if}
                 <span class="date">{enCours ? `${s.presents} dans la salle` : dateEnLettres(s.prevueLe) || dateEnLettres(s.creeLe)}</span>
               </div>
               <div class="avatars">

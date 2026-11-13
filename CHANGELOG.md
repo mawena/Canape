@@ -2,6 +2,34 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) ; versions selon [SemVer](https://semver.org/lang/fr/).
 
+## [1.9.0] — 2026-11-13
+
+Une soirée à plusieurs films.
+
+### Ajouté
+
+- **Programme de la soirée** : à la création d'une séance, « Ajouter un autre film » permet d'en choisir plusieurs,
+  dans l'ordre voulu (monter, descendre, retirer, au clavier comme à la souris) ; le bouton devient « Créer la
+  soirée ».
+- **Panneau « Programme de la soirée »** dans la salle (bouton de la barre, seulement quand il y a plusieurs
+  films) : film en cours et films suivants ; l'hôte peut ajouter un film, retirer ou réordonner les suivants et
+  « Passer au film suivant » ; les invités voient le programme sans les actions. Il ne met pas le film en pause,
+  marche en plein écran et s'ouvre en bas de l'écran sur téléphone.
+- **Entracte de 5 minutes** entre deux films, chez tout le monde : affiche et titre du film suivant, compte à
+  rebours tenu par le serveur (le même pour tous, même après un rechargement ou une arrivée en cours d'entracte).
+  L'hôte peut « Lancer maintenant » ou ajouter 5 minutes. Le chat, les caméras et les réactions continuent. Le film
+  suivant part pour tous avec le compte à rebours habituel.
+- **Fin de soirée** : l'écran de fin n'arrive qu'après le dernier film et demande « Un mot sur cette soirée ? » ; le
+  temps ensemble couvre toute la soirée.
+- La liste des séances, la carte de l'accueil et le sas annoncent le programme (« 2 films : … »). Une séance d'un
+  seul film reste exactement comme avant.
+
+### Base de données
+
+- Migration `080_programme.sql`, appliquée toute seule au démarrage (la mise à jour sauvegarde la base avant) :
+  colonne `seances.rang_courant` et table `seances_programme` ; chaque séance existante reçoit un programme d'un
+  film, le sien.
+
 ## [1.8.0] — 2026-11-13
 
 Agenda et notifications.

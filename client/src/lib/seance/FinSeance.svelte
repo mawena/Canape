@@ -1,9 +1,11 @@
 <script lang="ts">
   // Écran de fin : « C'était bien. », le temps passé ensemble, qui était là, la note d'un mot de chacun.
   // Il s'ouvre à la fin du film (ou quand l'hôte termine la séance), se ferme d'un geste et ne revient pas tout seul.
+  // Soirée de plusieurs films : seulement après le dernier ; il parle alors de la soirée et cite le nombre de films.
   import { Avatar, Bouton } from '$lib/ui/index.ts';
   import SelecteurNote from './SelecteurNote.svelte';
-  import { emojiNote, libelleNote, maNote, phraseTemps, presents } from './souvenir.ts';
+  import { invitationNote, phraseSoiree } from './programme.ts';
+  import { emojiNote, estSeul, libelleNote, maNote, phraseTemps, presents } from './souvenir.ts';
   import type { Salle } from './salle.svelte.ts';
 
   let { salle, surQuitter }: { salle: Salle; surQuitter: () => void } = $props();
@@ -11,12 +13,14 @@
   const moiId = $derived(salle.moi?.utilisateur.id ?? null);
   const s = $derived(salle.souvenir);
   const personnes = $derived(s ? presents(s) : []);
+  const nbFilms = $derived(salle.nbFilmsVus);
+  const resume = $derived(s ? (phraseSoiree(nbFilms, s.secondesEnsemble, estSeul(s)) ?? phraseTemps(s)) : ' ');
 </script>
 
 <div class="voile fin" role="dialog" aria-modal="false" aria-labelledby="titre-fin" data-test="fin-seance">
   <div class="contenu">
     <h2 id="titre-fin">C’était bien.</h2>
-    <p class="temps" data-test="temps-ensemble" aria-live="polite">{s ? phraseTemps(s) : ' '}</p>
+    <p class="temps" data-test="temps-ensemble" data-films={nbFilms} aria-live="polite">{resume}</p>
 
     {#if personnes.length > 1}
       <ul class="presents" aria-label="Qui était là">
@@ -35,7 +39,7 @@
     {/if}
 
     <div class="note-bloc">
-      <p class="invite" id="invite-note">Un mot sur ce film ?</p>
+      <p class="invite" id="invite-note" data-test="invite-note">{invitationNote(nbFilms)}</p>
       <SelecteurNote note={s ? maNote(s, moiId) : null} surChoisir={(n) => void salle.noter(n)} libelle="Ta note" />
     </div>
 

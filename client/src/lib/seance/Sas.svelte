@@ -7,6 +7,7 @@
   import Video from '@lucide/svelte/icons/video';
   import VideoOff from '@lucide/svelte/icons/video-off';
   import Headphones from '@lucide/svelte/icons/headphones';
+  import { phraseProgramme, programmeTrie } from '@canape/partage';
   import { Bouton } from '$lib/ui/index.ts';
   import InviterSeance from './InviterSeance.svelte';
   import { libelleAppareil, mesurerMicro, ouvrirMedias, type RaisonSansMedias } from './medias.ts';
@@ -14,6 +15,8 @@
 
   let { salle, surQuitter, peutInviter = false }: { salle: Salle; surQuitter: () => void; peutInviter?: boolean } = $props();
   let inviterOuvert = $state(false);
+  // Soirée : « 3 films : A, B, C » sous le titre ; rien de plus pour un seul film.
+  const programme = $derived(phraseProgramme(programmeTrie(salle.programme).map((f) => f.titre)));
 
   let flux: MediaStream | null = $state(null);
   let raison: RaisonSansMedias | null = $state(null);
@@ -94,6 +97,7 @@
   <section class="carte">
     <h1>Avant d’entrer</h1>
     <p class="sous">{salle.titre}</p>
+    {#if programme}<p class="programme" data-test="resume-programme">{programme}</p>{/if}
 
     <div class="apercu" class:sans-image={!flux || !cameraActive || !flux.getVideoTracks().length}>
       <video bind:this={previsualisation} autoplay muted playsinline aria-label="Aperçu de ta caméra"></video>
@@ -160,6 +164,7 @@
   .carte { width: min(520px, 100%); background: var(--s1, #15141c); border-radius: var(--r-xl, 28px); padding: 28px; display: grid; gap: 16px; border: 1px solid var(--bord); box-shadow: var(--ombre-4); }
   h1 { font-family: 'Instrument Serif', var(--titre, Georgia, serif); font-size: 2rem; font-weight: 400; margin: 0; }
   .sous { margin: -8px 0 0; color: var(--doux, #c0bacb); }
+  .programme { margin: -12px 0 0; color: var(--discret, #9f99ad); font-size: 0.9rem; }
   .apercu { position: relative; aspect-ratio: 4 / 3; border-radius: var(--r-l, 20px); overflow: hidden; background: var(--s3); display: grid; place-items: center; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.07); }
   .apercu video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
   .apercu.sans-image video { visibility: hidden; }

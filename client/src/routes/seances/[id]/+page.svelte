@@ -6,6 +6,9 @@
   - Commandes : `commandes`, `lecture`, `lancer-ensemble`, `reculer`, `avancer`, `barre-temps`, `volumes`, `vol-film`, `vol-voix`,
     `vol-personne`, `baisse-film`, `langue-st`, `menu-langue`, `langue-<index>`, `st-aucun`, `st-<cle>`, `micro`, `camera`,
     `bouton-chat`, `je-reviens`, `inviter-seance` (hôte seulement ; ouvre `panneau-inviter`, `lien-seance`, `copier-lien-seance`, `partager-lien-seance`, `erreur-lien-seance`), `plein-ecran`, `reaction-1` à `reaction-8`
+  - Soirée (plusieurs films) : `bouton-programme` (ouvre `programme`, `programme-film`, `programme-monter`, `programme-descendre`, `programme-retirer`,
+    `ajouter-film-programme`, `programme-recherche`, `programme-choix`, `film-suivant`, `confirmer-film-suivant` ; actions pour l'hôte seulement),
+    `entracte` (dans la scène ; `entracte-film`, `entracte-temps`, `entracte-lancer`, `entracte-prolonger` pour l'hôte) ; `salle` a `data-entracte`
   - Vignettes : `vignettes`, `vignette` (attributs `data-cid`, `data-parle`, `data-moi`, `data-pair` : new|connecting|connected…), `menu-vignette`, `afficher-cameras`
   - Chat : `chat`, `saisie-chat`, `message` ; réactions flottantes : `reaction`
   - Voiles : `compte-a-rebours`, `attente`, `ne-plus-attendre`, `reprise`, `reprendre-position`, `depuis-le-debut`,
@@ -23,6 +26,7 @@
   import { Avatar, Bouton, Chargement } from '$lib/ui/index.ts';
   import Chat from '$lib/seance/Chat.svelte';
   import Commandes from '$lib/seance/Commandes.svelte';
+  import Entracte from '$lib/seance/Entracte.svelte';
   import { peutInviter } from '$lib/seance/inviter.ts';
   import { lireMoi, urlConnexion } from '$lib/seance/moi.ts';
   import { coteChat } from '$lib/seance/prefs.ts';
@@ -181,9 +185,9 @@
 {:else}
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
-    data-theme="sombre" class="salle" class:repos={cache} class:portrait class:paysage={paysageTel} class:plein-cadre={pleinEcran && !document.fullscreenElement}
+    data-theme="sombre" class="salle" class:repos={cache} class:portrait class:paysage={paysageTel} class:plein-cadre={pleinEcran && !document.fullscreenElement} class:en-entracte={salle.enEntracte}
     bind:this={conteneur} onpointermove={reveiller} onpointerdown={reveiller} data-test="salle" data-phase={salle.phase} data-liaison={salle.liaison}
-    data-lecture={salle.enLecture} data-position={Math.round(salle.temps)} data-nb-presents={salle.personnes.length}
+    data-lecture={salle.enLecture} data-position={Math.round(salle.temps)} data-nb-presents={salle.personnes.length} data-entracte={salle.enEntracte}
   >
     <div class="lueur" aria-hidden="true"></div>
 
@@ -220,6 +224,7 @@
     <div class="scene" ondblclick={doubleClic} role="presentation">
       <!-- svelte-ignore a11y_media_has_caption -->
       <video bind:this={video} playsinline onclick={cliquerFilm} data-test="film" aria-label="Film"></video>
+      {#if salle.enEntracte}<Entracte {salle} />{/if}
     </div>
 
     <Vignettes {salle} avecNom={!cache} imposerRangee={portrait} {paysageTel} {conteneur} />
@@ -306,6 +311,8 @@
   .salle:not(.portrait) :global(.vignettes.rangee) { margin-bottom: 112px; position: relative; z-index: 4; }
   .portrait .haut { position: static; padding: 8px 12px; background: var(--s1, #15141c); }
   .portrait .scene { flex: none; aspect-ratio: 16 / 9; }
+  /* Entracte sur téléphone : la scène grandit pour l'affiche, le minuteur et les boutons. */
+  .portrait.en-entracte .scene { aspect-ratio: auto; min-height: 300px; }
   .portrait .bas { position: static; }
   .portrait .annonces { top: 52px; }
   .portrait .apercu, .portrait .conseil { display: none; }

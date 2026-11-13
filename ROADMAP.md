@@ -205,7 +205,7 @@ Ajouter une séance à son agenda ; être prévenu quand quelqu'un entre dans la
 
 Enchaîner plusieurs films dans une même séance (liste d'attente), avec un entracte de 5 minutes entre deux.
 
-- [ ] Serveur : liste des films d'une séance, passage synchronisé au film suivant, entracte
-- [ ] Interface : liste à la création et dans la salle (hôte), entracte avec compte à rebours
-- [ ] Essais (unitaires, Playwright), captures
+- [x] Serveur : liste des films d'une séance, passage synchronisé au film suivant, entracte
+- [x] Interface : liste à la création et dans la salle (hôte), entracte avec compte à rebours
+- [x] Essais (unitaires, Playwright), captures
 - [ ] Release 1.9.0 et mise en production

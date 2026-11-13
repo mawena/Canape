@@ -3,6 +3,7 @@ export * from './agenda.ts';
 export * from './films.ts';
 export * from './lecture.ts';
 export * from './notifications.ts';
+export * from './programme.ts';
 export * from './seances.ts';
 export * from './torrents.ts';
 export * from './ws.ts';

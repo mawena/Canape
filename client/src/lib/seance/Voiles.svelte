@@ -1,5 +1,6 @@
 <script lang="ts">
   // Tout ce qui se pose sur le film : compte à rebours, attente mutuelle, lecture bloquée, reprise, fin, erreurs.
+  // Pendant l'entracte d'une soirée, seul le voile « Entracte » (posé dans la scène par la page) reste.
   import { Bouton } from '$lib/ui/index.ts';
   import FinSeance from './FinSeance.svelte';
   import { formaterDuree } from './synchro.ts';
@@ -14,7 +15,7 @@
     <p class="chiffre" aria-live="assertive" role="status">{salle.compte}</p>
     <Bouton variante="secondaire" onclick={() => salle.annulerCompteARebours()}>Annuler</Bouton>
   </div>
-{:else if salle.etat?.filmId && (salle.etat.attente.length || salle.chargement) && !salle.fini}
+{:else if salle.etat?.filmId && (salle.etat.attente.length || salle.chargement) && !salle.fini && !salle.enEntracte}
   <div class="voile attente" role="status" data-test="attente">
     <span class="anneau" aria-hidden="true"></span>
     {#if salle.jeSuisEnAttente || (!salle.etat.attente.length && salle.chargement)}
@@ -44,7 +45,7 @@
   </div>
 {/if}
 
-{#if salle.reprise && salle.compte === null && !salle.fini}
+{#if salle.reprise && salle.compte === null && !salle.fini && !salle.enEntracte}
   <div class="voile carte" data-test="reprise">
     <h2>Reprendre ici ?</h2>
     <p>Tu t’étais arrêté·e à {formaterDuree(salle.reprise.position)}{salle.reprise.avec.length ? ` avec ${salle.reprise.avec.join(', ')}` : ''}.</p>
