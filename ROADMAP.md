@@ -180,7 +180,7 @@ téléchargements en cours, lancer une séance en deux clics ; une page claire s
 - [x] Analyse de l'accueil actuel (ordinateur, téléphone, compte neuf, compte chargé) et nouvelle organisation
 - [x] Interface : séance en cours ou à venir, « Reprendre », téléchargements en cours, lancement rapide d'une séance
 - [x] Essais (unitaires, Playwright), captures ordinateur et téléphone, clair et sombre
-- [ ] Release 1.6.0 et mise en production
+- [x] Release 1.6.0 et mise en production
 
 ## Phase 19 — Fin de séance et souvenir
 
@@ -190,7 +190,7 @@ gardés dans l'historique.
 - [x] Serveur : durée passée ensemble, note de chaque personne (migration, API)
 - [x] Interface : écran de fin de séance, note, souvenir visible dans l'historique
 - [x] Essais (unitaires, Playwright), captures
-- [ ] Release 1.7.0 et mise en production
+- [x] Release 1.7.0 et mise en production
 
 ## Phase 20 — Agenda et notifications
 
@@ -199,7 +199,7 @@ Ajouter une séance à son agenda ; être prévenu quand quelqu'un entre dans la
 - [x] Fichier agenda (.ics) d'une séance prévue
 - [x] Notifications Web Push « Camille est dans la salle » : accord par appareil dans le compte, envoi par le serveur
 - [x] Essais (sans contacter de vrai service de notifications), captures
-- [ ] Release 1.8.0 et mise en production
+- [x] Release 1.8.0 et mise en production
 
 ## Phase 21 — Soirée à plusieurs films
 
@@ -208,4 +208,4 @@ Enchaîner plusieurs films dans une même séance (liste d'attente), avec un ent
 - [x] Serveur : liste des films d'une séance, passage synchronisé au film suivant, entracte
 - [x] Interface : liste à la création et dans la salle (hôte), entracte avec compte à rebours
 - [x] Essais (unitaires, Playwright), captures
-- [ ] Release 1.9.0 et mise en production
+- [x] Release 1.9.0 et mise en production
