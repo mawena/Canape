@@ -1,7 +1,7 @@
 // Routes REST des séances : droits, création, liens, messages, reprise, historique, ICE.
 import assert from 'node:assert/strict';
 import { after, before, describe, test } from 'node:test';
-import { creerUtilisateur, faireConnaitre, get, patch, post, supprimer, type UtilisateurTest } from '../aides.ts';
+import { creerUtilisateur, faireConnaitre, get, patch, post, put, supprimer, type UtilisateurTest } from '../aides.ts';
 import { creerEnv, insererFilm, inserer, type Env } from './aides-seances.ts';
 
 describe('séances : REST', () => {
@@ -37,6 +37,59 @@ describe('séances : REST', () => {
     assert.equal((await post(env.app, '/api/seances', { filmId: film, invites: [99999] }, hote)).statusCode, 400);
     assert.equal((await post(env.app, '/api/seances', {}, hote)).statusCode, 400);
     assert.equal((await post(env.app, '/api/seances', { filmId: film, titre: 'x'.repeat(121) }, hote)).statusCode, 400);
+  });
+
+  test('programme : création avec filmIds (droits sur chaque film, ordre, sans doublon) et filmId toujours accepté', async () => {
+    const f2 = insererFilm(env, hote, { visibilite: 'tous' });
+    const f3 = insererFilm(env, hote, { visibilite: 'tous' });
+    const r = await post(env.app, '/api/seances', { filmIds: [f2, f3, f2], invites: [invite.id] }, hote);
+    assert.equal(r.statusCode, 201);
+    const s = r.json();
+    assert.equal(s.filmId, f2);
+    assert.deepEqual(s.programme.map((p: { filmId: string }) => p.filmId), [f2, f3]);
+    assert.equal(s.rangCourant, 0);
+    // Une séance d'un seul film : un programme d'un film, comme avant.
+    const seul = (await post(env.app, '/api/seances', { filmId: film }, hote)).json();
+    assert.deepEqual(seul.programme.map((p: { filmId: string }) => p.filmId), [film]);
+    // Chaque film doit être visible de l'hôte.
+    assert.equal((await post(env.app, '/api/seances', { filmIds: [film, filmPrive] }, hote)).statusCode, 404);
+    assert.equal((await post(env.app, '/api/seances', { filmIds: [] }, hote)).statusCode, 400);
+    assert.equal((await post(env.app, '/api/seances', { filmIds: 'x' }, hote)).statusCode, 400);
+    assert.equal((await post(env.app, '/api/seances', { filmIds: Array.from({ length: 21 }, () => film) }, hote)).statusCode, 400);
+    assert.equal((await post(env.app, '/api/seances', { filmIds: [film, 7] }, hote)).statusCode, 400);
+  });
+
+  test('programme : seul l\'hôte (ou un admin) remplace les films à venir ; le film en cours reste', async () => {
+    const f2 = insererFilm(env, hote, { visibilite: 'tous' });
+    const f3 = insererFilm(env, hote, { visibilite: 'tous' });
+    const f4 = insererFilm(env, hote, { visibilite: 'tous' });
+    const id = (await post(env.app, '/api/seances', { filmIds: [film, f2], invites: [invite.id] }, hote)).json().id;
+    assert.equal((await put(env.app, `/api/seances/${id}/programme`, { filmIds: [f4] }, invite)).statusCode, 403);
+    assert.equal((await put(env.app, `/api/seances/${id}/programme`, { filmIds: [f4] }, etranger)).statusCode, 404);
+    const r = await put(env.app, `/api/seances/${id}/programme`, { filmIds: [f4, f3] }, hote);
+    assert.equal(r.statusCode, 200);
+    assert.deepEqual(r.json().programme.map((p: { filmId: string }) => p.filmId), [film, f4, f3]);
+    assert.equal(r.json().filmId, film);
+    assert.equal((await put(env.app, `/api/seances/${id}/programme`, { filmIds: [filmPrive] }, hote)).statusCode, 404);
+    assert.equal((await put(env.app, `/api/seances/${id}/programme`, { filmIds: [] }, admin)).statusCode, 200);
+    assert.deepEqual((await get(env.app, `/api/seances/${id}`, invite)).json().programme.map((p: { filmId: string }) => p.filmId), [film]);
+  });
+
+  test('programme : l\'invité voit les films suivants (même privés) tant que la séance n\'est pas finie', async () => {
+    const f2 = insererFilm(env, hote, { visibilite: 'prive' });
+    const u = { id: invite.id, role: 'viewer' } as never;
+    const id = (await post(env.app, '/api/seances', { filmIds: [film, f2], invites: [invite.id] }, hote)).json().id;
+    assert.equal(env.faux.service.peutVoir(u, f2), true);
+    await patch(env.app, `/api/seances/${id}`, { terminee: true }, hote);
+    assert.equal(env.faux.service.peutVoir(u, f2), false);
+  });
+
+  test('changer de film par PATCH remplace le film en cours dans le programme', async () => {
+    const f2 = insererFilm(env, hote, { visibilite: 'tous' });
+    const f3 = insererFilm(env, hote, { visibilite: 'tous' });
+    const id = (await post(env.app, '/api/seances', { filmIds: [film, f2] }, hote)).json().id;
+    const s = (await patch(env.app, `/api/seances/${id}`, { filmId: f3 }, hote)).json();
+    assert.deepEqual(s.programme.map((p: { filmId: string }) => p.filmId), [f3, f2]);
   });
 
   test('droits : hôte, invité, admin ; étranger : 404', async () => {

@@ -55,9 +55,10 @@ export interface Env extends AppTest {
   port: number;
 }
 
-export async function creerEnv(): Promise<Env> {
+export async function creerEnv(env: Record<string, string> = {}): Promise<Env> {
   let faux!: Faux;
   const t = await creerAppTest({
+    env,
     avantPret: (app) => {
       faux = fauxMediatheque(app);
       // La vraie médiathèque est déjà enregistrée par creerApp : on la remplace par le faux service.
@@ -131,9 +132,11 @@ export function connecter(env: Env, seanceId: string, u: UtilisateurTest | null,
   });
 }
 
-export function inserer(t: AppTest, hote: UtilisateurTest, filmId: string | null, invites: UtilisateurTest[] = []): string {
+/** Séance directement en base, avec son programme (le film en cours au rang 0, puis `suite`). */
+export function inserer(t: AppTest, hote: UtilisateurTest, filmId: string | null, invites: UtilisateurTest[] = [], suite: string[] = []): string {
   const id = idBase32();
   t.db.prepare('INSERT INTO seances (id, hote_id, film_id, position, cree_le) VALUES (?, ?, ?, 0, ?)').run(id, hote.id, filmId, new Date().toISOString());
+  [...(filmId ? [filmId] : []), ...suite].forEach((f, i) => t.db.prepare('INSERT INTO seances_programme (seance_id, rang, film_id) VALUES (?, ?, ?)').run(id, i, f));
   for (const i of invites) t.db.prepare('INSERT INTO seances_participants (seance_id, utilisateur_id) VALUES (?, ?)').run(id, i.id);
   return id;
 }

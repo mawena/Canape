@@ -162,6 +162,8 @@ export const post = (app: FastifyInstance, url: string, corps?: Corps, utilisate
   requete(app, 'POST', url, { utilisateur, corps: corps ?? null });
 export const patch = (app: FastifyInstance, url: string, corps: Corps, utilisateur?: UtilisateurTest | null) =>
   requete(app, 'PATCH', url, { utilisateur, corps });
+export const put = (app: FastifyInstance, url: string, corps: Corps, utilisateur?: UtilisateurTest | null) =>
+  requete(app, 'PUT', url, { utilisateur, corps });
 export const supprimer = (app: FastifyInstance, url: string, utilisateur?: UtilisateurTest | null) =>
   requete(app, 'DELETE', url, { utilisateur });
 

@@ -2,7 +2,7 @@
 import { statSync } from 'node:fs';
 import path from 'node:path';
 import type { FastifyInstance } from 'fastify';
-import type { Film, MessageChat, MessageChatWs, ProgressionFilm, Seance, UtilisateurPublic } from '@canape/partage';
+import type { Film, FilmProgramme, MessageChat, MessageChatWs, ProgressionFilm, Seance, UtilisateurPublic } from '@canape/partage';
 import type { UtilisateurConnecte } from '../../commun/auth.ts';
 import { introuvable } from '../../commun/erreurs.ts';
 import { estParticipant, souvenirDe } from './souvenirs.ts';
@@ -17,6 +17,7 @@ export interface LigneSeance {
   piste_audio: number | null;
   sous_titres: string | null;
   position: number;
+  rang_courant: number;
   cree_le: string;
   terminee_le: string | null;
   hote_prenom: string;
@@ -37,6 +38,55 @@ export function invitesDe(app: FastifyInstance, seanceId: string): UtilisateurPu
   ).all(seanceId) as unknown as UtilisateurPublic[]).map((u) => ({ id: u.id, prenom: u.prenom, couleur: u.couleur }));
 }
 
+interface LigneProgramme {
+  rang: number; film_id: string; titre: string; annee: number | null; affiche: string | null; fond: string | null; couleur: string | null;
+}
+
+/** Programme d'une séance dans l'ordre (les films supprimés ont disparu de la table). */
+export function programmeDe(app: FastifyInstance, seanceId: string): FilmProgramme[] {
+  const lignes = app.db.prepare(
+    `SELECT g.rang, g.film_id, f.titre, f.annee, f.affiche, f.fond, f.couleur
+       FROM seances_programme g JOIN films f ON f.id = g.film_id WHERE g.seance_id = ? ORDER BY g.rang`,
+  ).all(seanceId) as unknown as LigneProgramme[];
+  return lignes.map((l) => ({
+    rang: l.rang, filmId: l.film_id, titre: l.titre, annee: l.annee, aAffiche: l.affiche !== null, couleur: l.couleur,
+    versionImages: versionImages(app.config.films, l),
+  }));
+}
+
+/** Le film qui suit le film en cours, ou `null` (dernier film, ou film en cours seul). */
+export function suivantDe(app: FastifyInstance, seanceId: string): { rang: number; filmId: string } | null {
+  const l = app.db.prepare(
+    `SELECT g.rang, g.film_id FROM seances_programme g JOIN seances s ON s.id = g.seance_id
+      WHERE g.seance_id = ? AND g.rang > s.rang_courant ORDER BY g.rang LIMIT 1`,
+  ).get(seanceId) as { rang: number; film_id: string } | undefined;
+  return l ? { rang: l.rang, filmId: l.film_id } : null;
+}
+
+/** Le film en cours change (choix manuel) : il prend la place du film en cours dans le programme. */
+export function poserFilmCourant(app: FastifyInstance, seanceId: string, filmId: string): void {
+  const s = app.db.prepare('SELECT rang_courant FROM seances WHERE id = ?').get(seanceId) as { rang_courant: number } | undefined;
+  if (!s) return;
+  app.db.prepare(
+    `INSERT INTO seances_programme (seance_id, rang, film_id) VALUES (?, ?, ?)
+     ON CONFLICT (seance_id, rang) DO UPDATE SET film_id = excluded.film_id`,
+  ).run(seanceId, s.rang_courant, filmId);
+}
+
+/** Passe le film en cours au rang `rang` du programme. */
+export function avancerAuRang(app: FastifyInstance, seanceId: string, rang: number): void {
+  app.db.prepare('UPDATE seances SET rang_courant = ? WHERE id = ?').run(rang, seanceId);
+}
+
+/** Remplace les films à venir (après le film en cours) par `filmIds`, dans cet ordre. */
+export function remplacerAVenir(app: FastifyInstance, seanceId: string, filmIds: string[]): void {
+  const s = app.db.prepare('SELECT rang_courant FROM seances WHERE id = ?').get(seanceId) as { rang_courant: number } | undefined;
+  if (!s) return;
+  app.db.prepare('DELETE FROM seances_programme WHERE seance_id = ? AND rang > ?').run(seanceId, s.rang_courant);
+  const ins = app.db.prepare('INSERT INTO seances_programme (seance_id, rang, film_id) VALUES (?, ?, ?)');
+  filmIds.forEach((id, i) => ins.run(seanceId, s.rang_courant + 1 + i, id));
+}
+
 export function versSeance(app: FastifyInstance, l: LigneSeance, presents: number): Seance {
   // Film supprimé (la clé étrangère a vidé `film_id`) : position et pistes n'ont plus de sens.
   if (l.film_id === null) l = { ...l, position: 0, piste_audio: null, sous_titres: null };
@@ -44,7 +94,7 @@ export function versSeance(app: FastifyInstance, l: LigneSeance, presents: numbe
     id: l.id, hoteId: l.hote_id, hotePrenom: l.hote_prenom, filmId: l.film_id, filmTitre: l.film_titre,
     titre: l.titre, prevueLe: l.prevue_le, aUnLien: l.lien_hash !== null, pisteAudio: l.piste_audio,
     sousTitres: l.sous_titres, position: l.position, creeLe: l.cree_le, termineeLe: l.terminee_le,
-    invites: invitesDe(app, l.id), presents,
+    invites: invitesDe(app, l.id), programme: programmeDe(app, l.id), rangCourant: l.rang_courant, presents,
   };
 }
 
@@ -92,7 +142,7 @@ interface LigneProgression {
 }
 
 /** Même règle que la médiathèque : date de dernière écriture des images (cache du navigateur, `?v=`). */
-function versionImages(dossierFilms: string, l: LigneProgression): number {
+function versionImages(dossierFilms: string, l: { affiche: string | null; fond: string | null }): number {
   let v = 0;
   for (const rel of [l.affiche, l.fond]) {
     if (!rel) continue;

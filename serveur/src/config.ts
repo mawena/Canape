@@ -54,6 +54,8 @@ export interface Config {
   transcodageFils: number;
   transcodagePriorite: number;
   preparationAuto: boolean;
+  /** Interne (essais) : durée de l'entracte entre deux films, en secondes (`CANAPE_ENTRACTE_SECONDES`, 300 par défaut). */
+  entracteSecondes: number;
   tmdbCle: string;
   ice: ServeurIce[];
   turnUrls: string[];
@@ -203,6 +205,7 @@ export function chargerConfig(env: Record<string, string | undefined> = process.
     transcodageFils: entier(v['CANAPE_TRANSCODAGE_FILS'], fils, 'CANAPE_TRANSCODAGE_FILS', 1, 256),
     transcodagePriorite: entier(v['CANAPE_TRANSCODAGE_PRIORITE'], 10, 'CANAPE_TRANSCODAGE_PRIORITE', 0, 19),
     preparationAuto: booleen(v['CANAPE_PREPARATION_AUTO'], true),
+    entracteSecondes: entier(v['CANAPE_ENTRACTE_SECONDES'], 300, 'CANAPE_ENTRACTE_SECONDES', 1, 3600),
     tmdbCle: v['CANAPE_TMDB_CLE'] || '',
     ice,
     turnUrls: (v['CANAPE_TURN_URLS'] || '').split(',').map((s) => s.trim()).filter(Boolean),
