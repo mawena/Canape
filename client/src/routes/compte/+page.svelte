@@ -4,6 +4,7 @@
   import { api, ErreurApi } from '$lib/api/client.ts';
   import { aideMotDePasse, formaterOctets, pourcentage } from '$lib/comptes/format.ts';
   import { session } from '$lib/comptes/session.svelte.ts';
+  import NotificationsAppareil from '$lib/notifications/NotificationsAppareil.svelte';
   import { Avatar, BarreProgression, Bouton, Carte, Champ, Chargement, toast } from '$lib/ui/index.ts';
 
   let compte = $state<Compte | null>(null);
@@ -86,6 +87,8 @@
         <Bouton type="submit" chargement={envoiMdp} disabled={!actuel || !nouveau || aide !== null}>Changer le mot de passe</Bouton>
       </form>
     </Carte>
+
+    <NotificationsAppareil />
 
     <Carte titre="Apparence">
       <p class="doux">Clair par défaut. Le thème sombre est plus reposant le soir ; « Comme mon appareil » suit ses réglages.</p>

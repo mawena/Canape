@@ -2,6 +2,36 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) ; versions selon [SemVer](https://semver.org/lang/fr/).
 
+## [1.8.0] — 2026-11-13
+
+Agenda et notifications.
+
+### Ajouté
+
+- **« Ajouter à l'agenda »** sur chaque séance qui a une date (liste des séances, séance tout juste créée, carte de
+  l'accueil) : un fichier `.ics` que tous les agendas savent lire, avec un rappel 15 minutes avant et le lien vers la
+  séance (jamais le lien d'invitation).
+- **Notifications « Camille est dans la salle »** : quand quelqu'un entre dans la salle, les autres participants de
+  la séance qui l'ont accepté sont prévenus sur leurs appareils. Une seule notification par personne et par séance
+  toutes les 10 minutes ; rien pour qui est déjà dans la salle.
+- **Notifications sur cet appareil**, dans la page Compte : un interrupteur par appareil, un bouton pour s'envoyer
+  un essai, et un état clair (refusé par le navigateur, non pris en charge, iPhone : seulement une fois Canapé ajouté
+  à l'écran d'accueil). La permission n'est demandée qu'au clic.
+
+### Sécurité
+
+- Notifications Web Push écrites sans nouvelle dépendance (VAPID et chiffrement `aes128gcm` de `node:crypto`,
+  vérifiés sur l'exemple de la RFC 8291) ; le contenu est chiffré pour l'appareil : prénom, titre et adresse de la
+  séance seulement.
+- En production, le serveur n'envoie qu'aux services de notifications des navigateurs (Google, Mozilla, Apple,
+  Microsoft), sans suivre de redirection et avec un délai maximal : l'inscription étant libre, il ne peut pas servir
+  de relais vers un autre site.
+
+### Base de données
+
+- Migration `070_notifications.sql`, appliquée toute seule au démarrage : clés du serveur (créées une fois, à ne
+  jamais supprimer : sinon les appareils abonnés ne reçoivent plus rien), abonnements, derniers envois.
+
 ## [1.7.0] — 2026-11-13
 
 Fin de séance et souvenirs.

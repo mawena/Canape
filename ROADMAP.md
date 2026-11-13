@@ -196,9 +196,9 @@ gardés dans l'historique.
 
 Ajouter une séance à son agenda ; être prévenu quand quelqu'un entre dans la salle (avec l'accord de chacun).
 
-- [ ] Fichier agenda (.ics) d'une séance prévue
-- [ ] Notifications Web Push « Camille est dans la salle » : accord par appareil dans le compte, envoi par le serveur
-- [ ] Essais (sans contacter de vrai service de notifications), captures
+- [x] Fichier agenda (.ics) d'une séance prévue
+- [x] Notifications Web Push « Camille est dans la salle » : accord par appareil dans le compte, envoi par le serveur
+- [x] Essais (sans contacter de vrai service de notifications), captures
 - [ ] Release 1.8.0 et mise en production
 
 ## Phase 21 — Soirée à plusieurs films

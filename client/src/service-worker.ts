@@ -56,3 +56,38 @@ sw.addEventListener('fetch', (event) => {
     );
   }
 });
+
+// ---- Notifications Web Push ----
+// La charge arrive chiffrée du service de notifications du navigateur : prénom, titre et adresse de la séance seulement.
+interface ChargePush { titre?: string; corps?: string; url?: string; etiquette?: string }
+
+sw.addEventListener('push', (event) => {
+  let charge: ChargePush = {};
+  try { charge = (event.data?.json() ?? {}) as ChargePush; } catch { /* charge illisible : notification générique */ }
+  event.waitUntil(
+    sw.registration.showNotification(charge.titre ?? 'Canapé', {
+      body: charge.corps ?? '',
+      icon: '/icones/icone-192.png',
+      badge: '/icones/icone-192.png',
+      ...(charge.etiquette ? { tag: charge.etiquette } : {}),
+      data: { url: typeof charge.url === 'string' && /^\/(?!\/)/.test(charge.url) ? charge.url : '/' },
+    }),
+  );
+});
+
+sw.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = new URL((event.notification.data as { url?: string } | null)?.url ?? '/', sw.location.origin);
+  event.waitUntil((async () => {
+    const fenetres = (await sw.clients.matchAll({ type: 'window', includeUncontrolled: true })) as WindowClient[];
+    // Déjà sur la bonne page : on la met au premier plan.
+    const identique = fenetres.find((f) => new URL(f.url).pathname === url.pathname);
+    if (identique) { await identique.focus(); return; }
+    // Un onglet Canapé qui n'est pas dans une salle (la salle en cours n'est jamais quittée) : il prend la page.
+    const libre = fenetres.find((f) => !/^\/seances\/[a-z2-7]{12}\/?$/.test(new URL(f.url).pathname));
+    if (libre) {
+      try { await (await libre.focus()).navigate(url.href); return; } catch { /* repli : nouvelle fenêtre */ }
+    }
+    await sw.clients.openWindow(url.href);
+  })());
+});

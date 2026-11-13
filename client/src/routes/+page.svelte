@@ -6,6 +6,7 @@
     AfficheFilm, BarreProgression, Bouton, Badge, EnTetePage, EtatVide, Icone, Lueur, MiniAffiche, PileAvatars, Squelette, toast,
     couleurDuTitre, formaterDans, formaterDuree, formaterHeure, formaterJourLong,
   } from '$lib/ui/index.ts';
+  import BoutonAgenda from '$lib/seance/BoutonAgenda.svelte';
   import { accroche, autresPersonnes, filmsARreprendre, filmsPourLancer, ouvertureSalle, salleOuverte, seanceDeCeSoir } from '$lib/interface/accueil.ts';
   import LancementRapide from '$lib/interface/LancementRapide.svelte';
   import Telechargements from '$lib/interface/Telechargements.svelte';
@@ -155,6 +156,7 @@
           <div class="boutons">
             <Bouton taille="l" icone="lecture" href={ouverte ? liens.seance(ceSoir.id) : undefined} disabled={!ouverte} data-test="rejoindre">{enCours ? 'Rejoindre' : 'Entrer dans la salle'}</Bouton>
             <Bouton variante="secondaire" icone={copie ? 'verifier' : 'lien'} onclick={copierLien} data-test="copier-lien-hero">Copier le lien</Bouton>
+            {#if ceSoir.prevueLe && ceSoir.termineeLe === null && !enCours}<BoutonAgenda seanceId={ceSoir.id} variante="secondaire" />{/if}
           </div>
           {#if !ouverte && ouverture}<p class="aide-hero">La salle ouvre à {formaterHeure(ouverture)}.</p>{/if}
         </div>
