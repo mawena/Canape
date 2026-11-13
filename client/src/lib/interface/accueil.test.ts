@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import type { ListeSeances, Seance } from '@canape/partage';
-import { accroche, autresPersonnes, salleOuverte, seanceDeCeSoir } from './accueil.ts';
+import { accroche, autresPersonnes, filmsPourLancer, salleOuverte, seanceDeCeSoir, telechargementsAMontrer, titreTelechargements } from './accueil.ts';
 
 function seance(p: Partial<Seance>): Seance {
   return {
@@ -45,5 +45,22 @@ describe('accueil', () => {
     assert.equal(accroche('Awa', null, 1, false, maintenant).suite, 'qu’est-ce qu’on regarde\u00a0?');
     assert.equal(accroche('Awa', null, 1, true, maintenant).suite, 'reprends où tu t’étais arrêté.');
     assert.equal(accroche('Awa', seance({ presents: 1 }), 1, false, maintenant).suite, 'Léa est déjà là.');
+  });
+});
+
+describe('accueil : lancement rapide et téléchargements', () => {
+  it('ne propose que les films prêts, ceux commencés d’abord', () => {
+    const films = [{ id: 'a', etat: 'pret' }, { id: 'b', etat: 'analyse' }, { id: 'c', etat: 'pret' }, { id: 'd', etat: 'erreur' }];
+    const reprises = [{ film: { id: 'c' } }] as unknown as Parameters<typeof filmsPourLancer>[1];
+    assert.deepEqual(filmsPourLancer(films, reprises).map((f) => f.id), ['c', 'a']);
+    assert.deepEqual(filmsPourLancer(films).map((f) => f.id), ['a', 'c']);
+  });
+  it('ne garde que les téléchargements actifs', () => {
+    const l = [{ etat: 'telechargement' }, { etat: 'metadonnees' }, { etat: 'pause' }, { etat: 'termine' }, { etat: 'erreur' }, { etat: 'annule' }];
+    assert.equal(telechargementsAMontrer(l).length, 3);
+  });
+  it('accorde le titre', () => {
+    assert.equal(titreTelechargements(1), '1 téléchargement en cours');
+    assert.equal(titreTelechargements(3), '3 téléchargements en cours');
   });
 });

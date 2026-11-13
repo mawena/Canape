@@ -524,6 +524,15 @@ choix langue et sous-titres, chat repliable, réactions qui flottent, compte à 
 réglages). Installable (PWA) : manifeste, icônes, service worker qui ne met en cache que l'enveloppe de l'application
 (jamais les médias ni l'API).
 
+*Réalisé (phase 18, accueil plus pratique)* : l'accueil va droit au but, dans cet ordre : la séance en cours (« Rejoindre ») ou
+la prochaine (« Entrer dans la salle », « Copier le lien »), sinon le **lancement rapide** (`LancementRapide.svelte` : on touche
+un film puis « Lancer », ce qui appelle `POST /api/seances` sans date puis `POST /api/seances/:id/lien` et montre le lien ; « Plus
+d'options » mène à la page Nouvelle séance) ; « Reprendre » (lignes avec barre de progression, un seul geste) ; les
+téléchargements en cours (`Telechargements.svelte`, même suivi que la galerie, rien s'il n'y en a pas) ; le lancement rapide
+« autre séance » ; les ajouts récents ; « Pour bien démarrer » en bas (il reste la première chose d'un compte neuf). Sur
+téléphone, la carte de séance tient dans le premier écran (affiche de 84 px à côté du titre, boutons sous le pouce). Logique pure
+dans `client/src/lib/interface/accueil.ts`. Aucune modification du serveur.
+
 ## Livraison
 
 - Paquet : `scripts/paquet.sh` → `dist/canape-<version>.tar.gz` (serveur/src, serveur/migrations, partage/src,

@@ -97,7 +97,7 @@ main, séances, chat et réactions, reprise, PWA, mise en production automatique
 ## Phase 12 — Release 1.0.0
 
 - [x] Version, CHANGELOG, tag, release GitHub
-- [ ] Premier déploiement automatique sur https://canape.mawena.cloud, vérifié
+- [ ] Premier déploiement automatique sur https://canape.mawena.cloud, vérifié (en attente : facturation GitHub Actions débloquée fin novembre 2026)
 
 ---
 
@@ -152,7 +152,7 @@ le VPS pour tous les torrents. Contrat : [docs/CONCEPTION.md](docs/CONCEPTION.md
 - [x] Mise en production de la 1.4.0 et installation de Transmission sur https://canape.mawena.cloud (torrent privé C411 vérifié par l'utilisateur)
 - [x] Correctif 1.4.1 : dossiers de téléchargement ouverts au groupe sans chmod setgid (refusé par `RestrictSUIDSGID` : « Permission denied » chez Transmission), `mettre-a-jour` garde `telechargements` en `2770`
 - [x] Mise en production de la 1.4.1 : le torrent privé C411 se télécharge (vérifié par l'utilisateur)
-- [ ] Premier film privé arrivé dans la galerie (lien physique, partage qui continue)
+- [x] Premier film privé arrivé dans la galerie (lien physique, partage qui continue) — confirmé en production le 13/11/2026
 
 ---
 
@@ -166,4 +166,46 @@ arrive dans la salle au bon moment du film.
 - [x] Interface : bouton « Inviter » dans la salle (pendant le film, plein écran compris, sans pause) et dans le sas : lien, « Copier le lien », « Partager » sur téléphone ; « Copier le lien » dans la liste des séances ; seulement pour l'hôte
 - [x] Arrivée en cours de film : la personne qui rejoint par le lien est synchronisée au bon moment (corrigé si besoin)
 - [x] Essais (unitaires, Playwright : invitation pendant le film, troisième personne qui rejoint, invité sans le bouton), captures
-- [ ] Release 1.5.0 et mise en production
+- [x] Release 1.5.0 et mise en production — en ligne le 13/11/2026
+
+# Canapé 1.6 à 1.9 — accueil, souvenirs, agenda, soirées
+
+Quatre fonctions choisies le 13/11/2026, dans cet ordre ; une phase et une release chacune.
+
+## Phase 18 — Accueil plus pratique
+
+Aller droit au but dès l'ouverture : la séance en cours ou la prochaine en avant, reprendre un film commencé, voir les
+téléchargements en cours, lancer une séance en deux clics ; une page claire sur téléphone.
+
+- [x] Analyse de l'accueil actuel (ordinateur, téléphone, compte neuf, compte chargé) et nouvelle organisation
+- [x] Interface : séance en cours ou à venir, « Reprendre », téléchargements en cours, lancement rapide d'une séance
+- [x] Essais (unitaires, Playwright), captures ordinateur et téléphone, clair et sombre
+- [ ] Release 1.6.0 et mise en production
+
+## Phase 19 — Fin de séance et souvenir
+
+À la fin du film : un petit résumé (« 1 h 52 ensemble », qui était là) et une note d'un mot (coup de cœur, bien, bof),
+gardés dans l'historique.
+
+- [ ] Serveur : durée passée ensemble, note de chaque personne (migration, API)
+- [ ] Interface : écran de fin de séance, note, souvenir visible dans l'historique
+- [ ] Essais (unitaires, Playwright), captures
+- [ ] Release 1.7.0 et mise en production
+
+## Phase 20 — Agenda et notifications
+
+Ajouter une séance à son agenda ; être prévenu quand quelqu'un entre dans la salle (avec l'accord de chacun).
+
+- [ ] Fichier agenda (.ics) d'une séance prévue
+- [ ] Notifications Web Push « Camille est dans la salle » : accord par appareil dans le compte, envoi par le serveur
+- [ ] Essais (sans contacter de vrai service de notifications), captures
+- [ ] Release 1.8.0 et mise en production
+
+## Phase 21 — Soirée à plusieurs films
+
+Enchaîner plusieurs films dans une même séance (liste d'attente), avec un entracte de 5 minutes entre deux.
+
+- [ ] Serveur : liste des films d'une séance, passage synchronisé au film suivant, entracte
+- [ ] Interface : liste à la création et dans la salle (hôte), entracte avec compte à rebours
+- [ ] Essais (unitaires, Playwright), captures
+- [ ] Release 1.9.0 et mise en production
