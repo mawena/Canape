@@ -31,6 +31,8 @@
   let recherche = $state('');
   let confirmer = $state(false);
   let statut = $state('');
+  /** Le bouton est à gauche de l'écran (barre repliée sur deux lignes) : le panneau s'ouvre vers la droite. */
+  let versDroite = $state(false);
 
   const programme = $derived(programmeTrie(salle.programme));
   const rang = $derived(salle.rangCourant);
@@ -46,6 +48,7 @@
   $effect(() => {
     if (ouvert && !etaitOuvert) {
       etaitOuvert = true;
+      versDroite = (declencheur?.getBoundingClientRect().right ?? Infinity) < 420;
       void tick().then(() => panneau?.focus());
     } else if (!ouvert && etaitOuvert) {
       etaitOuvert = false;
@@ -123,13 +126,13 @@
 <div class="programme-ancre">
   <button bind:this={declencheur} type="button" class="rond" class:actif={ouvert} onclick={() => (ouvert = !ouvert)} aria-expanded={ouvert}
     aria-haspopup="dialog" aria-label="Programme de la soirée" title="Programme de la soirée" data-test="bouton-programme">
-    <ListVideo size={22} aria-hidden="true" /><span class="libelle">Programme</span>
+    <ListVideo size={22} aria-hidden="true" />
   </button>
 
   {#if ouvert}
     <button type="button" class="voile" tabindex="-1" aria-hidden="true" onclick={fermer}></button>
     <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-    <div bind:this={panneau} class="panneau" role="dialog" aria-labelledby="titre-programme" tabindex="-1" onkeydown={clavier} data-test="programme">
+    <div bind:this={panneau} class="panneau" class:vers-droite={versDroite} role="dialog" aria-labelledby="titre-programme" tabindex="-1" onkeydown={clavier} data-test="programme">
       <span class="poignee" aria-hidden="true"></span>
       <header>
         <div>
@@ -216,11 +219,9 @@
 <style>
   .programme-ancre { position: relative; display: inline-block; }
   button { color: inherit; font: inherit; }
-  .rond { position: relative; z-index: 32; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-width: 44px; min-height: 44px; padding: 0 12px; border: 0; border-radius: 999px; background: transparent; transition: background 120ms; }
+  .rond { position: relative; z-index: 32; display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 50%; background: transparent; transition: background 120ms; }
   .rond:hover { background: rgba(255, 255, 255, 0.12); }
   .rond.actif { background: var(--lampe-fond); color: var(--lampe, #1f5ce0); }
-  .libelle { font-size: 14.5px; font-weight: 600; display: none; }
-  @media (min-width: 1024px) { .libelle { display: inline; } }
 
   .voile { position: fixed; inset: 0; z-index: 30; border: 0; padding: 0; background: transparent; cursor: default; }
   .panneau {
@@ -228,6 +229,7 @@
     overflow-y: auto; display: grid; gap: 12px; padding: 16px 18px 18px; border-radius: 20px; background: var(--s2); color: var(--texte);
     border: 1px solid var(--bord-vif); box-shadow: var(--ombre-3); text-align: left; animation: entree 160ms var(--ease, ease-out);
   }
+  .panneau.vers-droite { right: auto; left: 0; }
   .panneau:focus-visible { outline: 2px solid var(--lampe, #60a5fa); outline-offset: 2px; }
   .poignee { display: none; }
   header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
@@ -268,8 +270,10 @@
   @keyframes entree { from { opacity: 0; transform: translateY(6px); } }
 
   @media (max-width: 640px) {
+    /* La feuille du bas passe devant toute la barre (le voile sombre la ferme d'une touche). */
+    .rond { z-index: auto; width: 48px; height: 48px; }
     .voile { background: rgba(6, 5, 10, 0.55); }
-    .panneau { position: fixed; left: 0; right: 0; bottom: 0; width: auto; max-height: 82dvh; border-radius: 22px 22px 0 0; border-bottom: 0; padding-bottom: calc(20px + env(safe-area-inset-bottom)); animation: monte 200ms var(--ease, ease-out); }
+    .panneau, .panneau.vers-droite { position: fixed; left: 0; right: 0; bottom: 0; width: auto; max-height: 82dvh; border-radius: 22px 22px 0 0; border-bottom: 0; padding-bottom: calc(20px + env(safe-area-inset-bottom)); animation: monte 200ms var(--ease, ease-out); }
     .poignee { display: block; width: 36px; height: 4px; border-radius: 2px; background: var(--bord-champ); margin: -6px auto 0; }
     .action { flex-basis: 100%; }
   }

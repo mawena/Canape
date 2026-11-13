@@ -154,6 +154,8 @@
   @keyframes entree { from { opacity: 0; transform: translateY(6px); } }
 
   @media (max-width: 640px) {
+    /* La feuille du bas passe devant toute la barre, boutons compris (le voile sombre la ferme d'une touche). */
+    .inviter > button:first-child { z-index: auto; }
     .voile { background: rgba(6, 5, 10, 0.55); }
     .panneau { position: fixed; left: 0; right: 0; bottom: 0; width: auto; border-radius: 22px 22px 0 0; border-bottom: 0; padding-bottom: calc(20px + env(safe-area-inset-bottom)); animation: monte 200ms var(--ease, ease-out); }
     .bouton .panneau { left: 0; }

@@ -13,13 +13,13 @@ const PREMIER = 'La Première Mire';
 const SECOND = 'Le Retour de la mire';
 
 /** Deux captures (ordinateur 1440×900 et téléphone 390×844) ; la page revient en 1440×900. */
-async function capturer(page: Page, nom: string, pleinePage = false): Promise<void> {
+async function capturer(page: Page, nom: string): Promise<void> {
   if (!dossierCaptures) return;
   mkdirSync(dossierCaptures, { recursive: true });
   for (const [suffixe, largeur, hauteur] of [['ordinateur', 1440, 900], ['telephone', 390, 844]] as const) {
     await page.setViewportSize({ width: largeur, height: hauteur });
     await page.waitForTimeout(600);
-    await page.screenshot({ path: path.join(dossierCaptures, `${nom}-${suffixe}.png`), fullPage: pleinePage });
+    await page.screenshot({ path: path.join(dossierCaptures, `${nom}-${suffixe}.png`) });
   }
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.waitForTimeout(300);
@@ -77,7 +77,8 @@ test.describe('Soirée à plusieurs films', () => {
       await expect(lignes.first()).toContainText(PREMIER);
       await a.getByRole('checkbox', { name: new RegExp(viewer.prenom) }).check();
       await expect(a.getByTestId('creer-seance')).toHaveText('Créer la soirée');
-      await capturer(a, 'creation', true);
+      await a.getByTestId('programme').scrollIntoViewIfNeeded();
+      await capturer(a, 'creation');
       await a.getByTestId('creer-seance').click();
       await expect(a.getByTestId('seance-creee')).toBeVisible();
       await expect(a.getByTestId('resume-programme')).toHaveText(`2 films : ${PREMIER}, ${SECOND}`);
