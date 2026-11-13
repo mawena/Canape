@@ -160,8 +160,8 @@ inviter parmi les comptes). Chacun rejoint la salle, autorise sa caméra et son 
 
 **Soirée de plusieurs films** : dans « Séances », « Lancer une séance », choisir un premier film puis « Ajouter un autre
 film » et cocher les suivants ; leur ordre se règle avec les flèches de la liste « Les films de la soirée ». La liste des
-séances, la carte de l'accueil et le sas annoncent « 2 films : … ». Dans la salle, le bouton « Programme » ouvre le
-programme de la soirée (en lecture seule pour les invités). À la fin d'un film, l'entracte s'ouvre chez tout le monde ;
+séances, la carte de l'accueil et le sas annoncent « 2 films : … ». Dans la salle, le bouton « Programme de la soirée »
+de la barre (icône de liste) ouvre le programme (en lecture seule pour les invités). À la fin d'un film, l'entracte s'ouvre chez tout le monde ;
 l'hôte peut lancer le film suivant tout de suite ou rallonger l'entracte de 5 minutes. Chaque film vu entre dans
 l'historique, et l'écran de fin, après le dernier film, demande « Un mot sur cette soirée ? ».
 

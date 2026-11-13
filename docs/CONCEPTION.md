@@ -338,7 +338,7 @@ d'`Origin` égale à `CANAPE_URL_PUBLIQUE`. Types dans `partage/src/*.ts`.
   films s'étend aux films du programme (l'affiche du film suivant s'affiche pendant l'entracte). `Souvenir.nbFilms` : films
   déjà lancés (rang ≤ rang courant). Fonctions pures communes : `partage/src/programme.ts` (film suivant, temps restant
   d'entracte, « 3 films : … », « Film 2 sur 3 »). Client : création (`routes/seances/nouvelle`, « Ajouter un autre film »,
-  monter / descendre / retirer), panneau `ProgrammeSoiree.svelte` (bouton « Programme » de la barre, seulement s'il y a
+  monter / descendre / retirer), panneau `ProgrammeSoiree.svelte` (bouton « Programme de la soirée » de la barre, icône seule, seulement s'il y a
   plusieurs films ; actions pour l'hôte, lecture seule pour les invités), voile `Entracte.svelte` (dans la scène : caméras,
   chat et réactions restent utilisables), logique pure `client/src/lib/seance/programme.ts` ; la liste des séances, la
   carte de l'accueil et le sas disent « 2 films : … » (`data-test="resume-programme"`). L'écran de fin n'apparaît qu'après
