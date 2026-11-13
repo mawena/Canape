@@ -2,6 +2,31 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) ; versions selon [SemVer](https://semver.org/lang/fr/).
 
+## [1.7.0] — 2026-11-13
+
+Fin de séance et souvenirs.
+
+### Ajouté
+
+- **Écran de fin** dans la salle, quand le film arrive à la fin ou quand l'hôte termine la séance : « C'était
+  bien. », le temps passé ensemble (« 1 h 52 ensemble », ou « Tu as regardé seul·e »), les personnes présentes et
+  une note d'un mot : coup de cœur, bien ou bof. La note des autres apparaît en direct sur leur avatar. « Revoir la
+  fin » ferme l'écran sans qu'il revienne ; « Quitter la salle » sort.
+- **Souvenirs dans l'historique** : chaque séance passée montre qui était là, le temps passé ensemble et la note de
+  chacun ; on peut noter (ou changer sa note) après coup.
+- Le **temps ensemble** est mesuré par le serveur de salle : il compte les moments où au moins deux personnes sont
+  dans la salle, et survit aux allers-retours.
+
+### Modifié
+
+- Quand le film arrive à la fin, il est marqué « terminé » dans l'historique de toutes les personnes présentes, et
+  plus seulement de celle dont le lecteur a signalé la fin.
+
+### Base de données
+
+- Migration `060_souvenirs.sql`, appliquée toute seule au démarrage (la mise à jour sauvegarde la base avant) :
+  colonne `seances.ensemble_secondes`, tables `seances_presences` et `seances_notes`.
+
 ## [1.6.0] — 2026-11-13
 
 Un accueil qui va droit au but.

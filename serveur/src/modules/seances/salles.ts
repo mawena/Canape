@@ -9,6 +9,7 @@ import type { UtilisateurConnecte } from '../../commun/auth.ts';
 import { maintenantIso } from '../../commun/identifiants.ts';
 import { messagesDe } from './depot.ts';
 import { Salle, positionValide } from './salle.ts';
+import { noterPresence, souvenirDe } from './souvenirs.ts';
 
 /** Seau à jetons : `capacite` d'un coup, `parSeconde` ensuite. */
 export class Seau {
@@ -78,6 +79,8 @@ export class Salles {
   /** Maintien : ping de protocole, fermeture des connexions mortes. */
   private maintien(): void {
     for (const a of this.actives.values()) {
+      // Le temps passé ensemble s'écrit régulièrement : un redémarrage du serveur n'en perd qu'un court bout.
+      if (a.salle.taille >= 2) this.enregistrer(a);
       for (const c of a.connexions.values()) {
         if (!c.vivant) { c.ws.terminate(); continue; }
         c.vivant = false;
@@ -113,12 +116,12 @@ export class Salles {
     this.diffuser(a, { t: 'etat', etat: a.salle.instantane(), raison, par });
   }
 
-  /** Écrit film, position, piste audio et sous-titres dans `seances`. */
+  /** Écrit film, position, piste audio, sous-titres et temps passé ensemble dans `seances`. */
   private enregistrer(a: SalleActive): void {
     const e = a.salle.aEnregistrer();
     try {
-      this.app.db.prepare('UPDATE seances SET film_id = ?, position = ?, piste_audio = ?, sous_titres = ? WHERE id = ?')
-        .run(e.filmId, e.position, e.pisteAudio, e.sousTitres, a.id);
+      this.app.db.prepare('UPDATE seances SET film_id = ?, position = ?, piste_audio = ?, sous_titres = ?, ensemble_secondes = ? WHERE id = ?')
+        .run(e.filmId, e.position, e.pisteAudio, e.sousTitres, a.salle.secondesEnsemble(), a.id);
     } catch (err) {
       this.app.log.warn({ err }, 'séance : état non enregistré');
     }
@@ -127,11 +130,13 @@ export class Salles {
   private ouvrir(id: string): SalleActive {
     let a = this.actives.get(id);
     if (a) return a;
-    const l = this.app.db.prepare('SELECT film_id, position, piste_audio, sous_titres FROM seances WHERE id = ?').get(id) as
-      { film_id: string | null; position: number; piste_audio: number | null; sous_titres: string | null } | undefined;
+    const l = this.app.db.prepare('SELECT film_id, position, piste_audio, sous_titres, ensemble_secondes FROM seances WHERE id = ?').get(id) as
+      { film_id: string | null; position: number; piste_audio: number | null; sous_titres: string | null; ensemble_secondes: number } | undefined;
     a = {
       id,
-      salle: new Salle(l?.film_id ? { filmId: l.film_id, position: l.position, pisteAudio: l.piste_audio, sousTitres: l.sous_titres } : { filmId: null, position: 0, pisteAudio: null, sousTitres: null }, this.maintenant),
+      salle: new Salle(l?.film_id
+        ? { filmId: l.film_id, position: l.position, pisteAudio: l.piste_audio, sousTitres: l.sous_titres, ensemble: l.ensemble_secondes }
+        : { filmId: null, position: 0, pisteAudio: null, sousTitres: null, ...(l ? { ensemble: l.ensemble_secondes } : {}) }, this.maintenant),
       connexions: new Map(),
       minuteur: null,
     };
@@ -150,6 +155,7 @@ export class Salles {
     };
     const moi = a.salle.ajouter(cid, publicDe(utilisateur));
     a.connexions.set(cid, c);
+    try { noterPresence(this.app, seanceId, utilisateur.id, maintenantIso()); } catch (err) { this.app.log.warn({ err }, 'séance : présence non enregistrée'); }
     ws.on('pong', () => { c.vivant = true; });
     ws.on('error', () => { /* la fermeture suit */ });
     ws.on('message', (data: Buffer, binaire: boolean) => {
@@ -213,7 +219,8 @@ export class Salles {
       case 'lecture': return etat(s.lire(c.cid, msg.position));
       case 'pause': {
         const r = s.pause(c.cid, msg.position, msg.fin === true);
-        if (r === 'fin') this.noterProgression(a, c, s.aEnregistrer().position, true);
+        // Le film est fini pour toute la salle : il entre dans l'historique de chaque personne présente.
+        if (r === 'fin') for (const x of a.connexions.values()) this.noterProgression(a, x, s.aEnregistrer().position, true);
         return etat(r);
       }
       case 'aller': return etat(s.aller(c.cid, msg.position));
@@ -307,6 +314,21 @@ export class Salles {
          seance_id = excluded.seance_id, termine = excluded.termine, vu_le = excluded.vu_le`,
     ).run(c.utilisateur.id, filmId, termine && duree ? duree : pos, duree, a.id, termine ? 1 : 0, maintenantIso());
     this.app.db.prepare('UPDATE seances SET position = ? WHERE id = ?').run(a.salle.aEnregistrer().position, a.id);
+  }
+
+  /** Enregistre tout de suite le temps passé ensemble d'une salle ouverte (avant de lire le souvenir en base). */
+  enregistrerSeance(seanceId: string): void {
+    const a = this.actives.get(seanceId);
+    if (a) this.enregistrer(a);
+  }
+
+  /** Envoie le souvenir à la salle : une note a changé, ou l'hôte vient de terminer la séance (`fin`). */
+  diffuserSouvenir(seanceId: string, fin: boolean): void {
+    const a = this.actives.get(seanceId);
+    if (!a) return;
+    this.enregistrer(a);
+    const souvenir = souvenirDe(this.app, seanceId);
+    if (souvenir) this.diffuser(a, { t: 'souvenir', souvenir, fin });
   }
 
   /** Le film d'une séance est retiré ou remplacé hors WebSocket (suppression du film, `PATCH` de l'hôte). */

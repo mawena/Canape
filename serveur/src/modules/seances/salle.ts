@@ -11,6 +11,8 @@ export interface EtatInitial {
   position: number;
   pisteAudio: number | null;
   sousTitres: string | null;
+  /** Secondes déjà passées à deux personnes ou plus (reprise après redémarrage). */
+  ensemble?: number;
 }
 
 export interface ResultatDepart {
@@ -34,6 +36,8 @@ export class Salle {
   private reprise = false;
   private compteFin: number | null = null;
   private compteId = 0;
+  private ensemble: number;
+  private dernierEnsemble: number;
 
   constructor(initial: EtatInitial, maintenant: () => number = Date.now) {
     this.maintenant = maintenant;
@@ -42,13 +46,34 @@ export class Salle {
     this.pisteAudio = initial.pisteAudio;
     this.sousTitres = initial.sousTitres;
     this.instant = maintenant();
+    this.ensemble = typeof initial.ensemble === 'number' && Number.isFinite(initial.ensemble) && initial.ensemble > 0 ? initial.ensemble : 0;
+    this.dernierEnsemble = this.instant;
   }
 
   get taille(): number { return this.participants.size; }
   get compteEnCours(): boolean { return this.compteFin !== null; }
   get idCompte(): number { return this.compteId; }
 
+  /** Personnes différentes dans la salle (plusieurs onglets d'un même compte ne comptent qu'une fois). */
+  private get personnes(): number {
+    return new Set([...this.participants.values()].map((p) => p.utilisateur.id)).size;
+  }
+
+  /** Cumule le temps passé à deux personnes ou plus jusqu'à maintenant (à appeler avant tout changement de présents). */
+  private cumuler(): void {
+    const t = this.maintenant();
+    if (this.personnes >= 2) this.ensemble += Math.max(0, (t - this.dernierEnsemble) / 1000);
+    this.dernierEnsemble = t;
+  }
+
+  /** Secondes passées ensemble (au moins deux personnes dans la salle en même temps), jusqu'à maintenant. */
+  secondesEnsemble(): number {
+    const t = this.maintenant();
+    return this.ensemble + (this.personnes >= 2 ? Math.max(0, (t - this.dernierEnsemble) / 1000) : 0);
+  }
+
   ajouter(cid: string, utilisateur: UtilisateurPublic): Participant {
+    this.cumuler();
     const p: Participant = { cid, utilisateur, micro: false, camera: false, tampon: false };
     this.participants.set(cid, p);
     return p;
@@ -58,6 +83,7 @@ export class Salle {
   retirer(cid: string): ResultatDepart {
     const p = this.participants.get(cid) ?? null;
     if (!p) return { participant: null, raison: null };
+    this.cumuler();
     this.participants.delete(cid);
     const attendait = this.tampons.delete(cid);
     const autreOnglet = [...this.participants.values()].some((q) => q.utilisateur.id === p.utilisateur.id);

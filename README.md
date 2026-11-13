@@ -39,6 +39,7 @@ même temps, chacun avec son volume. Les caméras et les micros circulent direct
 - Lecture synchronisée, appel vidéo WebRTC, chat, réactions qui flottent, compte à rebours, indicateur de synchro.
 - Langue et sous-titres partagés par tous.
 - Reprise là où l'on s'était arrêté, historique des séances.
+- Fin de séance : à la fin du film (ou quand l'hôte termine la séance), un écran « C'était bien. 1 h 52 ensemble » avec les présents et une note d'un mot (coup de cœur, bien, bof) que chacun voit arriver en direct ; « Revoir la fin » le ferme, il ne revient pas tout seul. L'historique garde le souvenir de chaque séance (présents, temps ensemble, notes) et permet de noter après coup.
 
 **Application**
 - Interface en français, installable sur téléphone et ordinateur (PWA).

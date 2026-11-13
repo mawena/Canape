@@ -7,13 +7,13 @@ import { DOSSIER_MIGRATIONS, migrer, ouvrirBase, transaction } from '../../src/d
 
 const TABLES = [
   'reglages', 'utilisateurs', 'sessions', 'invitations', 'films', 'films_partages', 'sous_titres_externes',
-  'televersements', 'seances', 'seances_participants', 'messages', 'progression', 'preparations',
+  'televersements', 'seances', 'seances_participants', 'seances_presences', 'seances_notes', 'messages', 'progression', 'preparations',
 ];
 
 test('les migrations créent toutes les tables du contrat, une seule fois', () => {
   const db = ouvrirBase(':memory:');
   const faites = migrer(db);
-  assert.deepEqual(faites, ['001_base.sql', '010_comptes.sql', '011_inscription.sql', '020_films.sql', '021_films_couleur.sql', '030_seances.sql', '031_seances_lien.sql', '040_lecture.sql', '050_torrents.sql', '051_transmission.sql']);
+  assert.deepEqual(faites, ['001_base.sql', '010_comptes.sql', '011_inscription.sql', '020_films.sql', '021_films_couleur.sql', '030_seances.sql', '031_seances_lien.sql', '040_lecture.sql', '050_torrents.sql', '051_transmission.sql', '060_souvenirs.sql']);
   const noms = (db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all() as Array<{ name: string }>).map((t) => t.name);
   for (const t of TABLES) assert.ok(noms.includes(t), `table ${t} manquante`);
   assert.deepEqual(migrer(db), [], 'deuxième passage : rien à appliquer');
