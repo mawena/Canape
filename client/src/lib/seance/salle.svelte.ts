@@ -1,6 +1,9 @@
 // Contrôleur de la salle : relie le WebSocket, le moteur de synchro, l'appel WebRTC, le son et l'état affiché.
 // Tout l'état réactif de la page vit ici (Svelte 5, runes) ; les composants ne font que l'afficher.
-import { EMOJIS, LIMITES_WS, type Emoji, type EtatApi, type NoteSeance, type PlanDeLecture, type Seance, type Souvenir, type UtilisateurPublic } from '@canape/partage';
+import {
+  EMOJIS, LIMITES_WS, estSoiree, filmEnCours, filmSuivant, tempsRestantEntracte,
+  type Emoji, type EtatApi, type FilmProgramme, type NoteSeance, type PlanDeLecture, type Seance, type Souvenir, type UtilisateurPublic,
+} from '@canape/partage';
 import { api } from '$lib/api/client.ts';
 import { attacherLecture, chargerPlan } from '$lib/lecture/attacher.ts';
 import { Appel, type EtatPair } from './appel.ts';
@@ -9,6 +12,7 @@ import { ClientWs, urlWsSeance } from './client-ws.ts';
 import { detecteurVoix, lirePeripheriques, type Peripheriques } from './medias.ts';
 import { MoteurSynchro } from './moteur.ts';
 import { ecrirePrefs, lirePrefs, type Coin, type PrefsSalle } from './prefs.ts';
+import { estEnchainement, filmsLances, peutGererProgramme } from './programme.ts';
 import { ajouterReaction, annonceReactions, FabriqueReactions, purgerReactions, type ReactionFlottante, DUREE_REACTION } from './reactions.ts';
 import { aUnCasque, BaisseFilm, volumeFilm, Voix } from './son.ts';
 import { Horloge } from './synchro.ts';
@@ -91,6 +95,10 @@ export class Salle {
   tallyReactions = $state(0);
   serveurRtt: number | null = $state(null);
   retour5min: string | null = $state(null);
+  /** Secondes restantes de l'entracte (horloge du serveur : le même temps chez tout le monde), ou `null`. */
+  entracteRestant: number | null = $state(null);
+  /** Une modification du programme est en route (boutons du panneau inactifs). */
+  programmeOccupe = $state(false);
 
   private video: HTMLVideoElement | null = null;
   private ws: ClientWs | null = null;
@@ -164,6 +172,19 @@ export class Salle {
   get titre(): string {
     return this.seance?.titre ?? this.seance?.filmTitre ?? 'Séance';
   }
+
+  // ---- Programme de la soirée ---------------------------------------------------------------------------------
+
+  get programme(): FilmProgramme[] { return this.seance?.programme ?? []; }
+  get rangCourant(): number { return this.seance?.rangCourant ?? 0; }
+  /** Plus d'un film au programme : le bouton « Programme » apparaît (une séance d'un seul film reste comme avant). */
+  get estSoiree(): boolean { return estSoiree(this.programme); }
+  get suivant(): FilmProgramme | null { return filmSuivant(this.programme, this.rangCourant); }
+  get enEntracte(): boolean { return (this.etat?.entracteFin ?? null) !== null; }
+  /** L'hôte gère le programme et l'entracte. */
+  get estHote(): boolean { return peutGererProgramme(this.seance, this.moi?.utilisateur.id ?? null); }
+  /** Films de la soirée déjà lancés (écran de fin) : le souvenir fait foi, sinon le programme. */
+  get nbFilmsVus(): number { return this.souvenir?.nbFilms ?? filmsLances(this.programme, this.rangCourant); }
 
   // ---- Préférences ------------------------------------------------------------------------------------------
 
@@ -505,6 +526,7 @@ export class Salle {
         if (p) { p.micro = m.micro; p.camera = m.camera; }
         break;
       }
+      case 'programme': this.surProgramme(m.programme, m.rangCourant); break;
       case 'souvenir':
         this.souvenir = m.souvenir;
         if (m.fin) this.terminer();
@@ -562,13 +584,14 @@ export class Salle {
     if (this.video) this.moteur.surReconnexion();
     const premiere = this.etat === null;
     this.recevoirEtat(m.etat);
-    if (premiere && !m.etat.lecture && m.etat.position > 30 && m.etat.filmId) {
+    if (premiere && !m.etat.lecture && m.etat.position > 30 && m.etat.filmId && m.etat.entracteFin === null) {
       this.reprise = {
         position: m.etat.position,
         avec: (this.seance?.invites ?? []).map((u) => u.prenom).filter((n) => n !== m.moi.utilisateur.prenom),
       };
     }
-    if (this.seance === null) void this.chargerSeance().catch(() => {});
+    // Relue à chaque (re)connexion : le programme a pu changer pendant la coupure.
+    void this.chargerSeance().catch(() => {});
   }
 
   private recevoirEtat(etat: EtatSeance): void {
@@ -576,6 +599,7 @@ export class Salle {
     for (const p of this.personnes) p.tampon = etat.attente.includes(p.cid);
     if (this.video) this.moteur.appliquerEtat(etat);
     this.synchroniserCompte(etat);
+    this.synchroniserEntracte(etat);
     void this.suivreFilm();
     this.appliquerSousTitres();
     this.ecart = this.moteur.ecart;
@@ -592,14 +616,23 @@ export class Salle {
     const retires = avant && raison === 'attente-ignoree'
       ? retiresAttente(avant.attente, etat.attente).map((c) => this.nomDe(c) ?? 'quelqu’un') : undefined;
     const moi = par !== null && par === this.moi?.cid;
+    // Le film suivant du programme (fin de l'entracte, « Lancer maintenant », « Passer au film suivant ») : le message
+    // `programme` arrive juste après ; le titre vient du programme qu'on connaît déjà.
+    const suite = raison === 'film' ? estEnchainement(this.programme, this.rangCourant, etat.filmId) : null;
+    const ajout = raison === 'entracte' && avant?.entracteFin != null && etat.entracteFin !== null
+      ? (etat.entracteFin - avant.entracteFin) / 1000 : 0;
     this.recevoirEtat(etat);
+    if (suite && etat.compteARebours !== null) this.compteAuteur = `Place à ${suite.titre}.`;
     if (raison === 'fin') this.terminer();
     if (raison === 'film' || (avant && avant.filmId !== etat.filmId)) { this.fini = false; this.finFermee = false; this.souvenir = null; this.reprise = null; }
     if (raison === 'lecture' || raison === 'compte_a_rebours') this.reprise = null;
     if (raison === 'compte_a_rebours' && par !== null) this.compteAuteur = moi ? 'Tu as lancé le compte à rebours.' : `${this.nomDe(par) ?? 'Quelqu’un'} a lancé le compte à rebours.`;
     if (!moi) {
       const nom = raison === 'depart' ? par : this.nomDe(par);
-      const ctx = { raison, nom, etat, avant: attendue, plan: this.plan, ...(retires ? { retires } : {}) };
+      const ctx = {
+        raison, nom, etat, avant: attendue, plan: this.plan, ...(retires ? { retires } : {}),
+        ...(suite ? { suite: suite.titre } : {}), ...(ajout > 0 ? { ajout } : {}),
+      };
       const texte = texteAnnonce(ctx);
       if (texte) {
         this.annoncer(raison, texte);
@@ -632,7 +665,7 @@ export class Salle {
 
   // ---- Commandes partagées ----------------------------------------------------------------------------------
 
-  get peutAgir(): boolean { return this.liaison === 'ouvert' && !!this.etat?.filmId; }
+  get peutAgir(): boolean { return this.liaison === 'ouvert' && !!this.etat?.filmId && !this.enEntracte; }
 
   basculerLecture(): void { if (this.peutAgir) { this.reprise = null; this.moteur.basculer(); } }
   aller(position: number): void { if (this.peutAgir) this.moteur.aller(position); }
@@ -647,6 +680,38 @@ export class Salle {
   ignorerAttente(cid: string): void { this.ws?.envoyer({ t: 'ignorer_attente', cid }); }
   depuisLeDebut(): void { this.reprise = null; this.aller(0); }
   changerFilm(filmId: string): void { this.fini = false; this.finFermee = false; this.souvenir = null; this.ws?.envoyer({ t: 'film', filmId }); }
+
+  // ---- Soirée : programme et entracte (hôte) ------------------------------------------------------------------
+
+  /** « Lancer maintenant » : fin de l'entracte, le film suivant pour tout le monde. */
+  lancerFilmSuivant(): void { this.ws?.envoyer({ t: this.enEntracte ? 'entracte_lancer' : 'film_suivant' }); }
+  /** « +5 min ». */
+  prolongerEntracte(): void { this.ws?.envoyer({ t: 'entracte_prolonger' }); }
+
+  /** Remplace les films à venir (ordre, ajout, retrait) ; tout le monde reçoit le nouveau programme. */
+  async modifierProgramme(filmIds: string[]): Promise<boolean> {
+    if (this.programmeOccupe) return false;
+    this.programmeOccupe = true;
+    try {
+      const s = await api.put<Seance>(`/api/seances/${encodeURIComponent(this.seanceId)}/programme`, { filmIds });
+      this.seance = s;
+      return true;
+    } catch (e) {
+      this.annoncer('erreur', e instanceof Error && e.message ? e.message : 'Le programme n’a pas pu être modifié.');
+      return false;
+    } finally {
+      this.programmeOccupe = false;
+    }
+  }
+
+  private surProgramme(programme: FilmProgramme[], rangCourant: number): void {
+    if (!this.seance) return;
+    const enCours = filmEnCours(programme, rangCourant);
+    this.seance = {
+      ...this.seance, programme, rangCourant,
+      ...(enCours ? { filmId: enCours.filmId, filmTitre: enCours.titre } : {}),
+    };
+  }
 
   /** « Je reviens dans 5 min » : pause pour tous et message dans le chat. */
   jeReviens(): void {
@@ -670,6 +735,27 @@ export class Salle {
     const maj = (): void => { this.compte = Math.max(1, Math.ceil((this.compteFin - Date.now()) / 1000)); };
     maj();
     this.compteTimer = setInterval(maj, 100);
+  }
+
+  // ---- Entracte ---------------------------------------------------------------------------------------------
+
+  private entracteTimer: ReturnType<typeof setInterval> | null = null;
+
+  /** L'heure de fin vient du serveur : chacun compte avec l'horloge du serveur, donc tout le monde lit le même temps. */
+  private synchroniserEntracte(etat: EtatSeance): void {
+    if (this.entracteTimer) clearInterval(this.entracteTimer);
+    this.entracteTimer = null;
+    const fin = etat.entracteFin;
+    if (fin === null) {
+      this.entracteRestant = null;
+      return;
+    }
+    const maj = (): void => {
+      const r = tempsRestantEntracte(fin, this.horloge.serveurMaintenant());
+      if (r !== this.entracteRestant) this.entracteRestant = r;
+    };
+    maj();
+    this.entracteTimer = setInterval(maj, 250);
   }
 
   // ---- Chat, réactions ---------------------------------------------------------------------------------------
@@ -830,6 +916,7 @@ export class Salle {
     for (const m of this.minuteries) clearInterval(m);
     this.minuteries = [];
     if (this.compteTimer) clearInterval(this.compteTimer);
+    if (this.entracteTimer) clearInterval(this.entracteTimer);
     if (this.pingTimer) clearTimeout(this.pingTimer);
     for (const t of this.minuteriesAnnonce.values()) clearTimeout(t);
     this.moteur.arreter();

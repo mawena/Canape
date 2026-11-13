@@ -1,11 +1,11 @@
 // Routes REST du module séances.
 import type { FastifyInstance } from 'fastify';
-import { construireIcs, nomFichierAgenda, type ListeSeances, type ReponseIce, type ReponseLienSeance, type Seance, type Souvenir } from '@canape/partage';
+import { MAX_FILMS_PROGRAMME, construireIcs, nomFichierAgenda, type ListeSeances, type ReponseIce, type ReponseLienSeance, type Seance, type Souvenir } from '@canape/partage';
 import { ErreurHttp, introuvable, requeteInvalide } from '../../commun/erreurs.ts';
 import { idBase32, jetonAleatoire, maintenantIso, sha256Hex } from '../../commun/identifiants.ts';
 import { transaction } from '../../db/index.ts';
 import { comptesCiblables } from '../comptes/connus.ts';
-import { accesSeance, ligneSeance, messagesDe, progressions, versSeance, type LigneSeance } from './depot.ts';
+import { accesSeance, ligneSeance, messagesDe, poserFilmCourant, progressions, remplacerAVenir, versSeance, type LigneSeance } from './depot.ts';
 import type { Salles } from './salles.ts';
 import { estNote, estParticipant, poserNote, souvenirDe } from './souvenirs.ts';
 import { serveursIce } from './turn.ts';
@@ -35,6 +35,14 @@ function dateValide(v: unknown): string | null {
 function listeIds(v: unknown): number[] {
   if (!Array.isArray(v) || v.length > 50 || !v.every((x) => Number.isInteger(x) && x > 0)) throw requeteInvalide('Liste d\'invités invalide.');
   return [...new Set(v as number[])];
+}
+
+/** Liste d'identifiants de films (1 à `MAX_FILMS_PROGRAMME` ; `vide` : une liste vide est permise), sans doublon, dans l'ordre. */
+function listeFilms(v: unknown, vide: boolean): string[] {
+  if (!Array.isArray(v) || v.length > MAX_FILMS_PROGRAMME || (!vide && v.length === 0) || !v.every((x) => typeof x === 'string')) {
+    throw requeteInvalide(`Liste de films invalide (${vide ? '0' : '1'} à ${MAX_FILMS_PROGRAMME} films).`);
+  }
+  return [...new Set(v as string[])];
 }
 
 const SIX_HEURES = 6 * 3_600_000;
@@ -86,16 +94,25 @@ export function enregistrerRoutes(app: FastifyInstance, salles: Salles): void {
   app.post('/api/seances', pre, async (req, reply): Promise<Seance> => {
     const u = req.utilisateur;
     const c = corps(req);
-    if (typeof c['filmId'] !== 'string') throw requeteInvalide('Film requis.');
-    const film = app.mediatheque.obtenir(c['filmId']);
-    if (!film || !app.mediatheque.peutVoir(u, film.id)) throw introuvable('Film introuvable.');
+    // `filmIds` : le programme d'une soirée (le premier film est lancé d'abord) ; `filmId` : une séance d'un seul film.
+    let filmIds: string[];
+    if (c['filmIds'] !== undefined) filmIds = listeFilms(c['filmIds'], false);
+    else if (typeof c['filmId'] === 'string') filmIds = [c['filmId']];
+    else throw requeteInvalide('Film requis.');
+    for (const fid of filmIds) {
+      const f = app.mediatheque.obtenir(fid);
+      if (!f || !app.mediatheque.peutVoir(u, f.id)) throw introuvable('Film introuvable.');
+    }
+    const premier = filmIds[0] as string;
     const titre = c['titre'] === undefined ? null : titreValide(c['titre']);
     const prevueLe = c['prevueLe'] === undefined ? null : dateValide(c['prevueLe']);
     const invites = verifierInvites(c['invites'] === undefined ? [] : listeIds(c['invites']), u.id, u);
     const id = idBase32();
     transaction(db, () => {
       db.prepare('INSERT INTO seances (id, hote_id, film_id, titre, prevue_le, position, cree_le) VALUES (?, ?, ?, ?, ?, 0, ?)')
-        .run(id, u.id, film.id, titre, prevueLe, maintenantIso());
+        .run(id, u.id, premier, titre, prevueLe, maintenantIso());
+      const prog = db.prepare('INSERT INTO seances_programme (seance_id, rang, film_id) VALUES (?, ?, ?)');
+      filmIds.forEach((fid, i) => prog.run(id, i, fid));
       remplacerInvites(id, invites);
     });
     reply.status(201);
@@ -134,11 +151,29 @@ export function enregistrerRoutes(app: FastifyInstance, salles: Salles): void {
       }
       if (filmId !== undefined && filmId !== ligne.film_id) {
         db.prepare('UPDATE seances SET film_id = ?, position = 0, piste_audio = NULL, sous_titres = NULL WHERE id = ?').run(filmId, ligne.id);
+        poserFilmCourant(app, ligne.id, filmId);
       }
     });
     if (filmId !== undefined && filmId !== ligne.film_id) salles.changerFilm(ligne.id, filmId);
     // L'hôte termine la séance : l'écran de fin s'ouvre dans la salle.
     if (c['terminee'] === true && ligne.terminee_le === null) salles.diffuserSouvenir(ligne.id, true);
+    return sortie(ligneSeance(app, ligne.id)!);
+  });
+
+  // ---- Programme de la soirée : l'hôte remplace les films à venir (après le film en cours) ----
+  app.put<{ Params: { id: string } }>('/api/seances/:id/programme', pre, async (req): Promise<Seance> => {
+    const u = req.utilisateur;
+    const { ligne, role } = accesSeance(app, req.params.id, u);
+    exigerHote(role);
+    const filmIds = listeFilms(corps(req)['filmIds'], true);
+    for (const fid of filmIds) {
+      const f = app.mediatheque.obtenir(fid);
+      if (!f || !app.mediatheque.peutVoir(u, f.id)) throw introuvable('Film introuvable.');
+    }
+    // Le film en cours compte dans la limite.
+    if (filmIds.length + 1 > MAX_FILMS_PROGRAMME) throw requeteInvalide(`Une soirée compte ${MAX_FILMS_PROGRAMME} films au plus.`);
+    transaction(db, () => remplacerAVenir(app, ligne.id, filmIds));
+    salles.diffuserProgramme(ligne.id);
     return sortie(ligneSeance(app, ligne.id)!);
   });
 

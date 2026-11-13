@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import type { Film, ListeSeances, ProgressionFilm, ReponseLienSeance, Seance } from '@canape/partage';
+  import { phraseProgramme, programmeTrie, type Film, type ListeSeances, type ProgressionFilm, type ReponseLienSeance, type Seance } from '@canape/partage';
   import { api, ErreurApi } from '$lib/api/client.ts';
   import {
     AfficheFilm, BarreProgression, Bouton, Badge, EnTetePage, EtatVide, Icone, Lueur, MiniAffiche, PileAvatars, Squelette, toast,
@@ -44,6 +44,8 @@
   const moi = $derived(session.utilisateur);
   const filmParId = $derived(new Map(films.map((f) => [f.id, f])));
   const ceSoir = $derived(seanceDeCeSoir(seances, maintenant));
+  // Soirée de plusieurs films : « 3 films : A, B, C » sous le titre (rien de plus pour un seul film).
+  const programmeCeSoir = $derived(ceSoir ? phraseProgramme(programmeTrie(ceSoir.programme ?? []).map((f) => f.titre)) : null);
   const filmDeSeance = $derived(ceSoir?.filmId ? (filmParId.get(ceSoir.filmId) ?? null) : null);
   const aReprendre = $derived(filmsARreprendre(reprises));
   const recents = $derived(films.filter((f) => f.etat !== 'erreur').slice(0, 6));
@@ -143,6 +145,7 @@
               {#if ceSoir.prevueLe && !ouverte}<span class="compte tn">{formaterDans(ceSoir.prevueLe, maintenant)}</span>{/if}
             </p>
             <h2 id="titre-ce-soir">{ceSoir.filmTitre ?? filmDeSeance?.titre ?? 'Séance'}</h2>
+            {#if programmeCeSoir}<p class="programme-soiree" data-test="resume-programme">{programmeCeSoir}</p>{/if}
           </div>
           {#if filmDeSeance?.resume}<p class="resume">{filmDeSeance.resume}</p>{/if}
           <div class="qui">
@@ -253,6 +256,7 @@
   .puces { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
   .compte { font-weight: 600; color: var(--lampe); font-size: 16px; }
   .hero h2 { font: 400 clamp(2.25rem, 5vw, 3.375rem) / 1 var(--titre); letter-spacing: -0.01em; text-wrap: balance; }
+  .programme-soiree { margin: 0; font-weight: 600; opacity: 0.9; max-width: 52ch; }
   .resume { color: var(--doux); max-width: 60ch; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .qui { display: flex; align-items: center; gap: 14px; color: var(--doux); margin: 6px 0 4px; }
   .boutons { display: flex; gap: var(--e-3); flex-wrap: wrap; align-items: center; }

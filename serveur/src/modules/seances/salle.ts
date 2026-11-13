@@ -1,5 +1,5 @@
 // État d'une salle de séance : logique pure (pas de réseau, horloge injectée), portée de `salon.js` de la 0.1.
-import { LIMITES_WS, type EtatSeance, type Participant, type RaisonEtat } from '@canape/partage';
+import { ENTRACTE_MAX_SECONDES, LIMITES_WS, type EtatSeance, type Participant, type RaisonEtat } from '@canape/partage';
 import type { UtilisateurPublic } from '@canape/partage';
 
 export function positionValide(p: unknown): p is number {
@@ -36,6 +36,8 @@ export class Salle {
   private reprise = false;
   private compteFin: number | null = null;
   private compteId = 0;
+  /** Heure de fin de l'entracte (ms), ou `null`. */
+  private entracteFin: number | null = null;
   private ensemble: number;
   private dernierEnsemble: number;
 
@@ -53,6 +55,8 @@ export class Salle {
   get taille(): number { return this.participants.size; }
   get compteEnCours(): boolean { return this.compteFin !== null; }
   get idCompte(): number { return this.compteId; }
+  get enEntracte(): boolean { return this.entracteFin !== null; }
+  get finEntracte(): number | null { return this.entracteFin; }
 
   /** Personnes différentes dans la salle (plusieurs onglets d'un même compte ne comptent qu'une fois). */
   private get personnes(): number {
@@ -122,6 +126,7 @@ export class Salle {
       pisteAudio: this.pisteAudio,
       sousTitres: this.sousTitres,
       compteARebours: this.compteFin === null ? null : Math.max(0, Math.ceil((this.compteFin - t) / 1000)),
+      entracteFin: this.entracteFin,
       serveur: t,
     };
   }
@@ -144,7 +149,7 @@ export class Salle {
 
   /** Une commande d'un participant connu. Rend la raison ou `null` si rien ne change. */
   lire(cid: string, position?: unknown): RaisonEtat | null {
-    if (!this.participants.has(cid)) return null;
+    if (!this.participants.has(cid) || this.entracteFin !== null) return null;
     const pos = positionValide(position) ? position : this.positionAttendue();
     if (this.tampons.size > 0) {
       this.reprise = true;
@@ -156,22 +161,60 @@ export class Salle {
     return 'lecture';
   }
 
-  pause(cid: string, position?: unknown, fin = false): RaisonEtat | null {
-    if (!this.participants.has(cid)) return null;
+  /**
+   * Pause. Avec `fin` : le film est fini. `entracteMs` (seulement s'il reste un film au programme) ouvre alors un entracte
+   * (raison `entracte`) ; sans lui, c'est la fin de la séance (raison `fin`). Pendant un entracte, le film d'avant ne
+   * bouge plus : toute pause (y compris une deuxième fin, envoyée par chaque personne présente) est ignorée.
+   */
+  pause(cid: string, position?: unknown, fin = false, entracteMs: number | null = null): RaisonEtat | null {
+    if (!this.participants.has(cid) || this.entracteFin !== null) return null;
     const pos = positionValide(position) ? position : this.positionAttendue();
     this.reprise = false;
     this.fixer({ lecture: false, position: pos });
+    if (fin && entracteMs !== null) {
+      this.entracteFin = this.maintenant() + entracteMs;
+      return 'entracte';
+    }
     return fin ? 'fin' : 'pause';
   }
 
+  /** Rallonge l'entracte de `ms` (jamais au-delà de `ENTRACTE_MAX_SECONDES` à partir de maintenant). */
+  prolongerEntracte(ms: number): RaisonEtat | null {
+    if (this.entracteFin === null) return null;
+    const t = this.maintenant();
+    this.entracteFin = Math.min(this.entracteFin + ms, t + ENTRACTE_MAX_SECONDES * 1000);
+    this.fixer({}, true);
+    return 'entracte';
+  }
+
+  /** Plus de film après l'entracte (le programme a été vidé) : c'est la fin de la séance. */
+  finirEntracte(): RaisonEtat | null {
+    if (this.entracteFin === null) return null;
+    this.entracteFin = null;
+    this.fixer({}, true);
+    return 'fin';
+  }
+
+  /** Passe au film suivant pour tous : position 0, pistes par défaut, puis (`avecCompte`) compte à rebours qui lance la lecture. */
+  enchainer(filmId: string, avecCompte: boolean): RaisonEtat {
+    this.entracteFin = null;
+    this.film(null, filmId);
+    if (avecCompte) {
+      this.compteFin = this.maintenant() + LIMITES_WS.compteARebours * 1000;
+      this.compteId += 1;
+    }
+    return 'film';
+  }
+
   aller(cid: string, position: unknown): RaisonEtat | null {
-    if (!this.participants.has(cid) || !positionValide(position)) return null;
+    if (!this.participants.has(cid) || this.entracteFin !== null || !positionValide(position)) return null;
     this.fixer({ position });
     return 'aller';
   }
 
   film(cid: string | null, filmId: string | null): RaisonEtat | null {
     if (cid !== null && !this.participants.has(cid)) return null;
+    this.entracteFin = null;
     this.tampons.clear();
     this.reprise = false;
     this.fixer({ filmId, lecture: false, position: 0, pisteAudio: null, sousTitres: null });
@@ -179,14 +222,14 @@ export class Salle {
   }
 
   audio(cid: string, piste: number): RaisonEtat | null {
-    if (!this.participants.has(cid)) return null;
+    if (!this.participants.has(cid) || this.entracteFin !== null) return null;
     this.reprise = false;
     this.fixer({ pisteAudio: piste, lecture: false, position: this.positionAttendue() });
     return 'audio';
   }
 
   sousTitresChoix(cid: string, cle: string | null): RaisonEtat | null {
-    if (!this.participants.has(cid)) return null;
+    if (!this.participants.has(cid) || this.entracteFin !== null) return null;
     this.reprise = false;
     this.fixer({ sousTitres: cle, lecture: false, position: this.positionAttendue() });
     return 'sous_titres';
@@ -194,7 +237,7 @@ export class Salle {
 
   /** Pause à la position courante puis compte à rebours ; la lecture démarre à `finCompteARebours`. */
   demarrerCompteARebours(cid: string): RaisonEtat | null {
-    if (!this.participants.has(cid) || this.filmId === null) return null;
+    if (!this.participants.has(cid) || this.filmId === null || this.entracteFin !== null) return null;
     this.reprise = false;
     const pos = this.positionAttendue();
     this.fixer({ lecture: false, position: pos });

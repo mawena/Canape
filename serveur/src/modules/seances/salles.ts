@@ -7,7 +7,7 @@ import {
 } from '@canape/partage';
 import type { UtilisateurConnecte } from '../../commun/auth.ts';
 import { maintenantIso } from '../../commun/identifiants.ts';
-import { messagesDe } from './depot.ts';
+import { avancerAuRang, messagesDe, poserFilmCourant, programmeDe, suivantDe } from './depot.ts';
 import { Salle, positionValide } from './salle.ts';
 import { noterPresence, souvenirDe } from './souvenirs.ts';
 
@@ -51,6 +51,8 @@ export interface SalleActive {
   salle: Salle;
   connexions: Map<string, Connexion>;
   minuteur: NodeJS.Timeout | null;
+  /** Fin de l'entracte (passage au film suivant). */
+  entracte: NodeJS.Timeout | null;
 }
 
 const EMOJIS_OK: ReadonlySet<string> = new Set(EMOJIS);
@@ -93,6 +95,7 @@ export class Salles {
     clearInterval(this.battement);
     for (const a of this.actives.values()) {
       if (a.minuteur) clearTimeout(a.minuteur);
+      if (a.entracte) clearTimeout(a.entracte);
       for (const c of a.connexions.values()) c.ws.terminate();
     }
     this.actives.clear();
@@ -139,6 +142,7 @@ export class Salles {
         : { filmId: null, position: 0, pisteAudio: null, sousTitres: null, ...(l ? { ensemble: l.ensemble_secondes } : {}) }, this.maintenant),
       connexions: new Map(),
       minuteur: null,
+      entracte: null,
     };
     this.actives.set(id, a);
     return a;
@@ -190,6 +194,9 @@ export class Salles {
     const { participant, raison } = a.salle.retirer(c.cid);
     if (a.connexions.size === 0) {
       if (a.minuteur) clearTimeout(a.minuteur);
+      // Plus personne pendant l'entracte : la séance garde le film suivant (on le retrouvera au début, prêt à être lancé).
+      if (a.salle.enEntracte) this.passerAuSuivant(a, null, false);
+      if (a.entracte) clearTimeout(a.entracte);
       this.enregistrer(a);
       this.actives.delete(a.id);
       return;
@@ -227,9 +234,12 @@ export class Salles {
         return;
       case 'lecture': return etat(s.lire(c.cid, msg.position));
       case 'pause': {
-        const r = s.pause(c.cid, msg.position, msg.fin === true);
+        // Il reste un film au programme : la fin du film ouvre un entracte, pas l'écran de fin.
+        const entracteMs = msg.fin === true && suivantDe(this.app, a.id) !== null ? this.app.config.entracteSecondes * 1000 : null;
+        const r = s.pause(c.cid, msg.position, msg.fin === true, entracteMs);
         // Le film est fini pour toute la salle : il entre dans l'historique de chaque personne présente.
-        if (r === 'fin') for (const x of a.connexions.values()) this.noterProgression(a, x, s.aEnregistrer().position, true);
+        if (r === 'fin' || r === 'entracte') for (const x of a.connexions.values()) this.noterProgression(a, x, s.aEnregistrer().position, true);
+        if (r === 'entracte') this.armerEntracte(a);
         return etat(r);
       }
       case 'aller': return etat(s.aller(c.cid, msg.position));
@@ -239,7 +249,9 @@ export class Salles {
           return this.erreur(c, 'film_inconnu', 'Film introuvable.');
         }
         // Enregistré d'abord : la règle d'accès « participant d'une séance dont le film est celui-ci » en dépend.
-        return etat(s.film(c.cid, film.id));
+        const r = s.film(c.cid, film.id);
+        if (r) { this.desarmerEntracte(a); poserFilmCourant(this.app, a.id, film.id); }
+        return etat(r);
       }
       case 'audio':
         if (!Number.isInteger(msg.piste) || msg.piste < 0 || msg.piste > 255) return this.erreur(c, 'piste_invalide', 'Piste audio invalide.');
@@ -252,14 +264,19 @@ export class Salles {
       case 'compte_a_rebours': {
         const r = s.demarrerCompteARebours(c.cid);
         if (!r) return;
-        if (a.minuteur) clearTimeout(a.minuteur);
-        const id = s.idCompte;
-        a.minuteur = setTimeout(() => {
-          a.minuteur = null;
-          const fin = s.finCompteARebours(id);
-          if (fin) this.diffuserEtat(a, fin, null);
-        }, LIMITES_WS.compteARebours * 1000);
-        a.minuteur.unref();
+        this.armerCompte(a);
+        return etat(r);
+      }
+      case 'entracte_lancer':
+      case 'film_suivant':
+        if (!this.estHote(a, c)) return this.erreur(c, 'interdit', 'Seul l’hôte peut faire cela.');
+        if (msg.t === 'entracte_lancer' && !s.enEntracte) return;
+        if (!this.passerAuSuivant(a, c.cid, true)) return this.erreur(c, 'film_inconnu', 'Il n’y a pas d’autre film au programme.');
+        return;
+      case 'entracte_prolonger': {
+        if (!this.estHote(a, c)) return this.erreur(c, 'interdit', 'Seul l’hôte peut faire cela.');
+        const r = s.prolongerEntracte(this.app.config.entracteSecondes * 1000);
+        if (r) this.armerEntracte(a);
         return etat(r);
       }
       case 'tampon': return etat(s.tampon(c.cid, msg.enCours === true));
@@ -309,6 +326,70 @@ export class Salles {
     }
   }
 
+  /** L'hôte de la séance (ou un administrateur) : seul·e à gérer le programme et l'entracte. */
+  private estHote(a: SalleActive, c: Connexion): boolean {
+    if (c.utilisateur.role === 'admin') return true;
+    const l = this.app.db.prepare('SELECT hote_id FROM seances WHERE id = ?').get(a.id) as { hote_id: number } | undefined;
+    return l?.hote_id === c.utilisateur.id;
+  }
+
+  /** Compte à rebours de la salle : à son terme, la lecture démarre (ou attend ceux qui chargent encore). */
+  private armerCompte(a: SalleActive): void {
+    if (a.minuteur) clearTimeout(a.minuteur);
+    const id = a.salle.idCompte;
+    a.minuteur = setTimeout(() => {
+      a.minuteur = null;
+      const fin = a.salle.finCompteARebours(id);
+      if (fin) this.diffuserEtat(a, fin, null);
+    }, LIMITES_WS.compteARebours * 1000);
+    a.minuteur.unref();
+  }
+
+  /** (Re)programme la fin de l'entracte à l'heure que dit la salle. */
+  private armerEntracte(a: SalleActive): void {
+    this.desarmerEntracte(a);
+    const fin = a.salle.finEntracte;
+    if (fin === null) return;
+    a.entracte = setTimeout(() => {
+      a.entracte = null;
+      this.passerAuSuivant(a, null, true);
+    }, Math.max(0, fin - this.maintenant()));
+    a.entracte.unref();
+  }
+
+  private desarmerEntracte(a: SalleActive): void {
+    if (a.entracte) clearTimeout(a.entracte);
+    a.entracte = null;
+  }
+
+  /** Film suivant du programme pour tout le monde (fin de l'entracte, « Lancer maintenant », « Passer au film suivant »). `false` s'il n'y en a pas. */
+  private passerAuSuivant(a: SalleActive, par: string | null, avecCompte: boolean): boolean {
+    const suivant = suivantDe(this.app, a.id);
+    if (!suivant) {
+      // Plus de film à suivre (retiré pendant l'entracte) : fin de séance normale.
+      if (a.salle.enEntracte) {
+        this.desarmerEntracte(a);
+        this.diffuserEtat(a, a.salle.finirEntracte() ?? 'fin', par);
+      }
+      return false;
+    }
+    this.desarmerEntracte(a);
+    const raison = a.salle.enchainer(suivant.filmId, avecCompte);
+    avancerAuRang(this.app, a.id, suivant.rang);
+    if (avecCompte) this.armerCompte(a);
+    this.diffuserEtat(a, raison, par);
+    this.diffuser(a, { t: 'programme', programme: programmeDe(this.app, a.id), rangCourant: suivant.rang });
+    return true;
+  }
+
+  /** Le programme a changé hors de la salle (REST) : tout le monde le revoit. */
+  diffuserProgramme(seanceId: string): void {
+    const a = this.actives.get(seanceId);
+    if (!a) return;
+    const l = this.app.db.prepare('SELECT rang_courant FROM seances WHERE id = ?').get(seanceId) as { rang_courant: number } | undefined;
+    this.diffuser(a, { t: 'programme', programme: programmeDe(this.app, seanceId), rangCourant: l?.rang_courant ?? 0 });
+  }
+
   /** Progression du compte (reprise, historique) et position de la séance. */
   private noterProgression(a: SalleActive, c: Connexion, position: number, fin: boolean): void {
     const filmId = a.salle.aEnregistrer().filmId;
@@ -344,6 +425,7 @@ export class Salles {
   changerFilm(seanceId: string, filmId: string | null): void {
     const a = this.actives.get(seanceId);
     if (!a) return;
+    this.desarmerEntracte(a);
     this.diffuserEtat(a, a.salle.film(null, filmId) ?? 'film', null);
   }
 
@@ -356,6 +438,7 @@ export class Salles {
     const a = this.actives.get(seanceId);
     if (!a) return;
     if (a.minuteur) clearTimeout(a.minuteur);
+    this.desarmerEntracte(a);
     this.actives.delete(seanceId);
     for (const c of a.connexions.values()) c.ws.close(4004, 'Séance supprimée');
   }

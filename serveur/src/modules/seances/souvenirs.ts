@@ -22,14 +22,15 @@ export function noterPresence(app: FastifyInstance, seanceId: string, utilisateu
 
 interface LigneSouvenir {
   id: string; film_id: string | null; film_titre: string | null; titre: string | null;
-  cree_le: string; terminee_le: string | null; ensemble_secondes: number;
+  cree_le: string; terminee_le: string | null; ensemble_secondes: number; nb_films: number;
 }
 interface LignePersonne { id: number; prenom: string; couleur: string | null; present: number; note: NoteSeance | null }
 
 /** Le souvenir d'une séance, ou `null` si elle n'existe pas. Aucun contrôle d'accès ici. */
 export function souvenirDe(app: FastifyInstance, seanceId: string): Souvenir | null {
   const l = app.db.prepare(
-    `SELECT s.id, s.film_id, f.titre AS film_titre, s.titre, s.cree_le, s.terminee_le, s.ensemble_secondes
+    `SELECT s.id, s.film_id, f.titre AS film_titre, s.titre, s.cree_le, s.terminee_le, s.ensemble_secondes,
+            (SELECT COUNT(*) FROM seances_programme g WHERE g.seance_id = s.id AND g.rang <= s.rang_courant) AS nb_films
        FROM seances s LEFT JOIN films f ON f.id = s.film_id WHERE s.id = ?`,
   ).get(seanceId) as LigneSouvenir | undefined;
   if (!l) return null;
@@ -43,7 +44,7 @@ export function souvenirDe(app: FastifyInstance, seanceId: string): Souvenir | n
   ).all(seanceId) as unknown as LignePersonne[];
   return {
     seanceId: l.id, filmId: l.film_id, filmTitre: l.film_titre, titre: l.titre, creeLe: l.cree_le, termineeLe: l.terminee_le,
-    secondesEnsemble: Math.max(0, Math.round(l.ensemble_secondes)),
+    secondesEnsemble: Math.max(0, Math.round(l.ensemble_secondes)), nbFilms: l.nb_films,
     personnes: personnes.map((p): PresentSouvenir => ({
       utilisateur: { id: p.id, prenom: p.prenom, couleur: p.couleur }, present: p.present === 1, note: p.note,
     })),

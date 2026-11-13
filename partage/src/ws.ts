@@ -1,6 +1,6 @@
 // Protocole WebSocket d'une séance : `GET /ws/seances/:id` (contrat : docs/CONCEPTION.md, « WebSocket d'une séance »).
 import type { UtilisateurPublic } from './comptes.ts';
-import type { Souvenir } from './seances.ts';
+import type { FilmProgramme, Souvenir } from './seances.ts';
 
 /** Liste fermée des réactions. */
 export const EMOJIS = ['😂', '❤️', '😱', '😭', '🔥', '👏', '😮', '🍿'] as const;
@@ -16,6 +16,8 @@ export const LIMITES_WS = {
   intervalleProgression: 10,
   /** Délai du compte à rebours, en secondes. */
   compteARebours: 3,
+  /** Entracte entre deux films, en secondes (`+ 5 min` ajoute autant). */
+  entracte: 300,
   /** Au-delà : saut. Entre `seuilVitesse` et `seuilSaut` : vitesse corrigée. */
   seuilSaut: 1,
   seuilVitesse: 0.3,
@@ -47,6 +49,8 @@ export interface EtatSeance {
   sousTitres: string | null;
   /** Secondes restantes avant le lancement, ou `null`. */
   compteARebours: number | null;
+  /** Heure de fin de l'entracte (ms, horloge du serveur, comme `serveur` et `instant`), ou `null` s'il n'y en a pas. */
+  entracteFin: number | null;
   serveur: number;
 }
 
@@ -70,6 +74,12 @@ export type MessageClient =
   | { t: 'audio'; piste: number }
   | { t: 'sous_titres'; cle: string | null }
   | { t: 'compte_a_rebours' }
+  /** Hôte : lance tout de suite le film suivant (pendant l'entracte). */
+  | { t: 'entracte_lancer' }
+  /** Hôte : rallonge l'entracte de 5 minutes. */
+  | { t: 'entracte_prolonger' }
+  /** Hôte : passe tout de suite au film suivant du programme. */
+  | { t: 'film_suivant' }
   | { t: 'tampon'; enCours: boolean }
   | { t: 'ignorer_attente'; cid: string }
   | { t: 'media'; micro: boolean; camera: boolean }
@@ -90,17 +100,20 @@ export type MessageClient =
  *   partie (et non un `cid`). La lecture, si elle tournait, est mise en pause pour tous ; pas de changement d'état si la
  *   personne garde un autre onglet dans la séance (sauf si son départ vide `attente` : alors `reprise`) ;
  * - `attente-ignoree` : `par` (le `cid` de qui a cliqué) a retiré le `cid` demandé de la liste d'attente ;
+ * - `entracte` : le film est fini et un autre suit : pause sur la fin, `entracteFin` donne l'heure de reprise ; aussi quand l'hôte
+ *   rallonge l'entracte. Quand il finit (ou que l'hôte le lance), `film` (`par` = `cid` de l'hôte ou `null`) amène le film suivant
+ *   pour tous (position 0, pistes par défaut), avec le compte à rebours qui lance la lecture ;
  * - `compte_a_rebours` avec `par` = `null` : le compte à rebours est fini (la lecture démarre : `lecture` vaut `true`,
  *   ou reste `false` avec `attente` non vide si quelqu'un met encore en mémoire).
  */
 export type RaisonEtat =
   | 'lecture' | 'pause' | 'aller' | 'film' | 'audio' | 'sous_titres' | 'compte_a_rebours'
-  | 'tampon' | 'reprise' | 'depart' | 'attente-ignoree' | 'fin';
+  | 'tampon' | 'reprise' | 'depart' | 'attente-ignoree' | 'fin' | 'entracte';
 
 /** Codes de `erreur {code}` (la connexion reste ouverte sauf mention contraire). */
 export type CodeErreurWs =
   | 'message_invalide' | 'type_inconnu' | 'trop_vite' | 'texte_invalide' | 'texte_trop_long'
-  | 'film_inconnu' | 'piste_invalide' | 'destinataire_inconnu' | 'serveur';
+  | 'film_inconnu' | 'interdit' | 'piste_invalide' | 'destinataire_inconnu' | 'serveur';
 
 export type MessageServeur =
   | {
@@ -112,6 +125,8 @@ export type MessageServeur =
       etat: EtatSeance;
       messages: MessageChatWs[];
     }
+  /** Le programme de la soirée a changé (film suivant, ajout, retrait, ordre). */
+  | { t: 'programme'; programme: FilmProgramme[]; rangCourant: number }
   /** Le souvenir a changé (une note) ; `fin` : l'hôte vient de terminer la séance. */
   | { t: 'souvenir'; souvenir: Souvenir; fin: boolean }
   | { t: 'etat'; etat: EtatSeance; raison: RaisonEtat; par: string | null }
