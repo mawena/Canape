@@ -1,6 +1,6 @@
 // Contrôleur de la salle : relie le WebSocket, le moteur de synchro, l'appel WebRTC, le son et l'état affiché.
 // Tout l'état réactif de la page vit ici (Svelte 5, runes) ; les composants ne font que l'afficher.
-import { EMOJIS, LIMITES_WS, type Emoji, type EtatApi, type PlanDeLecture, type Seance, type UtilisateurPublic } from '@canape/partage';
+import { EMOJIS, LIMITES_WS, type Emoji, type EtatApi, type NoteSeance, type PlanDeLecture, type Seance, type Souvenir, type UtilisateurPublic } from '@canape/partage';
 import { api } from '$lib/api/client.ts';
 import { attacherLecture, chargerPlan } from '$lib/lecture/attacher.ts';
 import { Appel, type EtatPair } from './appel.ts';
@@ -85,6 +85,9 @@ export class Salle {
   compteAuteur: string | null = $state(null);
   reprise: { position: number; avec: string[] } | null = $state(null);
   fini = $state(false);
+  /** L'écran de fin a été fermé : il ne revient pas tout seul (jusqu'au prochain film). */
+  finFermee = $state(false);
+  souvenir: Souvenir | null = $state(null);
   tallyReactions = $state(0);
   serveurRtt: number | null = $state(null);
   retour5min: string | null = $state(null);
@@ -502,6 +505,10 @@ export class Salle {
         if (p) { p.micro = m.micro; p.camera = m.camera; }
         break;
       }
+      case 'souvenir':
+        this.souvenir = m.souvenir;
+        if (m.fin) this.terminer();
+        break;
       case 'reaction': this.surReaction(m.cid, m.emoji); break;
       case 'message': this.surMessage(m.message); break;
       case 'signal': this.appel?.signal(m.de, m.donnees); break;
@@ -587,7 +594,7 @@ export class Salle {
     const moi = par !== null && par === this.moi?.cid;
     this.recevoirEtat(etat);
     if (raison === 'fin') this.terminer();
-    if (raison === 'film' || (avant && avant.filmId !== etat.filmId)) { this.fini = false; this.reprise = null; }
+    if (raison === 'film' || (avant && avant.filmId !== etat.filmId)) { this.fini = false; this.finFermee = false; this.souvenir = null; this.reprise = null; }
     if (raison === 'lecture' || raison === 'compte_a_rebours') this.reprise = null;
     if (raison === 'compte_a_rebours' && par !== null) this.compteAuteur = moi ? 'Tu as lancé le compte à rebours.' : `${this.nomDe(par) ?? 'Quelqu’un'} a lancé le compte à rebours.`;
     if (!moi) {
@@ -639,7 +646,7 @@ export class Salle {
   changerSousTitres(cle: string | null): void { this.ws?.envoyer({ t: 'sous_titres', cle }); }
   ignorerAttente(cid: string): void { this.ws?.envoyer({ t: 'ignorer_attente', cid }); }
   depuisLeDebut(): void { this.reprise = null; this.aller(0); }
-  changerFilm(filmId: string): void { this.fini = false; this.ws?.envoyer({ t: 'film', filmId }); }
+  changerFilm(filmId: string): void { this.fini = false; this.finFermee = false; this.souvenir = null; this.ws?.envoyer({ t: 'film', filmId }); }
 
   /** « Je reviens dans 5 min » : pause pour tous et message dans le chat. */
   jeReviens(): void {
@@ -762,7 +769,32 @@ export class Salle {
   }
 
   private terminer(): void {
+    if (this.finFermee) return;
     this.fini = true;
+    void this.chargerSouvenir();
+  }
+
+  /** « Revoir la fin » : ferme l'écran de fin, qui ne revient pas tout seul. */
+  fermerFin(): void {
+    this.fini = false;
+    this.finFermee = true;
+  }
+
+  async chargerSouvenir(): Promise<void> {
+    try {
+      this.souvenir = await api.get<Souvenir>(`/api/seances/${encodeURIComponent(this.seanceId)}/souvenir`);
+    } catch { /* l'écran de fin s'affiche sans le détail */ }
+  }
+
+  /** Ta note d'un mot ; la même note une seconde fois l'efface. Les autres la voient aussitôt (message `souvenir`). */
+  async noter(note: NoteSeance): Promise<void> {
+    const moiId = this.moi?.utilisateur.id;
+    const actuelle = moiId == null ? null : this.souvenir?.personnes.find((p) => p.utilisateur.id === moiId)?.note ?? null;
+    try {
+      this.souvenir = await api.put<Souvenir>(`/api/seances/${encodeURIComponent(this.seanceId)}/note`, { note: actuelle === note ? null : note });
+    } catch {
+      this.annoncer('erreur', 'Ta note n’a pas pu être enregistrée.');
+    }
   }
 
   get secondesRegardees(): number { return this.moteur.secondesRegardees; }
