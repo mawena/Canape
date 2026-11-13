@@ -36,6 +36,7 @@ même temps, chacun avec son volume. Les caméras et les micros circulent direct
 
 **Séances et salle**
 - Séance créée en choisissant un film, avec un lien à envoyer aux invités ; l'hôte retrouve ce lien à tout moment, même film lancé (bouton « Inviter » de la salle et du sas, « Copier le lien » dans la liste des séances) sans interrompre la lecture.
+- Soirée à plusieurs films : dans « Nouvelle séance », « Ajouter un autre film » construit le programme (ordre réglable par les boutons monter et descendre, au clavier aussi). Entre deux films, un entracte de 5 minutes chez tout le monde, avec l'affiche du film suivant et le même compte à rebours pour tous (même après un rechargement) ; l'hôte peut « Lancer maintenant » ou ajouter 5 minutes, et à zéro le film suivant démarre pour tous. Le chat, les caméras et les réactions continuent pendant l'entracte. Dans la salle, le panneau « Programme de la soirée » montre les films (l'hôte y ajoute, retire ou réordonne les films à venir, et peut passer au film suivant). L'écran de fin n'arrive qu'après le dernier film. Une séance d'un seul film reste comme avant.
 - Lecture synchronisée, appel vidéo WebRTC, chat, réactions qui flottent, compte à rebours, indicateur de synchro.
 - Langue et sous-titres partagés par tous.
 - Agenda : « Ajouter à l'agenda » (liste des séances, séance créée, carte de l'accueil) télécharge un fichier `.ics` (RFC 5545) : date prévue, durée du film (2 h si inconnue), rappel 15 minutes avant, adresse de la séance (jamais le lien d'invitation).
@@ -157,6 +158,13 @@ fiche du film permet de le partager, de choisir les pistes et de le préparer à
 **Lancer une séance** : depuis l'accueil, toucher un film puis « Lancer » : la séance est créée et le lien est là (les réglages de date et d'invités sont dans « Plus d'options »). L'accueil montre d'abord la séance en cours ou la prochaine, les films à reprendre et les téléchargements en cours. Il suffit ensuite d'envoyer le lien de la séance aux invités (ou les
 inviter parmi les comptes). Chacun rejoint la salle, autorise sa caméra et son micro, et la lecture démarre pour tous.
 
+**Soirée de plusieurs films** : dans « Séances », « Lancer une séance », choisir un premier film puis « Ajouter un autre
+film » et cocher les suivants ; leur ordre se règle avec les flèches de la liste « Les films de la soirée ». La liste des
+séances, la carte de l'accueil et le sas annoncent « 2 films : … ». Dans la salle, le bouton « Programme » ouvre le
+programme de la soirée (en lecture seule pour les invités). À la fin d'un film, l'entracte s'ouvre chez tout le monde ;
+l'hôte peut lancer le film suivant tout de suite ou rallonger l'entracte de 5 minutes. Chaque film vu entre dans
+l'historique, et l'écran de fin, après le dernier film, demande « Un mot sur cette soirée ? ».
+
 **Agenda et notifications** : sur une séance qui a une date, « Ajouter à l'agenda » donne un fichier `.ics` que l'agenda de l'appareil ouvre. Pour être prévenu quand quelqu'un entre dans la salle : Compte, « Notifications sur cet appareil », activer l'interrupteur (le navigateur demande alors sa permission), puis « Envoyer un essai ». Aucune configuration serveur : les clés VAPID sont créées au premier démarrage et gardées en base (ne jamais les supprimer : tous les abonnements deviendraient muets). Le serveur doit pouvoir joindre en HTTPS les services de notifications des navigateurs (Mozilla, Google, Apple).
 
 **Conseils**
@@ -275,6 +283,9 @@ npx playwright install --with-deps chromium firefox webkit
 npm run e2e                          # tous les navigateurs
 npm run e2e -- --project=chromium    # un seul
 ```
+
+Pour les essais seulement, `CANAPE_ENTRACTE_SECONDES` raccourcit l'entracte d'une soirée (300 s par défaut ; « +5 min »
+ajoute la même durée) : `e2e/soiree.spec.ts` s'en sert pour ne pas attendre 5 minutes. À ne pas régler en production.
 
 Les tests, les essais Playwright et la construction sont des travaux lourds ; sur un poste modeste, ne pas les lancer en
 parallèle. Les scripts de déploiement se rejouent sans root avec `deploiement/essais/*.sh` (faux chemins et fausses

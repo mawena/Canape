@@ -122,6 +122,7 @@ Sur le VPS : `/etc/canape/canape.conf` lu par systemd.
 | `CANAPE_TMDB_CLE` | vide | clé TMDB (affiches, résumés) |
 | `CANAPE_ICE`, `CANAPE_TURN_URLS`, `CANAPE_TURN_SECRET` | STUN Google / vides | comme en 0.1 |
 | `CANAPE_TLS_CERT`, `CANAPE_TLS_CLE` | vides | HTTPS direct (sinon nginx) |
+| `CANAPE_ENTRACTE_SECONDES` | `300` | **essais seulement** : durée de l'entracte d'une soirée (1 à 3600 ; « +5 min » ajoute la même durée) |
 
 ## Données (SQLite)
 
@@ -236,6 +237,17 @@ CREATE TABLE seances_notes (                           -- note d'un mot : coeur 
   PRIMARY KEY (seance_id, utilisateur_id)
 );
 
+-- 080_programme.sql (soirée à plusieurs films, phase 21)
+ALTER TABLE seances ADD COLUMN rang_courant INTEGER NOT NULL DEFAULT 0;  -- rang du film en cours ; seances.film_id reste ce film
+CREATE TABLE seances_programme (                       -- les films de la séance, dans l'ordre (des trous sont permis)
+  seance_id TEXT NOT NULL REFERENCES seances(id) ON DELETE CASCADE,
+  rang INTEGER NOT NULL,
+  film_id TEXT NOT NULL REFERENCES films(id) ON DELETE CASCADE,
+  PRIMARY KEY (seance_id, rang)
+);
+CREATE INDEX seances_programme_film ON seances_programme (film_id);
+-- les séances existantes reçoivent un programme d'un film (rang 0 : leur film)
+
 -- 040_lecture.sql
 CREATE TABLE preparations (                            -- versions converties à l'avance (MP4 lisible partout)
   film_id TEXT NOT NULL REFERENCES films(id) ON DELETE CASCADE,
@@ -311,10 +323,26 @@ d'`Origin` égale à `CANAPE_URL_PUBLIQUE`. Types dans `partage/src/*.ts`.
 
 **Séances** (module seances)
 - `GET /api/seances` (à venir, en cours, récentes) ; `POST /api/seances` `{ filmId, titre?, prevueLe?, invites?: number[] }`
+  ou `{ filmIds: string[], … }` (soirée, voir plus bas)
 - `GET|PATCH|DELETE /api/seances/:id` ; `POST|DELETE /api/seances/:id/lien` (crée le lien, ou redonne le lien existant → `{ lien }` ; retire)
 - `POST /api/rejoindre/:jeton` → `{ seanceId }` (ajoute aux participants)
 - *Réalisé (phase 17, lien pendant la séance)* : l'hôte seul voit « Inviter » (`client/src/lib/seance/InviterSeance.svelte`, logique pure dans `inviter.ts`) dans la barre de commandes de la salle (enfant de l'élément en plein écran, feuille du bas sur téléphone, sans pause ni effet sur la synchro) et dans le sas ; le lien est demandé à l'ouverture (`POST /api/seances/:id/lien`, idempotent). « Copier le lien » dans la liste des séances à venir dont on est l'hôte. Une personne qui ouvre le lien en cours de film reçoit l'état de lecture du serveur de salle et se cale sur la position attendue ; aucune correction serveur n'a été nécessaire.
 - `GET /api/seances/:id/messages?avant=<id>`
+- *Réalisé (phase 21, soirée à plusieurs films)* : `Seance` porte `programme: FilmProgramme[]` (`rang`, `filmId`, `titre`,
+  `annee`, `aAffiche`, `versionImages`, `couleur`, trié par rang) et `rangCourant` ; `seances.film_id` reste le film en
+  cours, donc tout le code d'un seul film marche sans changement. `POST /api/seances` accepte `filmIds` (1 à 20 films, sans
+  doublon, dans l'ordre ; le premier est lancé d'abord ; prioritaire sur `filmId`, toujours accepté) avec la même règle
+  d'accès pour **chaque** film (404 sinon). `PUT /api/seances/:id/programme` `{ filmIds }` (hôte ou administrateur ; 403
+  sinon) remplace les films **à venir** (après le film en cours, liste vide permise, 20 films au plus avec le film en cours)
+  et diffuse `programme` dans la salle. `PATCH` d'un film remplace le film en cours dans le programme. La règle d'accès aux
+  films s'étend aux films du programme (l'affiche du film suivant s'affiche pendant l'entracte). `Souvenir.nbFilms` : films
+  déjà lancés (rang ≤ rang courant). Fonctions pures communes : `partage/src/programme.ts` (film suivant, temps restant
+  d'entracte, « 3 films : … », « Film 2 sur 3 »). Client : création (`routes/seances/nouvelle`, « Ajouter un autre film »,
+  monter / descendre / retirer), panneau `ProgrammeSoiree.svelte` (bouton « Programme » de la barre, seulement s'il y a
+  plusieurs films ; actions pour l'hôte, lecture seule pour les invités), voile `Entracte.svelte` (dans la scène : caméras,
+  chat et réactions restent utilisables), logique pure `client/src/lib/seance/programme.ts` ; la liste des séances, la
+  carte de l'accueil et le sas disent « 2 films : … » (`data-test="resume-programme"`). L'écran de fin n'apparaît qu'après
+  le dernier film et demande alors « Un mot sur cette soirée ? » en citant le nombre de films.
 - *Réalisé (phase 19, fin de séance et souvenir)* : `GET /api/seances/:id/souvenir` → `Souvenir` (`secondesEnsemble`, `personnes: [{ utilisateur, present, note }]`) et `PUT /api/seances/:id/note` `{ note: 'coeur'|'bien'|'bof'|null }` (`null` efface), réservés à l'hôte et aux invités (404 pour tout autre, administrateur compris). Le temps ensemble est mesuré par le serveur de salle (au moins deux comptes différents présents, cumulé ; enregistré à chaque changement d'état, toutes les 25 s et au départ de chacun). `GET /api/historique` ajoute `souvenir` à chaque entrée. Une pause `fin` met le film en « terminé » pour toute la salle.
 - `GET /api/reprendre` (films commencés, non terminés) ; `GET /api/historique`
 - `GET /api/ice` → `{ iceServers }` (identifiants TURN temporaires)
@@ -343,17 +371,34 @@ Client → serveur :
 `ping {c}` · `lecture {position}` · `pause {position, fin?}` · `aller {position}` · `film {filmId}` ·
 `audio {piste}` · `sous_titres {cle|null}` · `compte_a_rebours {}` (lecture lancée pour tous 3 s plus tard) ·
 `tampon {enCours}` · `media {micro, camera}` · `reaction {emoji}` (liste fermée : 😂 ❤️ 😱 😭 🔥 👏 😮 🍿) ·
-`message {texte}` (≤ 500 caractères) · `progression {position}` (toutes les 10 s) · `signal {a, donnees}`.
+`message {texte}` (≤ 500 caractères) · `progression {position}` (toutes les 10 s) · `signal {a, donnees}` ·
+soirée (hôte ou administrateur, sinon `erreur {code: 'interdit'}`) : `entracte_lancer {}` (pendant l'entracte : le film
+suivant tout de suite) · `entracte_prolonger {}` (+ 5 min, jamais plus d'une heure à partir de maintenant) ·
+`film_suivant {}` (le film suivant tout de suite, même en plein film ; `erreur film_inconnu` s'il n'y en a pas).
 
 Serveur → client :
 `bienvenue {moi:{cid, utilisateur}, serveur, participants, etat, messages}` · `etat {etat, raison, par}` ·
 `arrivee {participant}` · `depart {cid}` · `media {cid, micro, camera}` · `reaction {cid, emoji}` ·
-`message {message}` · `souvenir {souvenir, fin}` (une note a changé, ou `fin: true` : l'hôte a terminé la séance → écran de fin) · `signal {de, donnees}` · `pong {c, s}` · `erreur {code, message}`.
+`message {message}` · `souvenir {souvenir, fin}` (une note a changé, ou `fin: true` : l'hôte a terminé la séance → écran de fin) · `signal {de, donnees}` · `pong {c, s}` · `erreur {code, message}` ·
+`programme {programme, rangCourant}` (le programme de la soirée a changé : film suivant, ajout, retrait, ordre).
 
 `etat` = `{ filmId, lecture, position, instant, version, attente: string[], pisteAudio, sousTitres,
-compteARebours: number|null, serveur }` : mêmes règles qu'en 0.1 (position à l'instant serveur `instant`,
+compteARebours: number|null, entracteFin: number|null, serveur }` : mêmes règles qu'en 0.1 (position à l'instant serveur `instant`,
 rattrapage par saut au-delà de 1 s et par vitesse 0,95/1,05 entre 0,3 et 1 s, attente mutuelle, aucun écho
 d'événement). Changer de piste audio ou de film remet tout le monde en pause à la même position.
+
+**Soirée (phase 21).** Quand un film finit (`pause {fin: true}`) et qu'il reste un film au programme, le serveur ne répond
+pas `fin` mais `etat` raison `entracte` : pause sur la fin, `entracteFin` = heure de fin de l'entracte en ms, **horloge du
+serveur** (comme `serveur` et `instant` : chaque client compte avec son décalage d'horloge, donc tout le monde lit le même
+temps, y compris après un rechargement ou une arrivée en cours d'entracte, puisque `bienvenue.etat` le porte). Le film fini
+entre dans l'historique de chaque présent comme une fin ordinaire. Pendant l'entracte, le film fini ne bouge plus
+(lecture, pause, saut, pistes et compte à rebours ignorés ; une deuxième `fin` aussi) ; le chat, les caméras et les
+réactions continuent. `entracte_prolonger` renvoie `etat` raison `entracte` avec la nouvelle heure. À l'heure dite (ou sur
+`entracte_lancer` / `film_suivant`), le serveur passe au film suivant pour tous : `etat` raison `film` (`par` : le `cid` de
+l'hôte, ou `null` à la fin du minuteur), position 0, langue et sous-titres par défaut, compte à rebours de 3 s, puis
+attente mutuelle habituelle ; puis `programme` avec le nouveau `rangCourant`. Si plus aucun film ne suit (retiré pendant
+l'entracte), l'entracte finit en `fin` (écran de fin). Si tout le monde part pendant l'entracte, la séance passe au film
+suivant, en pause au début. Le dernier film fini donne `fin` comme avant. Durée : `CANAPE_ENTRACTE_SECONDES` (300 s).
 
 ## Moteur Transmission (phase 16)
 
