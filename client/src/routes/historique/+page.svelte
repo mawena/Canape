@@ -113,7 +113,9 @@
                   <SelecteurNote compact libelle="Ta note pour {p.film.titre}" note={maNote(p.souvenir, session.utilisateur?.id)} surChoisir={(n) => void noter(p, n)} />
                 </div>
               {/if}
-              {#snippet fin()}<Bouton variante="secondaire" taille="s" icone="reculer" href={liens.nouvelleSeance(p.film.id)} aria-label="Revoir {p.film.titre}">Revoir</Bouton>{/snippet}
+              <!-- Sur téléphone, « Revoir » passe sous la ligne au lieu de serrer le souvenir sur le côté. -->
+              <div class="revoir-tel"><Bouton variante="secondaire" taille="s" icone="reculer" href={liens.nouvelleSeance(p.film.id)} aria-label="Revoir {p.film.titre}">Revoir</Bouton></div>
+              {#snippet fin()}<span class="revoir-large"><Bouton variante="secondaire" taille="s" icone="reculer" href={liens.nouvelleSeance(p.film.id)} aria-label="Revoir {p.film.titre}">Revoir</Bouton></span>{/snippet}
             </LigneListe>
           {/each}
         </Liste>
@@ -137,8 +139,12 @@
   .squelettes { display: grid; gap: var(--e-4); }
   .sq-ligne { display: flex; gap: var(--e-4); align-items: center; }
   .sq-textes { display: grid; gap: 10px; flex: 1; }
+  .revoir-large { display: contents; }
+  .revoir-tel { display: none; }
   @media (max-width: 640px) {
-    .souvenir .temps { flex-basis: 100%; max-width: calc(100% - 104px); }
+    .revoir-large { display: none; }
+    .revoir-tel { display: flex; margin-top: 10px; }
+    .souvenir .temps { flex-basis: 100%; }
     .avance :global(.badge) { display: none; }
   }
 </style>
