@@ -222,6 +222,20 @@ CREATE TABLE progression (                             -- reprise et historique
   PRIMARY KEY (utilisateur_id, film_id)
 );
 
+-- 060_souvenirs.sql (fin de séance et souvenir)
+ALTER TABLE seances ADD COLUMN ensemble_secondes REAL NOT NULL DEFAULT 0;  -- temps cumulé à deux personnes différentes ou plus
+CREATE TABLE seances_presences (                       -- toute personne entrée au moins une fois dans la salle
+  seance_id TEXT NOT NULL REFERENCES seances(id) ON DELETE CASCADE,
+  utilisateur_id INTEGER NOT NULL REFERENCES utilisateurs(id) ON DELETE CASCADE,
+  premiere_le TEXT NOT NULL, PRIMARY KEY (seance_id, utilisateur_id)
+);
+CREATE TABLE seances_notes (                           -- note d'un mot : coeur | bien | bof
+  seance_id TEXT NOT NULL REFERENCES seances(id) ON DELETE CASCADE,
+  utilisateur_id INTEGER NOT NULL REFERENCES utilisateurs(id) ON DELETE CASCADE,
+  note TEXT NOT NULL CHECK (note IN ('coeur','bien','bof')), notee_le TEXT NOT NULL,
+  PRIMARY KEY (seance_id, utilisateur_id)
+);
+
 -- 040_lecture.sql
 CREATE TABLE preparations (                            -- versions converties à l'avance (MP4 lisible partout)
   film_id TEXT NOT NULL REFERENCES films(id) ON DELETE CASCADE,
@@ -301,6 +315,7 @@ d'`Origin` égale à `CANAPE_URL_PUBLIQUE`. Types dans `partage/src/*.ts`.
 - `POST /api/rejoindre/:jeton` → `{ seanceId }` (ajoute aux participants)
 - *Réalisé (phase 17, lien pendant la séance)* : l'hôte seul voit « Inviter » (`client/src/lib/seance/InviterSeance.svelte`, logique pure dans `inviter.ts`) dans la barre de commandes de la salle (enfant de l'élément en plein écran, feuille du bas sur téléphone, sans pause ni effet sur la synchro) et dans le sas ; le lien est demandé à l'ouverture (`POST /api/seances/:id/lien`, idempotent). « Copier le lien » dans la liste des séances à venir dont on est l'hôte. Une personne qui ouvre le lien en cours de film reçoit l'état de lecture du serveur de salle et se cale sur la position attendue ; aucune correction serveur n'a été nécessaire.
 - `GET /api/seances/:id/messages?avant=<id>`
+- *Réalisé (phase 19, fin de séance et souvenir)* : `GET /api/seances/:id/souvenir` → `Souvenir` (`secondesEnsemble`, `personnes: [{ utilisateur, present, note }]`) et `PUT /api/seances/:id/note` `{ note: 'coeur'|'bien'|'bof'|null }` (`null` efface), réservés à l'hôte et aux invités (404 pour tout autre, administrateur compris). Le temps ensemble est mesuré par le serveur de salle (au moins deux comptes différents présents, cumulé ; enregistré à chaque changement d'état, toutes les 25 s et au départ de chacun). `GET /api/historique` ajoute `souvenir` à chaque entrée. Une pause `fin` met le film en « terminé » pour toute la salle.
 - `GET /api/reprendre` (films commencés, non terminés) ; `GET /api/historique`
 - `GET /api/ice` → `{ iceServers }` (identifiants TURN temporaires)
 - `GET /ws/seances/:id` : WebSocket de la séance (ci-dessous)
@@ -320,7 +335,7 @@ Client → serveur :
 Serveur → client :
 `bienvenue {moi:{cid, utilisateur}, serveur, participants, etat, messages}` · `etat {etat, raison, par}` ·
 `arrivee {participant}` · `depart {cid}` · `media {cid, micro, camera}` · `reaction {cid, emoji}` ·
-`message {message}` · `signal {de, donnees}` · `pong {c, s}` · `erreur {code, message}`.
+`message {message}` · `souvenir {souvenir, fin}` (une note a changé, ou `fin: true` : l'hôte a terminé la séance → écran de fin) · `signal {de, donnees}` · `pong {c, s}` · `erreur {code, message}`.
 
 `etat` = `{ filmId, lecture, position, instant, version, attente: string[], pisteAudio, sousTitres,
 compteARebours: number|null, serveur }` : mêmes règles qu'en 0.1 (position à l'instant serveur `instant`,

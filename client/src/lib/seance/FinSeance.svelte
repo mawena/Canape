@@ -47,7 +47,7 @@
 </div>
 
 <style>
-  .voile { position: absolute; inset: 0; z-index: 8; display: grid; place-items: center; padding: 24px; overflow-y: auto; background: rgba(8, 11, 20, 0.9); color: #fff; text-align: center; }
+  .voile { position: absolute; inset: 0; z-index: 30; display: grid; place-items: center; padding: 24px; overflow-y: auto; background: rgba(8, 11, 20, 0.94); color: #fff; text-align: center; }
   .contenu { display: grid; justify-items: center; gap: var(--e-5); max-width: 560px; animation: apparition var(--d-3) var(--ease); }
   h2 { margin: 0; font: 400 clamp(2.6rem, 8vw, 4rem) / 1 var(--titre); letter-spacing: -0.01em; }
   .temps { margin: 0; min-height: 1.5em; font: 500 1.25rem / 1.3 var(--texte-police); color: var(--doux, #c0bacb); }

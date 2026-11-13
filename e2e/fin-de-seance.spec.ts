@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { mkdirSync } from 'node:fs';
+import type { Page } from '@playwright/test';
 import { test, expect, televerser, FILM_WEBM } from './support/fixtures.ts';
 import { creerSeance, entrerDansLaSalle } from './support/salle.ts';
 
@@ -7,8 +8,19 @@ import { creerSeance, entrerDansLaSalle } from './support/salle.ts';
 // CANAPE_E2E_CAPTURES_FIN (dossier) est défini.
 const dossierCaptures = process.env['CANAPE_E2E_CAPTURES_FIN'];
 
+/** Deux captures (ordinateur 1440×900 et téléphone 390×844) ; la page revient en 1440×900. */
+async function capturer(page: Page, nom: string): Promise<void> {
+  if (!dossierCaptures) return;
+  for (const [suffixe, largeur, hauteur] of [['ordinateur', 1440, 900], ['telephone', 390, 844]] as const) {
+    await page.setViewportSize({ width: largeur, height: hauteur });
+    await page.waitForTimeout(500);
+    await page.screenshot({ path: path.join(dossierCaptures, `${nom}-${suffixe}.png`) });
+  }
+  await page.setViewportSize({ width: 1440, height: 900 });
+}
+
 test.describe('Fin de séance et souvenir', () => {
-  test('le film arrive à la fin : écran de fin, notes en direct, historique, note après coup', async ({ ouvrir, monde }, info) => {
+  test('le film arrive à la fin : écran de fin, notes en direct, historique, note après coup', async ({ ouvrir, monde }) => {
     test.setTimeout(150_000);
     const filmId = await televerser(monde.serveur, monde.requeteAdmin, FILM_WEBM);
     const id = await creerSeance(monde.serveur, monde.requeteAdmin, filmId, [monde.viewer.id]);
@@ -30,10 +42,7 @@ test.describe('Fin de séance et souvenir', () => {
       await expect(p.getByTestId('temps-ensemble')).toContainText('ensemble');
       await expect(p.getByTestId('present-fin')).toHaveCount(2);
     }
-    if (dossierCaptures) {
-      mkdirSync(dossierCaptures, { recursive: true });
-      await a.waitForTimeout(600);
-    }
+    if (dossierCaptures) mkdirSync(dossierCaptures, { recursive: true });
 
     // Chacune note : la note de l'une apparaît en direct chez l'autre ; la sienne est en évidence.
     await a.getByTestId('note-coeur').click();
@@ -49,8 +58,7 @@ test.describe('Fin de séance et souvenir', () => {
     await a.getByTestId('note-coeur').click();
     await expect(b.locator('[data-test="present-fin"][data-note="coeur"]')).toHaveCount(1);
     if (dossierCaptures) {
-      await b.waitForTimeout(400);
-      await b.screenshot({ path: path.join(dossierCaptures, `fin-${info.project.name}.png`) });
+      await capturer(b, 'fin');
     }
 
     // « Revoir la fin » ferme le voile (chez soi seulement), et il ne revient pas tout seul.
@@ -74,11 +82,9 @@ test.describe('Fin de séance et souvenir', () => {
     await b.reload();
     await expect(b.getByTestId('souvenir').first().getByTestId('note-bien')).toHaveAttribute('aria-pressed', 'true');
     if (dossierCaptures) {
-      await b.screenshot({ path: path.join(dossierCaptures, `historique-clair-${info.project.name}.png`) });
-      await b.emulateMedia({ colorScheme: 'dark' });
-      await b.evaluate(() => { document.documentElement.dataset['theme'] = 'sombre'; });
-      await b.waitForTimeout(400);
-      await b.screenshot({ path: path.join(dossierCaptures, `historique-sombre-${info.project.name}.png`) });
+      await capturer(b, 'historique-clair');
+      await b.evaluate(() => { document.documentElement.setAttribute('data-theme', 'sombre'); });
+      await capturer(b, 'historique-sombre');
     }
 
     // A (qui a quitté) retrouve sa note et celle de B dans son propre historique.

@@ -129,7 +129,7 @@
   .avance { display: flex; align-items: center; gap: var(--e-3); margin-top: 6px; max-width: 420px; }
   .avance :global(.barre) { flex: 1; min-width: 80px; }
   .regarde { color: var(--discret); font-size: 13px; white-space: nowrap; }
-  .souvenir { display: flex; align-items: center; gap: var(--e-2) var(--e-3); flex-wrap: wrap; margin-top: 10px; }
+  .souvenir { min-width: 0; display: flex; align-items: center; gap: var(--e-2) var(--e-3); flex-wrap: wrap; margin-top: 10px; }
   .souvenir .temps { margin: 0; font-weight: 600; font-size: 13px; color: var(--doux); }
   .note-autre { padding: 4px 10px; border-radius: var(--r-pill); background: var(--s2); font-size: 13px; color: var(--doux); white-space: nowrap; }
   .souvenir :global(.notes) { justify-content: flex-start; gap: var(--e-2); }
@@ -138,6 +138,7 @@
   .sq-ligne { display: flex; gap: var(--e-4); align-items: center; }
   .sq-textes { display: grid; gap: 10px; flex: 1; }
   @media (max-width: 640px) {
+    .souvenir .temps { flex-basis: 100%; }
     .avance :global(.badge) { display: none; }
   }
 </style>

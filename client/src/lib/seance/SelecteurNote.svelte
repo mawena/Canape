@@ -27,6 +27,8 @@
 
 <style>
   .notes { display: flex; gap: var(--e-3); flex-wrap: wrap; justify-content: center; }
+  .notes:not(.compact) { flex-wrap: nowrap; width: min(100%, 372px); }
+  .notes:not(.compact) .note { flex: 1 1 0; min-width: 0; padding: 12px 6px; }
   .note {
     display: inline-flex; flex-direction: column; align-items: center; gap: 4px; min-width: 104px; padding: 12px 16px;
     border-radius: var(--r-l); border: 1.5px solid var(--bord-champ); background: transparent; color: var(--texte); cursor: pointer;
@@ -35,7 +37,7 @@
   }
   .note:hover { background: var(--lampe-fond); }
   .note:focus-visible { outline: 3px solid var(--lampe-vive); outline-offset: 2px; }
-  .note.choisie { background: var(--lampe-fond); border-color: var(--lampe); box-shadow: 0 0 0 1.5px var(--lampe); transform: translateY(-2px) scale(1.04); }
+  .note.choisie { background: var(--lampe-fond); border: 2px solid var(--lampe); padding: calc(12px - 0.5px) calc(16px - 0.5px); transform: translateY(-2px) scale(1.04); }
   .emoji { font-size: 28px; line-height: 1; }
   .compact .note { flex-direction: row; min-width: 0; padding: 6px 12px; gap: 6px; border-radius: var(--r-pill); font-size: 13px; }
   .compact .emoji { font-size: 16px; }
