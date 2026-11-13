@@ -52,12 +52,12 @@
 <style>
   .entracte {
     position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; padding: 88px 24px 150px; overflow: hidden;
-    background: rgba(8, 11, 20, 0.9); color: #fff; cursor: default; user-select: text;
+    background: rgba(8, 11, 20, 0.95); color: #fff; cursor: default; user-select: text;
   }
   /* La couleur du film suivant éclaire la pièce, du côté de son affiche ; aucun texte n'est posé sur elle sans fond. */
   .halo {
-    position: absolute; inset: -20%; pointer-events: none; opacity: 0.55;
-    background: radial-gradient(38% 46% at 38% 50%, var(--lueur, #1f5ce0), transparent 70%); filter: blur(48px);
+    position: absolute; inset: -10%; pointer-events: none; opacity: 0.3;
+    background: radial-gradient(24% 34% at 42% 50%, var(--lueur, #1f5ce0), transparent 75%); filter: blur(56px);
     animation: allume 900ms var(--ease, ease-out);
   }
   .carte { position: relative; display: flex; align-items: center; gap: clamp(20px, 4vw, 44px); max-width: 720px; }
