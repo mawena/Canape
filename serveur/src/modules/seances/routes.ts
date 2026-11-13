@@ -1,6 +1,6 @@
 // Routes REST du module séances.
 import type { FastifyInstance } from 'fastify';
-import type { ListeSeances, ReponseIce, ReponseLienSeance, Seance, Souvenir } from '@canape/partage';
+import { construireIcs, nomFichierAgenda, type ListeSeances, type ReponseIce, type ReponseLienSeance, type Seance, type Souvenir } from '@canape/partage';
 import { ErreurHttp, introuvable, requeteInvalide } from '../../commun/erreurs.ts';
 import { idBase32, jetonAleatoire, maintenantIso, sha256Hex } from '../../commun/identifiants.ts';
 import { transaction } from '../../db/index.ts';
@@ -212,6 +212,23 @@ export function enregistrerRoutes(app: FastifyInstance, salles: Salles): void {
     poserNote(app, req.params.id, req.utilisateur.id, note, maintenantIso());
     salles.diffuserSouvenir(req.params.id, false);
     return souvenirDe(app, req.params.id)!;
+  });
+
+  // ---- Agenda (.ics) : hôte et personnes invitées, séance avec une date prévue ----
+  app.get<{ Params: { id: string } }>('/api/seances/:id/agenda.ics', pre, async (req, reply) => {
+    exigerParticipant(req.params.id, req.utilisateur);
+    const l = ligneSeance(app, req.params.id);
+    if (!l || l.prevue_le === null) throw introuvable('Cette séance n\'a pas de date prévue.');
+    const film = l.film_id ? app.mediatheque.obtenir(l.film_id) : null;
+    const texte = construireIcs({
+      seanceId: l.id, hoteUid: new URL(app.config.urlPublique).host, titre: l.titre, filmTitre: l.film_titre,
+      prevueLe: l.prevue_le, dureeSecondes: film?.duree ?? null, url: `${app.config.urlPublique}/seances/${l.id}`, maintenant: new Date(),
+    });
+    return reply
+      .header('Content-Type', 'text/calendar; charset=utf-8')
+      .header('Content-Disposition', `attachment; filename="${nomFichierAgenda(l.id)}"`)
+      .header('Cache-Control', 'private, no-store')
+      .send(texte);
   });
 
   // ---- Messages ----
