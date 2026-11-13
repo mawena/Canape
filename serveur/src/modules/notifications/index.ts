@@ -30,7 +30,19 @@ function octets(v: unknown, longueur: number): Buffer | null {
 
 const HOTE_IP = /^(\d{1,3}(\.\d{1,3}){3}|\[.*\])$/;
 
-/** Adresse d'un service de notifications : https et un vrai nom d'hôte (http et boucle locale seulement si Canapé lui-même est en http, c'est-à-dire en développement). */
+// Services de notifications des navigateurs : Chrome, Edge Chromium, Brave, Opera, Samsung (FCM), Firefox (Mozilla),
+// Safari (Apple), ancien Edge (Windows). En production, Canapé n'envoie qu'à eux : l'inscription étant libre, une
+// adresse quelconque ferait du serveur un relais de requêtes vers n'importe quel site.
+const SERVICES_PUSH = ['fcm.googleapis.com', 'android.googleapis.com', 'push.services.mozilla.com', 'push.apple.com', 'notify.windows.com'];
+export function serviceDeNotificationsConnu(hote: string): boolean {
+  const h = hote.toLowerCase();
+  return SERVICES_PUSH.some((s) => h === s || h.endsWith(`.${s}`));
+}
+
+/**
+ * Adresse d'un service de notifications : en production, https vers un service connu des navigateurs (voir
+ * SERVICES_PUSH) ; http et boucle locale seulement si Canapé lui-même est en http, c'est-à-dire en développement.
+ */
 function endpointValide(v: unknown, urlPublique: string): string {
   if (typeof v !== 'string' || v.length > 2048) throw requeteInvalide('Adresse d\'abonnement invalide.');
   let u: URL;
@@ -40,6 +52,7 @@ function endpointValide(v: unknown, urlPublique: string): string {
   if (!dev && (u.protocol !== 'https:' || HOTE_IP.test(u.hostname) || u.hostname === 'localhost' || !u.hostname.includes('.'))) {
     throw requeteInvalide('Adresse d\'abonnement refusée.');
   }
+  if (!dev && !serviceDeNotificationsConnu(u.hostname)) throw requeteInvalide('Service de notifications inconnu.');
   if (dev && u.protocol !== 'https:' && u.protocol !== 'http:') throw requeteInvalide('Adresse d\'abonnement invalide.');
   return u.toString();
 }

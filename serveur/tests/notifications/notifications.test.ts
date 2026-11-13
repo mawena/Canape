@@ -80,17 +80,22 @@ describe('notifications Web Push', () => {
     await requete(env.app, 'DELETE', '/api/notifications/abonnements', { utilisateur: camille, corps: { endpoint: faux.url('partage') } });
   });
 
-  test('en production (https) : adresses locales ou IP refusées, pas de service local', async () => {
+  test('en production (https) : adresses locales, IP et services inconnus refusés ; services des navigateurs acceptés', async () => {
     const prod = await creerEnv2();
     try {
       const u = await creerUtilisateur(prod, { prenom: 'Zoe' });
       const ab = creerAbonneTest();
       const entetes = { cookie: u.cookie, origin: 'https://canape.exemple' };
       const envoyer = (endpoint: string) => requete(prod.app, 'POST', '/api/notifications/abonnements', { utilisateur: null, entetes, corps: ab.corps(endpoint) });
-      for (const e of ['http://push.exemple/x', 'https://127.0.0.1/x', 'https://localhost/x', 'https://[::1]/x', 'https://machine/x', 'https://u:p@push.exemple/x']) {
+      for (const e of ['http://push.exemple/x', 'https://127.0.0.1/x', 'https://localhost/x', 'https://[::1]/x', 'https://machine/x', 'https://u:p@push.exemple/x',
+        // Service inconnu : l'inscription est libre, le serveur n'envoie qu'aux services des navigateurs.
+        'https://push.exemple/abc', 'https://fcm.googleapis.com.exemple/x', 'https://googleapis.com/x', 'https://faux-push.apple.com.exemple/x', 'http://fcm.googleapis.com/fcm/send/x']) {
         assert.equal((await envoyer(e)).statusCode, 400, e);
       }
-      assert.equal((await envoyer('https://push.exemple/abc')).statusCode, 204);
+      for (const e of ['https://fcm.googleapis.com/fcm/send/abc', 'https://updates.push.services.mozilla.com/wpush/v2/abc',
+        'https://web.push.apple.com/abc', 'https://wns2-par02p.notify.windows.com/w/?token=abc']) {
+        assert.equal((await envoyer(e)).statusCode, 204, e);
+      }
     } finally { await prod.fermer(); }
   });
 
