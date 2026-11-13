@@ -153,8 +153,17 @@ export class Salles {
       seauSocial: new Seau(LIMITES_WS.evenementsParSeconde, LIMITES_WS.evenementsParSeconde, this.maintenant),
       seauGeneral: new Seau(200, 100, this.maintenant),
     };
+    // Un deuxième onglet de la même personne ne prévient personne.
+    const dejaLa = [...a.connexions.values()].some((x) => x.utilisateur.id === utilisateur.id);
     const moi = a.salle.ajouter(cid, publicDe(utilisateur));
     a.connexions.set(cid, c);
+    if (!dejaLa && this.app.hasDecorator('notifications')) {
+      // Envoi à part : aucune erreur de notification ne touche la salle.
+      void this.app.notifications.prevenirEntree({
+        seanceId, entrant: { id: utilisateur.id, prenom: utilisateur.prenom },
+        presents: new Set([...a.connexions.values()].map((x) => x.utilisateur.id)),
+      }).catch(() => undefined);
+    }
     try { noterPresence(this.app, seanceId, utilisateur.id, maintenantIso()); } catch (err) { this.app.log.warn({ err }, 'séance : présence non enregistrée'); }
     ws.on('pong', () => { c.vivant = true; });
     ws.on('error', () => { /* la fermeture suit */ });

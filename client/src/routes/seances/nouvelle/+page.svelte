@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import BoutonAgenda from '$lib/seance/BoutonAgenda.svelte';
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
   import type { CorpsCreerSeance, Film, ReponseLienSeance, Seance, UtilisateurPublic } from '@canape/partage';
@@ -103,6 +104,7 @@
           <Bouton variante="secondaire" icone="lien" onclick={() => copier(lien!, 'Lien copié.')} data-test="copier-lien">Copier le lien</Bouton>
         </div>
         <div class="actions">
+          {#if creee.prevueLe}<BoutonAgenda seanceId={creee.id} variante="secondaire" />{/if}
           <Bouton variante="secondaire" onclick={partager}>Partager le message</Bouton>
           <Bouton href="/seances/{creee.id}" data-test="entrer-salle-creee">Entrer dans la salle</Bouton>
         </div>

@@ -5,6 +5,7 @@
   import { api, ErreurApi } from '$lib/api/client.ts';
   import { session } from '$lib/interface/session.svelte.ts';
   import { Avatar, Bouton, Carte, Chargement, EtatVide, toast } from '$lib/ui/index.ts';
+  import BoutonAgenda from '$lib/seance/BoutonAgenda.svelte';
   import { dateEnLettres } from '$lib/seance/dates.ts';
   import { peutInviter } from '$lib/seance/inviter.ts';
   import { urlConnexion } from '$lib/seance/moi.ts';
@@ -84,6 +85,9 @@
               </div>
               {#if onglet === 'avenir' && peutInviter(s, session.utilisateur?.id)}
                 <Bouton variante="discret" icone="lien" chargement={copieEnCours === s.id} onclick={() => copierLien(s)} data-test="copier-lien-liste">Copier le lien</Bouton>
+              {/if}
+              {#if onglet === 'avenir' && s.prevueLe && s.termineeLe === null && !enCours}
+                <BoutonAgenda seanceId={s.id} />
               {/if}
               <Bouton href="/seances/{s.id}" variante={onglet === 'avenir' ? 'primaire' : 'secondaire'}>{onglet === 'avenir' ? 'Entrer' : 'Voir'}</Bouton>
             </div>

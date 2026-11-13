@@ -38,6 +38,8 @@ même temps, chacun avec son volume. Les caméras et les micros circulent direct
 - Séance créée en choisissant un film, avec un lien à envoyer aux invités ; l'hôte retrouve ce lien à tout moment, même film lancé (bouton « Inviter » de la salle et du sas, « Copier le lien » dans la liste des séances) sans interrompre la lecture.
 - Lecture synchronisée, appel vidéo WebRTC, chat, réactions qui flottent, compte à rebours, indicateur de synchro.
 - Langue et sous-titres partagés par tous.
+- Agenda : « Ajouter à l'agenda » (liste des séances, séance créée, carte de l'accueil) télécharge un fichier `.ics` (RFC 5545) : date prévue, durée du film (2 h si inconnue), rappel 15 minutes avant, adresse de la séance (jamais le lien d'invitation).
+- Notifications (Web Push) : « Camille est dans la salle » quand quelqu'un entre dans une séance où tu n'es pas encore. Accord explicite, appareil par appareil, dans Compte, « Notifications sur cet appareil » (interrupteur, essai). Au plus une notification par personne et par séance toutes les 10 minutes. La notification, chiffrée, ne contient que le prénom, le titre et l'adresse de la séance, et ne passe que par le service de notifications du navigateur de la personne. Sur iPhone : seulement une fois Canapé ajouté à l'écran d'accueil.
 - Reprise là où l'on s'était arrêté, historique des séances.
 - Fin de séance : à la fin du film (ou quand l'hôte termine la séance), un écran « C'était bien. 1 h 52 ensemble » avec les présents et une note d'un mot (coup de cœur, bien, bof) que chacun voit arriver en direct ; « Revoir la fin » le ferme, il ne revient pas tout seul. L'historique garde le souvenir de chaque séance (présents, temps ensemble, notes) et permet de noter après coup.
 
@@ -154,6 +156,8 @@ fiche du film permet de le partager, de choisir les pistes et de le préparer à
 
 **Lancer une séance** : depuis l'accueil, toucher un film puis « Lancer » : la séance est créée et le lien est là (les réglages de date et d'invités sont dans « Plus d'options »). L'accueil montre d'abord la séance en cours ou la prochaine, les films à reprendre et les téléchargements en cours. Il suffit ensuite d'envoyer le lien de la séance aux invités (ou les
 inviter parmi les comptes). Chacun rejoint la salle, autorise sa caméra et son micro, et la lecture démarre pour tous.
+
+**Agenda et notifications** : sur une séance qui a une date, « Ajouter à l'agenda » donne un fichier `.ics` que l'agenda de l'appareil ouvre. Pour être prévenu quand quelqu'un entre dans la salle : Compte, « Notifications sur cet appareil », activer l'interrupteur (le navigateur demande alors sa permission), puis « Envoyer un essai ». Aucune configuration serveur : les clés VAPID sont créées au premier démarrage et gardées en base (ne jamais les supprimer : tous les abonnements deviendraient muets). Le serveur doit pouvoir joindre en HTTPS les services de notifications des navigateurs (Mozilla, Google, Apple).
 
 **Conseils**
 - **Casque conseillé** : sans casque, le micro reprend le son du film et renvoie de l'écho aux autres.

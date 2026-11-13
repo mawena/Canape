@@ -18,6 +18,7 @@ import { migrer, ouvrirBase, type Base } from './db/index.ts';
 import moduleComptes from './modules/comptes/index.ts';
 import moduleLecture from './modules/lecture/index.ts';
 import moduleMediatheque from './modules/mediatheque/index.ts';
+import moduleNotifications from './modules/notifications/index.ts';
 import moduleSeances from './modules/seances/index.ts';
 
 export const DOSSIER_CLIENT = new URL('../../client/build/', import.meta.url).pathname;
@@ -70,10 +71,11 @@ export async function creerApp(config: Config, options: OptionsApp = {}): Promis
   installerControleOrigine(app);
   installerAuth(app);
 
-  // Les quatre modules, dans l'ordre (la lecture s'abonne à la médiathèque).
+  // Les cinq modules, dans l'ordre (la lecture s'abonne à la médiathèque).
   await app.register(sansEncapsulation(moduleComptes));
   await app.register(sansEncapsulation(moduleMediatheque));
   await app.register(sansEncapsulation(moduleLecture));
+  await app.register(sansEncapsulation(moduleNotifications));
   await app.register(sansEncapsulation(moduleSeances));
 
   if (clientPresent) {
