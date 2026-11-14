@@ -22,6 +22,9 @@ describe('envies : REST', () => {
     admin = await creerUtilisateur(t, { role: 'admin', prenom: 'Admin' });
     commun = insererFilm(t, ana, { visibilite: 'tous' });
     prive = insererFilm(t, ana, { visibilite: 'prive' });
+    // Ana connaît Ben et Cléo (un film partagé avec eux) ; Ben et Cléo ne se connaissent pas entre eux.
+    const lien = insererFilm(t, ana, { visibilite: 'partage' });
+    for (const u of [ben, cleo]) t.db.prepare('INSERT INTO films_partages (film_id, utilisateur_id) VALUES (?, ?)').run(lien, u.id);
   });
   after(async () => { await t.fermer(); });
 
@@ -51,7 +54,7 @@ describe('envies : REST', () => {
     await put(t.app, `/api/films/${autre}/envie`, null, cleo);
     await put(t.app, `/api/films/${commun}/envie`, null, ana);
     await put(t.app, `/api/films/${commun}/envie`, null, ben);
-    const l = await liste(ben);
+    const l = await liste(ana);
     assert.deepEqual(l.map((x) => x.film.id), [commun, autre]);
     assert.deepEqual(l[0]!.personnes.map((p) => p.prenom), ['Ana', 'Ben']);
     assert.equal(l[0]!.personnes[0]!.couleur, '#ff8fb4');
@@ -59,6 +62,7 @@ describe('envies : REST', () => {
     assert.equal(l[1]!.moi, false);
     assert.equal(l[0]!.film.nbEnvies, 2);
     assert.equal(l[0]!.film.envie, true);
+    assert.deepEqual((await liste(ben)).map((x) => x.film.id), [commun], 'Ben ne connaît pas Cléo : son envie ne ressort pas');
     for (const f of [autre, commun]) await supprimer(t.app, `/api/films/${f}/envie`, ana);
     await supprimer(t.app, `/api/films/${commun}/envie`, ben);
     await supprimer(t.app, `/api/films/${autre}/envie`, cleo);
@@ -86,6 +90,18 @@ describe('envies : REST', () => {
     assert.deepEqual((await liste(ben)).map((x) => x.film.id), [commun]);
     await supprimer(t.app, `/api/films/${prive}/envie`, ana);
     await supprimer(t.app, `/api/films/${commun}/envie`, ben);
+  });
+
+  test('vie privée : les comptes inconnus ne sont pas nommés, et un film voulu seulement par eux n\'apparaît pas', async () => {
+    const f = insererFilm(t, ana, { visibilite: 'tous' });
+    await put(t.app, `/api/films/${f}/envie`, null, cleo);
+    // Ben ne connaît pas Cléo (aucun partage, aucune séance en commun).
+    assert.ok(!(await liste(ben)).some((x) => x.film.id === f));
+    await put(t.app, `/api/films/${f}/envie`, null, ben);
+    const l = (await liste(ben)).find((x) => x.film.id === f)!;
+    assert.deepEqual(l.personnes.map((p) => p.prenom), ['Ben']);
+    assert.ok((await liste(admin)).some((x) => x.film.id === f && x.personnes.length === 2), 'l\'administrateur voit tout le monde');
+    t.db.prepare('DELETE FROM envies WHERE film_id = ?').run(f);
   });
 
   test('les films pas prêts ne sont pas proposés', async () => {

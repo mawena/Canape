@@ -4,6 +4,7 @@ import type { EtatEnvie, FilmAVoir } from '@canape/partage';
 import { etatEnvie, retirerEnvies } from '../../commun/envies.ts';
 import { introuvable } from '../../commun/erreurs.ts';
 import { maintenantIso } from '../../commun/identifiants.ts';
+import { comptesCiblables } from '../comptes/connus.ts';
 import type { Mediatheque } from './mediatheque.ts';
 
 export function installerEnvies(app: FastifyInstance, med: Mediatheque): void {
@@ -39,12 +40,16 @@ export function installerEnvies(app: FastifyInstance, med: Mediatheque): void {
       `SELECT u.id, u.prenom, u.couleur FROM envies e JOIN utilisateurs u ON u.id = e.utilisateur_id
         WHERE e.film_id = ? ORDER BY e.cree_le, u.id`,
     );
+    // Vie privée entre inconnus : on ne nomme que les comptes que je peux viser (connus, admins, moi) ; un film voulu seulement par des inconnus n'apparaît pas.
+    const visibles = comptesCiblables(app.db, u);
+    visibles.add(u.id);
     const sortie: FilmAVoir[] = [];
     for (const l of lignes) {
       const film = med.ligne(l.film_id);
       if (!film || !med.peutVoir(u, film.id)) continue;
       const personnes = (qui.all(film.id) as Array<{ id: number; prenom: string; couleur: string | null }>)
-        .map((p) => ({ id: p.id, prenom: p.prenom, couleur: p.couleur }));
+        .filter((p) => visibles.has(p.id)).map((p) => ({ id: p.id, prenom: p.prenom, couleur: p.couleur }));
+      if (personnes.length === 0) continue;
       sortie.push({ film: med.versFilm(film, u), personnes, moi: personnes.some((p) => p.id === u.id) });
     }
     return sortie;

@@ -56,6 +56,7 @@
   import Lamp from '@lucide/svelte/icons/lamp';
   import Moon from '@lucide/svelte/icons/moon';
   import CalendarClock from '@lucide/svelte/icons/calendar-clock';
+  import Heart from '@lucide/svelte/icons/heart';
   import CircleCheck from '@lucide/svelte/icons/circle-check';
 
   /**
@@ -76,7 +77,7 @@
     copier: Copy, envoyer: Send, disque: HardDrive, historique: History, 'menu-points': Ellipsis, oeil: Eye,
     'oeil-barre': EyeOff, reculer: RotateCcw, avancer: RotateCw, partager: Share2, bouclier: Shield,
     horloge: Clock, crayon: Pencil, actualiser: RefreshCw, tri: ArrowUpDown, 'reglages-fins': SlidersHorizontal,
-    lampe: Lamp, lune: Moon, 'calendrier-horloge': CalendarClock, ok: CircleCheck,
+    lampe: Lamp, lune: Moon, 'calendrier-horloge': CalendarClock, ok: CircleCheck, coeur: Heart,
   } as const;
 
   export type NomIcone = keyof typeof ICONES;
