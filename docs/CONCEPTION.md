@@ -237,6 +237,15 @@ CREATE TABLE seances_notes (                           -- note d'un mot : coeur 
   PRIMARY KEY (seance_id, utilisateur_id)
 );
 
+-- 090_envies.sql (films à voir ensemble, phase 23)
+CREATE TABLE envies (                                  -- « j'ai envie de voir ce film »
+  utilisateur_id INTEGER NOT NULL REFERENCES utilisateurs(id) ON DELETE CASCADE,
+  film_id TEXT NOT NULL REFERENCES films(id) ON DELETE CASCADE,
+  cree_le TEXT NOT NULL,
+  PRIMARY KEY (utilisateur_id, film_id)
+);
+CREATE INDEX envies_film ON envies (film_id);
+
 -- 080_programme.sql (soirée à plusieurs films, phase 21)
 ALTER TABLE seances ADD COLUMN rang_courant INTEGER NOT NULL DEFAULT 0;  -- rang du film en cours ; seances.film_id reste ce film
 CREATE TABLE seances_programme (                       -- les films de la séance, dans l'ordre (des trous sont permis)
@@ -344,6 +353,7 @@ d'`Origin` égale à `CANAPE_URL_PUBLIQUE`. Types dans `partage/src/*.ts`.
   carte de l'accueil et le sas disent « 2 films : … » (`data-test="resume-programme"`). L'écran de fin n'apparaît qu'après
   le dernier film et demande alors « Un mot sur cette soirée ? » en citant le nombre de films.
 - *Réalisé (phase 19, fin de séance et souvenir)* : `GET /api/seances/:id/souvenir` → `Souvenir` (`secondesEnsemble`, `personnes: [{ utilisateur, present, note }]`) et `PUT /api/seances/:id/note` `{ note: 'coeur'|'bien'|'bof'|null }` (`null` efface), réservés à l'hôte et aux invités (404 pour tout autre, administrateur compris). Le temps ensemble est mesuré par le serveur de salle (au moins deux comptes différents présents, cumulé ; enregistré à chaque changement d'état, toutes les 25 s et au départ de chacun). `GET /api/historique` ajoute `souvenir` à chaque entrée. Une pause `fin` met le film en « terminé » pour toute la salle.
+- *Réalisé (phase 23, films à voir ensemble)* : `PUT /api/films/:id/envie` (idempotent) et `DELETE /api/films/:id/envie` → `EtatEnvie { filmId, moi, nombre }` ; film invisible pour moi ou inconnu : 404 sans indice. `GET /api/envies` → `FilmAVoir[] { film, personnes: [{ id, prenom, couleur }], moi }` : films prêts avec au moins une envie et visibles par moi (mêmes règles que la galerie), triés par nombre d'envies puis date de la dernière envie ; seuls les comptes que je peux viser (`comptesCiblables` : admins, connus, moi) sont nommés, et un film voulu seulement par des inconnus n'apparaît pas. `Film.envie` (j'en ai envie) et `Film.nbEnvies` sont sur chaque fiche et dans la galerie. Retrait : à chaque progression « terminé » (95 % ou fin de film) d'un compte en séance, et à la fin de séance par l'hôte pour les présents qui ont fini le film. Client : `?invites=2,5` sur `/seances/nouvelle` pré-coche les invités.
 - `GET /api/reprendre` (films commencés, non terminés) ; `GET /api/historique`
 - `GET /api/ice` → `{ iceServers }` (identifiants TURN temporaires)
 - `GET /ws/seances/:id` : WebSocket de la séance (ci-dessous)
