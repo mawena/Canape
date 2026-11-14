@@ -10,7 +10,7 @@
   import { accroche, autresPersonnes, filmsARreprendre, filmsPourLancer, ouvertureSalle, salleOuverte, seanceDeCeSoir } from '$lib/interface/accueil.ts';
   import AVoirEnsemble from '$lib/interface/AVoirEnsemble.svelte';
   import { appliquerEtat } from '$lib/interface/envies.ts';
-  import { listerEnvies } from '$lib/mediatheque/api.ts';
+  import { listerEnvies, marquerEnvie } from '$lib/mediatheque/api.ts';
   import LancementRapide from '$lib/interface/LancementRapide.svelte';
   import Telechargements from '$lib/interface/Telechargements.svelte';
   import Installer from '$lib/interface/Installer.svelte';
@@ -44,9 +44,19 @@
 
   function surEnvie(etat: EtatEnvie): void {
     if (!moi) return;
+    const filmTitre = envies.find((x) => x.film.id === etat.filmId)?.film.titre ?? 'ce film';
     envies = appliquerEtat(envies, etat, { id: moi.id, prenom: moi.prenom, couleur: moi.couleur ?? null });
     // Je marque un film que personne n'avait marqué : il n'est pas dans la liste, on la recharge.
-    if (etat.moi && !envies.some((x) => x.film.id === etat.filmId)) void listerEnvies().then((l) => { envies = l; }, () => undefined);
+    if (etat.moi && !envies.some((x) => x.film.id === etat.filmId)) void recharger();
+    if (!etat.moi) {
+      toast.ok(`Envie retirée pour « ${filmTitre} ».`, 0, {
+        libelle: 'Annuler',
+        surClic: () => { void marquerEnvie(etat.filmId).then(recharger, () => toast.erreur('Impossible de remettre ton envie.')); },
+      });
+    }
+  }
+  async function recharger(): Promise<void> {
+    try { envies = await listerEnvies(); } catch { /* on garde la liste affichée */ }
   }
 
   onMount(() => {

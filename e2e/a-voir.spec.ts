@@ -59,6 +59,11 @@ test.describe('Films à voir ensemble', () => {
     await admin.page.goto('/');
     await admin.page.getByTestId('a-voir-film').getByTestId('bouton-envie').click();
     await expect(admin.page.getByTestId('a-voir-phrase')).toHaveText(`${monde.viewer.prenom} a envie de le voir.`);
+    // « Annuler » dans le toast remet l'envie.
+    await admin.page.getByRole('button', { name: 'Annuler' }).click();
+    await expect(admin.page.getByTestId('a-voir-phrase')).toHaveText(`Toi et ${monde.viewer.prenom}, vous avez envie de le voir.`);
+    await admin.page.getByTestId('a-voir-film').getByTestId('bouton-envie').click();
+    await expect(admin.page.getByTestId('a-voir-phrase')).toHaveText(`${monde.viewer.prenom} a envie de le voir.`);
     await expect(admin.page.getByTestId('a-voir-film')).toHaveAttribute('data-envieux', '1');
     await viewer.page.goto('/');
     await viewer.page.getByTestId('a-voir-film').getByTestId('bouton-envie').click();
