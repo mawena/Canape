@@ -14,6 +14,7 @@
   import ChercherCompte from '$lib/comptes/ChercherCompte.svelte';
   import { Avatar, Bouton, Carte, Champ, Chargement, MiniAffiche, toast } from '$lib/ui/index.ts';
   import { ceSoir21h, messageInvitation, versIso } from '$lib/seance/dates.ts';
+  import { lireInvites } from '$lib/interface/envies.ts';
   import { lireMoi, urlConnexion } from '$lib/seance/moi.ts';
   import { ajouterFilm, deplacerFilm, filmsDuCorps, retirerFilm, titresEnchaines } from '$lib/seance/programme.ts';
 
@@ -33,6 +34,8 @@
   let maintenant = $state(true);
   let quand = $state(ceSoir21h());
   let invites: number[] = $state([]);
+  /** `?invites=2,5` : personnes à inviter d'office (films « à voir ensemble »). */
+  const inviteesDemandes = lireInvites(page.url.searchParams.get('invites'));
   let envoi = $state(false);
   let creee: Seance | null = $state(null);
   let lien: string | null = $state(null);
@@ -47,6 +50,7 @@
       ]);
       films = f.filter((x) => x.etat === 'pret');
       comptes = u.filter((x) => x.id !== moi.id);
+      invites = inviteesDemandes.filter((id) => comptes.some((c) => c.id === id));
     } catch (e) {
       erreur = e instanceof Error ? e.message : 'Erreur inconnue.';
     } finally {

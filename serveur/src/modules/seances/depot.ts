@@ -4,6 +4,7 @@ import path from 'node:path';
 import type { FastifyInstance } from 'fastify';
 import type { Film, FilmProgramme, MessageChat, MessageChatWs, ProgressionFilm, Seance, UtilisateurPublic } from '@canape/partage';
 import type { UtilisateurConnecte } from '../../commun/auth.ts';
+import { etatEnvie } from '../../commun/envies.ts';
 import { introuvable } from '../../commun/erreurs.ts';
 import { estParticipant, souvenirDe } from './souvenirs.ts';
 
@@ -177,11 +178,13 @@ export function progressions(app: FastifyInstance, u: UtilisateurConnecte, filtr
     const partages = modifiable
       ? (app.db.prepare('SELECT utilisateur_id FROM films_partages WHERE film_id = ?').all(l.film_id) as Array<{ utilisateur_id: number }>).map((x) => x.utilisateur_id)
       : [];
+    const envie = etatEnvie(app.db, l.film_id, u.id);
     const film: Film = {
       id: l.film_id, proprietaireId: l.proprietaire_id, proprietairePrenom: l.proprietaire_prenom, titre: l.titre, annee: l.annee,
       resume: l.resume, genres: genres(l.genres), tmdbId: l.tmdb_id, nomOrigine: l.nom_origine, taille: l.taille, duree: l.f_duree,
       etat: l.etat, erreur: l.erreur, visibilite: l.visibilite, partages, aAffiche: l.affiche !== null, aFond: l.fond !== null,
       couleur: l.couleur, versionImages: versionImages(app.config.films, l), modifiable, ajouteLe: l.ajoute_le,
+      nbEnvies: envie.nombre, envie: envie.moi,
     };
     const entree: ProgressionFilm = { film, position: l.position, duree: l.duree, seanceId: l.seance_id, termine: l.termine === 1, vuLe: l.vu_le };
     if (filtre === 'historique') {

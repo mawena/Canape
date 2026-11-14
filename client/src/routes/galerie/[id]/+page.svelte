@@ -10,6 +10,7 @@
   import { Bouton, Champ, Chargement, EtatVide, Icone, Modale, toast } from '$lib/ui/index.ts';
   import ChercherCompte from '$lib/comptes/ChercherCompte.svelte';
   import { session } from '$lib/comptes/session.svelte.ts';
+  import BoutonEnvie from '$lib/mediatheque/BoutonEnvie.svelte';
   import Lecteur from '$lib/lecture/Lecteur.svelte';
   import Preparation from '$lib/lecture/Preparation.svelte';
 
@@ -207,6 +208,7 @@
         <div class="actions">
           {#if f.etat === 'pret'}
             <Bouton href={`/seances/nouvelle?film=${f.id}`} icone="lecture">Lancer une séance</Bouton>
+            <BoutonEnvie filmId={f.id} actif={f.envie} nombre={f.nbEnvies} surChangement={(e) => { if (film) film = { ...film, envie: e.moi, nbEnvies: e.nombre }; }} />
             <Bouton variante="secondaire" onclick={() => { regarderSeul = !regarderSeul; }}>{regarderSeul ? 'Fermer le lecteur' : 'Regarder seul'}</Bouton>
           {/if}
           {#if f.modifiable}

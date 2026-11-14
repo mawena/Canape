@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { phraseProgramme, programmeTrie, type Film, type ListeSeances, type ProgressionFilm, type ReponseLienSeance, type Seance } from '@canape/partage';
+  import { phraseProgramme, programmeTrie, type EtatEnvie, type Film, type FilmAVoir, type ListeSeances, type ProgressionFilm, type ReponseLienSeance, type Seance } from '@canape/partage';
   import { api, ErreurApi } from '$lib/api/client.ts';
   import {
     AfficheFilm, BarreProgression, Bouton, Badge, EnTetePage, EtatVide, Icone, Lueur, MiniAffiche, PileAvatars, Squelette, toast,
@@ -8,6 +8,9 @@
   } from '$lib/ui/index.ts';
   import BoutonAgenda from '$lib/seance/BoutonAgenda.svelte';
   import { accroche, autresPersonnes, filmsARreprendre, filmsPourLancer, ouvertureSalle, salleOuverte, seanceDeCeSoir } from '$lib/interface/accueil.ts';
+  import AVoirEnsemble from '$lib/interface/AVoirEnsemble.svelte';
+  import { appliquerEtat } from '$lib/interface/envies.ts';
+  import { listerEnvies } from '$lib/mediatheque/api.ts';
   import LancementRapide from '$lib/interface/LancementRapide.svelte';
   import Telechargements from '$lib/interface/Telechargements.svelte';
   import Installer from '$lib/interface/Installer.svelte';
@@ -18,21 +21,32 @@
   let seances = $state<ListeSeances | null>(null);
   let reprises: ProgressionFilm[] = $state([]);
   let films: Film[] = $state([]);
+  let envies: FilmAVoir[] = $state([]);
   let erreurs = $state({ seances: false, reprises: false, films: false });
   let charge = $state(false);
   let maintenant = $state(new Date());
 
   async function charger(): Promise<void> {
     erreurs = { seances: false, reprises: false, films: false };
-    const [s, r, f] = await Promise.allSettled([
+    const [s, r, f, e] = await Promise.allSettled([
       api.get<ListeSeances>('/api/seances'),
       api.get<ProgressionFilm[]>('/api/reprendre'),
       api.get<Film[]>('/api/films?vue=tous'),
+      listerEnvies(),
     ]);
     if (s.status === 'fulfilled') seances = s.value; else erreurs.seances = true;
     if (r.status === 'fulfilled') reprises = Array.isArray(r.value) ? r.value : []; else erreurs.reprises = true;
     if (f.status === 'fulfilled') films = Array.isArray(f.value) ? f.value : []; else erreurs.films = true;
+    // Les envies sont un plus : si elles ne se chargent pas, le reste de l'accueil reste là.
+    envies = e.status === 'fulfilled' && Array.isArray(e.value) ? e.value : [];
     charge = true;
+  }
+
+  function surEnvie(etat: EtatEnvie): void {
+    if (!moi) return;
+    envies = appliquerEtat(envies, etat, { id: moi.id, prenom: moi.prenom, couleur: moi.couleur ?? null });
+    // Je marque un film que personne n'avait marqué : il n'est pas dans la liste, on la recharge.
+    if (etat.moi && !envies.some((x) => x.film.id === etat.filmId)) void listerEnvies().then((l) => { envies = l; }, () => undefined);
   }
 
   onMount(() => {
@@ -193,6 +207,9 @@
         </ul>
       </section>
     {/if}
+
+    <!-- 2 bis. Films à voir ensemble (envies de chacun) -->
+    {#if moi && !erreurs.films}<AVoirEnsemble {envies} moi={{ id: moi.id, prenom: moi.prenom, couleur: moi.couleur ?? null }} surChangement={surEnvie} />{/if}
 
     <!-- 3. Téléchargements en cours -->
     <Telechargements />

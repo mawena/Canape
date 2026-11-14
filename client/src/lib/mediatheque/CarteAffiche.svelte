@@ -14,7 +14,7 @@
   const teinte = $derived(teinteTitre(film.titre));
   const details = $derived([film.annee ? String(film.annee) : '', formaterDuree(film.duree)].filter(Boolean).join(' · '));
   const etat = $derived(film.etat === 'pret' ? 'prêt' : film.etat === 'erreur' ? 'illisible' : 'analyse en cours');
-  const libelle = $derived(`${film.titre}${film.annee ? `, ${film.annee}` : ''}${film.duree ? `, ${formaterDuree(film.duree)}` : ''}, ${etat}`);
+  const libelle = $derived(`${film.titre}${film.annee ? `, ${film.annee}` : ''}${film.duree ? `, ${formaterDuree(film.duree)}` : ''}, ${etat}${film.envie ? ', tu as envie de le voir' : ''}`);
   const lueur = $derived(film.couleur ?? '#3b82f6');
 </script>
 
@@ -30,6 +30,7 @@
     <span class="badges" data-theme="sombre">
       {#if film.etat === 'analyse'}<span class="puce alerte">Analyse…</span>{/if}
       {#if film.etat === 'erreur'}<span class="puce mal"><Icone nom="alerte" taille={14} />Illisible</span>{/if}
+      {#if film.etat === 'pret' && (film.envie || film.nbEnvies > 0)}<span class="puce coeur" data-test="carte-envie"><Icone nom="coeur" taille={14} />{film.envie ? 'Tu en as envie' : film.nbEnvies}</span>{/if}
       {#if film.etat === 'pret' && film.visibilite !== 'prive'}<span class="puce rose"><Icone nom="utilisateurs" taille={14} />Partagé</span>{/if}
     </span>
   </div>
@@ -55,6 +56,8 @@
   .alerte { color: var(--alerte, #ffd166); }
   .mal { color: var(--mal, #ff7b6e); }
   .rose { color: var(--rose, #ff8fb4); }
+  .coeur { color: var(--rose, #ff8fb4); }
+  .coeur :global(svg) { fill: currentColor; }
   .titre { margin: 10px 0 2px; font-weight: 650; font-size: 0.95rem; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .details { margin: 0; font-size: 0.875rem; color: var(--discret, #9f99ad); }
   @media (prefers-reduced-motion: reduce) { .affiche { transition: none; } .carte:hover .affiche { transform: none; } }
