@@ -70,6 +70,7 @@ test.describe('Programme ajouté à une séance d’un seul film', () => {
       await expect(progA.getByTestId('programme-film')).toHaveCount(1);
       await expect(progA.getByTestId('programme-retirer')).toHaveCount(0);
       await expect(progA.getByTestId('film-suivant')).toHaveCount(0);
+      console.log('DEBUG', await progA.evaluate((el) => `${el.className} left=${getComputedStyle(el).left} rect=${JSON.stringify(el.getBoundingClientRect())} iw=${innerWidth} btn=${JSON.stringify(document.querySelector('[data-test=bouton-programme]')!.getBoundingClientRect())}`));
       await capturer(a, 'programme-un-film');
 
       // L'hôte ajoute le second film.
