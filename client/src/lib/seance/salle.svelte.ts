@@ -12,7 +12,7 @@ import { ClientWs, urlWsSeance } from './client-ws.ts';
 import { detecteurVoix, lirePeripheriques, type Peripheriques } from './medias.ts';
 import { MoteurSynchro } from './moteur.ts';
 import { ecrirePrefs, lirePrefs, type Coin, type PrefsSalle } from './prefs.ts';
-import { estEnchainement, filmsLances, peutGererProgramme } from './programme.ts';
+import { afficherProgramme, estEnchainement, filmsLances, peutGererProgramme } from './programme.ts';
 import { ajouterReaction, annonceReactions, FabriqueReactions, purgerReactions, type ReactionFlottante, DUREE_REACTION } from './reactions.ts';
 import { aUnCasque, BaisseFilm, volumeFilm, Voix } from './son.ts';
 import { Horloge } from './synchro.ts';
@@ -179,6 +179,8 @@ export class Salle {
   get rangCourant(): number { return this.seance?.rangCourant ?? 0; }
   /** Plus d'un film au programme : le bouton « Programme » apparaît (une séance d'un seul film reste comme avant). */
   get estSoiree(): boolean { return estSoiree(this.programme); }
+  /** Le bouton « Programme » : tout le monde dès deux films ; l'hôte aussi avec un seul film (pour en ajouter). */
+  get afficheProgramme(): boolean { return afficherProgramme(this.programme, this.estHote); }
   get suivant(): FilmProgramme | null { return filmSuivant(this.programme, this.rangCourant); }
   get enEntracte(): boolean { return (this.etat?.entracteFin ?? null) !== null; }
   /** L'hôte gère le programme et l'entracte. */

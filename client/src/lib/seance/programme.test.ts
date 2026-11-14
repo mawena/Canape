@@ -5,7 +5,7 @@ import {
   positionDansProgramme, programmeTrie, tempsRestantEntracte, type FilmProgramme,
 } from '@canape/partage';
 import {
-  ajouterFilm, deplacerFilm, dureeCourte, estEnchainement, etatFilm, filmsAjoutables, filmsDuCorps, filmsLances, idsAVenir,
+  afficherProgramme, ajouterFilm, deplacerFilm, dureeCourte, estEnchainement, etatFilm, filmsAjoutables, filmsDuCorps, filmsLances, idsAVenir,
   invitationNote, libelleRang, peutGererProgramme, phraseEntracte, phraseSoiree, retirerFilm, titresEnchaines,
 } from './programme.ts';
 
@@ -155,5 +155,26 @@ describe('fin de soirée', () => {
     assert.equal(phraseSoiree(1, 6720, false), null);
     assert.equal(phraseSoiree(3, 4 * 3600 + 12 * 60, false), '3 films, 4 h 12 ensemble');
     assert.equal(phraseSoiree(2, 0, true), '2 films, regardés seul·e');
+  });
+});
+
+describe('bouton Programme', () => {
+  test('un seul film : l’hôte le voit (pour ajouter), pas les autres ; dès deux films, tout le monde', () => {
+    const seul = [f(0, 'a')];
+    const deux = [f(0, 'a'), f(1, 'b')];
+    assert.equal(afficherProgramme(seul, true), true);
+    assert.equal(afficherProgramme(seul, false), false);
+    assert.equal(afficherProgramme(deux, false), true);
+    assert.equal(afficherProgramme(deux, true), true);
+  });
+
+  test('ajouter un film à un programme d’un seul film le fait apparaître comme film à venir', () => {
+    const seul = [f(0, 'a')];
+    assert.deepEqual(idsAVenir(seul, 0), []);
+    assert.deepEqual(ajouterFilm(idsAVenir(seul, 0), 'b'), ['b']);
+    // Dernier film déjà en cours (rang 2) : l'ajout crée bien un film suivant.
+    const fin = [f(0, 'a'), f(1, 'b'), f(2, 'c')];
+    assert.equal(filmSuivant(fin, 2), null);
+    assert.deepEqual(ajouterFilm(idsAVenir(fin, 2), 'd'), ['d']);
   });
 });

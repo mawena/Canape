@@ -1,7 +1,8 @@
 <script lang="ts">
   /**
-   * « Programme de la soirée » (séance de plusieurs films) : bouton de la barre de commandes + panneau non modal, comme
+   * « Programme » : bouton de la barre de commandes + panneau non modal, comme
    * « Inviter » (rien n'est mis en pause, il reste visible en plein écran, feuille du bas sur téléphone).
+   * Affiché dès deux films pour tout le monde, et pour l'hôte même avec un seul film (il peut en ajouter pendant la séance).
    * Tout le monde voit le programme ; l'hôte seul peut réordonner, retirer ou ajouter les films à venir, et passer au suivant.
    * `data-test` : `bouton-programme`, `programme`, `programme-film` (attributs `data-etat` : vu|en-cours|a-venir, `data-film`),
    * `programme-monter`, `programme-descendre`, `programme-retirer`, `ajouter-film-programme`, `programme-recherche`,
@@ -38,6 +39,7 @@
   const rang = $derived(salle.rangCourant);
   const aVenir = $derived(idsAVenir(salle.programme, rang));
   const hote = $derived(salle.estHote);
+  const soiree = $derived(salle.estSoiree);
   const rangTexte = $derived(libelleRang(salle.programme, rang));
   const plein = $derived(aVenir.length + 1 >= MAX_FILMS_PROGRAMME);
   const proposes = $derived.by(() => {
@@ -125,7 +127,7 @@
 
 <div class="programme-ancre">
   <button bind:this={declencheur} type="button" class="rond" class:actif={ouvert} onclick={() => (ouvert = !ouvert)} aria-expanded={ouvert}
-    aria-haspopup="dialog" aria-label="Programme de la soirée" title="Programme de la soirée" data-test="bouton-programme">
+    aria-haspopup="dialog" aria-label="Programme" title="Programme" data-test="bouton-programme">
     <ListVideo size={22} aria-hidden="true" />
   </button>
 
@@ -136,13 +138,13 @@
       <span class="poignee" aria-hidden="true"></span>
       <header>
         <div>
-          <h2 id="titre-programme">Programme de la soirée</h2>
+          <h2 id="titre-programme">{soiree ? 'Programme de la soirée' : 'Programme'}</h2>
           {#if rangTexte}<p class="rang">{rangTexte}</p>{/if}
         </div>
         <button type="button" class="x" onclick={fermer} aria-label="Fermer"><X size={18} aria-hidden="true" /></button>
       </header>
 
-      <ol class="films" aria-label="Films de la soirée, dans l’ordre">
+      <ol class="films" aria-label="Films du programme, dans l’ordre">
         {#each programme as f, i (f.rang)}
           {@const etat = etatFilm(f, rang)}
           {@const j = aVenir.indexOf(f.filmId)}
@@ -168,6 +170,7 @@
       </ol>
 
       <p class="lu" role="status">{statut}</p>
+      {#if hote && !soiree && !choix}<p class="aide">Ajoute un film : il suivra celui-ci, avec un entracte entre les deux.</p>{/if}
 
       {#if hote}
         {#if choix}
@@ -207,7 +210,7 @@
             {/if}
           </div>
           {#if confirmer && !salle.enEntracte}<p class="aide">Le film en cours s’arrête pour tout le monde.</p>{/if}
-          {#if plein}<p class="aide">Une soirée compte {MAX_FILMS_PROGRAMME} films au plus.</p>{/if}
+          {#if plein}<p class="aide">Un programme compte {MAX_FILMS_PROGRAMME} films au plus.</p>{/if}
         {/if}
       {:else}
         <p class="aide">C’est {salle.seance?.hotePrenom ?? 'l’hôte'} qui choisit les films de la soirée.</p>

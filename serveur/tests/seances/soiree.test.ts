@@ -251,3 +251,69 @@ describe('soirée : actions de l\'hôte (entracte long)', () => {
     a.fermer(); b.fermer();
   });
 });
+
+describe('programme ajouté à une séance d\'un seul film', () => {
+  let env: Env;
+  let hote: UtilisateurTest, invite: UtilisateurTest;
+  let f1: string, f2: string, f3: string;
+  before(async () => {
+    env = await creerEnv({ CANAPE_ENTRACTE_SECONDES: '60' });
+    hote = await creerUtilisateur(env, { prenom: 'Hana' });
+    invite = await creerUtilisateur(env, { prenom: 'Ivan' });
+    f1 = insererFilm(env, hote, { duree: 1000 });
+    f2 = insererFilm(env, hote, { duree: 1000 });
+    f3 = insererFilm(env, hote, { duree: 1000 });
+  });
+  after(() => env.fermer());
+
+  test('pendant la lecture du premier film : le film ajouté est diffusé, puis l\'entracte s\'enclenche et le film suivant se lance', async () => {
+    const { put } = await import('../aides.ts');
+    const id = inserer(env, hote, f1, [invite]);
+    const a = await connecter(env, id, hote);
+    const b = await connecter(env, id, invite);
+    a.envoyer({ t: 'lecture', position: 100 });
+    await b.attendre('etat', (m) => m.raison === 'lecture');
+    const r = await put(env.app, `/api/seances/${id}/programme`, { filmIds: [f2] }, hote);
+    assert.equal(r.statusCode, 200);
+    const prog = await b.attendre('programme');
+    assert.deepEqual([prog.programme.map((p) => p.filmId), prog.rangCourant], [[f1, f2], 0]);
+    // Le film continue de jouer : l'ajout ne le touche pas.
+    assert.equal(await b.aucun('etat', 200), true);
+    a.envoyer({ t: 'pause', position: 1000, fin: true });
+    const entracte = await b.attendre('etat', (m) => m.raison === 'entracte');
+    assert.equal(entracte.etat.filmId, f1);
+    a.envoyer({ t: 'entracte_lancer' });
+    const film = await b.attendre('etat', (m) => m.raison === 'film');
+    assert.deepEqual([film.etat.filmId, film.etat.entracteFin], [f2, null]);
+    a.fermer(); b.fermer();
+  });
+
+  test('dernier film du programme déjà en cours : en ajouter un fait apparaître un film suivant', async () => {
+    const { put } = await import('../aides.ts');
+    const id = inserer(env, hote, f1, [invite], [f2]);
+    const a = await connecter(env, id, hote);
+    const b = await connecter(env, id, invite);
+    a.envoyer({ t: 'film_suivant' });
+    await b.attendre('etat', (m) => m.raison === 'film');
+    // Plus de film suivant : « Passer au film suivant » est refusé.
+    a.envoyer({ t: 'film_suivant' });
+    assert.equal((await a.attendre('erreur')).code, 'film_inconnu');
+    const r = await put(env.app, `/api/seances/${id}/programme`, { filmIds: [f3] }, hote);
+    assert.equal(r.statusCode, 200);
+    const prog = await b.attendre('programme', (m) => m.programme.length === 3);
+    assert.deepEqual([prog.programme.map((p) => p.filmId), prog.rangCourant], [[f1, f2, f3], 1]);
+    // La fin du film en cours ouvre maintenant un entracte au lieu de terminer la séance.
+    a.envoyer({ t: 'pause', position: 1000, fin: true });
+    assert.ok((await b.attendre('etat', (m) => m.raison === 'entracte')).etat.entracteFin !== null);
+    a.fermer(); b.fermer();
+  });
+
+  test('seul l\'hôte ajoute des films ; l\'invité reçoit un refus', async () => {
+    const { put } = await import('../aides.ts');
+    const id = inserer(env, hote, f1, [invite]);
+    const r = await put(env.app, `/api/seances/${id}/programme`, { filmIds: [f2] }, invite);
+    assert.equal(r.statusCode, 403);
+    const l = env.db.prepare('SELECT COUNT(*) AS n FROM seances_programme WHERE seance_id = ?').get(id) as { n: number };
+    assert.equal(l.n, 1);
+  });
+});
