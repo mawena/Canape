@@ -286,6 +286,8 @@ describe('programme ajouté à une séance d\'un seul film', () => {
     const film = await b.attendre('etat', (m) => m.raison === 'film');
     assert.deepEqual([film.etat.filmId, film.etat.entracteFin], [f2, null]);
     a.fermer(); b.fermer();
+    await Promise.all([a.fermeture, b.fermeture]);
+    await new Promise((r) => setTimeout(r, 200));
   });
 
   test('dernier film du programme déjà en cours : en ajouter un fait apparaître un film suivant', async () => {
@@ -306,6 +308,8 @@ describe('programme ajouté à une séance d\'un seul film', () => {
     a.envoyer({ t: 'pause', position: 1000, fin: true });
     assert.ok((await b.attendre('etat', (m) => m.raison === 'entracte')).etat.entracteFin !== null);
     a.fermer(); b.fermer();
+    await Promise.all([a.fermeture, b.fermeture]);
+    await new Promise((r) => setTimeout(r, 200));
   });
 
   test('seul l\'hôte ajoute des films ; l\'invité reçoit un refus', async () => {
