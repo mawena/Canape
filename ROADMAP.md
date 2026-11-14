@@ -209,3 +209,27 @@ Enchaîner plusieurs films dans une même séance (liste d'attente), avec un ent
 - [x] Interface : liste à la création et dans la salle (hôte), entracte avec compte à rebours
 - [x] Essais (unitaires, Playwright), captures
 - [x] Release 1.9.0 et mise en production
+
+# Canapé 1.10 et 1.11 — programme pour toute séance, films à voir ensemble
+
+Choisis le 14/11/2026 ; une phase et une release chacune.
+
+## Phase 22 — Programme dans toute séance
+
+L'hôte peut ajouter un deuxième film (puis d'autres) à une séance prévue pour un seul film, depuis la salle, sans
+recréer la séance ; la séance devient alors une soirée avec entracte.
+
+- [ ] Bouton « Programme » dans la salle pour l'hôte même avec un seul film ; les autres ne le voient qu'à partir de deux films
+- [ ] Serveur : ajout de films accepté pour toute séance (règles et essais)
+- [ ] Essais (unitaires, Playwright), captures ordinateur et téléphone
+- [ ] Release 1.10.0 et mise en production
+
+## Phase 23 — Films à voir ensemble
+
+Chacun marque les films de la galerie qu'il a envie de voir ; Canapé montre ceux qui plaisent à plusieurs et permet de
+lancer la séance avec les intéressés en deux clics.
+
+- [ ] Serveur : envies par personne et par film (migration, API), retirées pour ceux qui ont vu le film ensemble jusqu'au bout
+- [ ] Interface : « J'ai envie de le voir » sur la fiche et la galerie, liste « À voir ensemble » sur l'accueil (qui en a envie), lancer une séance avec eux
+- [ ] Essais (unitaires, Playwright), captures ordinateur et téléphone
+- [ ] Release 1.11.0 et mise en production
