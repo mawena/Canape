@@ -313,12 +313,13 @@ export class Mediatheque implements ServiceMediatheque {
     const proprio = this.db.prepare('SELECT prenom FROM utilisateurs WHERE id = ?').get(l.proprietaire_id) as { prenom: string } | undefined;
     let genres: string[] = [];
     try { genres = l.genres ? (JSON.parse(l.genres) as string[]) : []; } catch { /* genres illisibles */ }
+    const envies = this.db.prepare('SELECT COUNT(*) AS n, COALESCE(SUM(utilisateur_id = ?), 0) AS moi FROM envies WHERE film_id = ?').get(u.id, l.id) as { n: number; moi: number };
     const film: Film = {
       id: l.id, proprietaireId: l.proprietaire_id, proprietairePrenom: proprio?.prenom ?? '', titre: l.titre, annee: l.annee,
       resume: l.resume, genres, tmdbId: l.tmdb_id, nomOrigine: l.nom_origine, taille: l.taille, duree: l.duree, etat: l.etat,
       erreur: l.erreur, visibilite: l.visibilite, partages: modifiable ? this.partages(l.id) : [],
       aAffiche: !!l.affiche, aFond: !!l.fond, couleur: l.couleur, versionImages: this.versionImages(l),
-      modifiable, ajouteLe: l.ajoute_le,
+      modifiable, ajouteLe: l.ajoute_le, nbEnvies: envies.n, envie: envies.moi > 0,
     };
     if (detail) {
       film.analyse = l.analyse ? (JSON.parse(l.analyse) as Analyse) : null;

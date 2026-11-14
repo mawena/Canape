@@ -9,6 +9,7 @@ import type { UtilisateurConnecte } from '../../commun/auth.ts';
 import { maintenantIso } from '../../commun/identifiants.ts';
 import { avancerAuRang, messagesDe, poserFilmCourant, programmeDe, suivantDe } from './depot.ts';
 import { Salle, positionValide } from './salle.ts';
+import { retirerEnvies } from '../../commun/envies.ts';
 import { noterPresence, souvenirDe } from './souvenirs.ts';
 
 /** Seau à jetons : `capacite` d'un coup, `parSeconde` ensuite. */
@@ -403,6 +404,8 @@ export class Salles {
        ON CONFLICT (utilisateur_id, film_id) DO UPDATE SET position = excluded.position, duree = excluded.duree,
          seance_id = excluded.seance_id, termine = excluded.termine, vu_le = excluded.vu_le`,
     ).run(c.utilisateur.id, filmId, termine && duree ? duree : pos, duree, a.id, termine ? 1 : 0, maintenantIso());
+    // Le film est vu jusqu'au bout : cette personne n'a plus envie de le voir.
+    if (termine) retirerEnvies(this.app.db, filmId, [c.utilisateur.id]);
     this.app.db.prepare('UPDATE seances SET position = ? WHERE id = ?').run(a.salle.aEnregistrer().position, a.id);
   }
 

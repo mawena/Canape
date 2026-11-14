@@ -7,6 +7,7 @@ import { transaction } from '../../db/index.ts';
 import { comptesCiblables } from '../comptes/connus.ts';
 import { accesSeance, ligneSeance, messagesDe, poserFilmCourant, progressions, remplacerAVenir, versSeance, type LigneSeance } from './depot.ts';
 import type { Salles } from './salles.ts';
+import { retirerEnviesDeSeance } from '../../commun/envies.ts';
 import { estNote, estParticipant, poserNote, souvenirDe } from './souvenirs.ts';
 import { serveursIce } from './turn.ts';
 
@@ -156,7 +157,10 @@ export function enregistrerRoutes(app: FastifyInstance, salles: Salles): void {
     });
     if (filmId !== undefined && filmId !== ligne.film_id) salles.changerFilm(ligne.id, filmId);
     // L'hôte termine la séance : l'écran de fin s'ouvre dans la salle.
-    if (c['terminee'] === true && ligne.terminee_le === null) salles.diffuserSouvenir(ligne.id, true);
+    if (c['terminee'] === true && ligne.terminee_le === null) {
+      retirerEnviesDeSeance(db, ligne.id);
+      salles.diffuserSouvenir(ligne.id, true);
+    }
     return sortie(ligneSeance(app, ligne.id)!);
   });
 

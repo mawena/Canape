@@ -93,6 +93,10 @@ export interface Film {
   /** Droit de modifier, partager, supprimer. */
   modifiable: boolean;
   ajouteLe: string;
+  /** Nombre de personnes qui ont envie de ce film (phase 23). */
+  nbEnvies: number;
+  /** Vrai si la personne connectée a envie de ce film. */
+  envie: boolean;
 }
 
 /** `PATCH /api/films/:id` */
@@ -116,3 +120,27 @@ export const EXTENSIONS_SOUS_TITRES = ['.srt', '.vtt'] as const;
 export const TAILLE_MAX_SOUS_TITRES = 5 * 1024 * 1024;
 /** Taille des morceaux de téléversement tus côté client. */
 export const TAILLE_MORCEAU_TUS = 50 * 1024 * 1024;
+
+// ---- Films « à voir ensemble » (phase 23) ----
+
+/** Un film que des personnes ont envie de voir (`GET /api/envies`). */
+export interface FilmAVoir {
+  film: Film;
+  /** Les personnes qui en ont envie, la plus ancienne envie d'abord. */
+  personnes: UtilisateurEnvie[];
+  /** Vrai si la personne connectée en fait partie. */
+  moi: boolean;
+}
+
+export interface UtilisateurEnvie {
+  id: number;
+  prenom: string;
+  couleur: string | null;
+}
+
+/** `PUT` et `DELETE /api/films/:id/envie` : l'état après l'appel. */
+export interface EtatEnvie {
+  filmId: string;
+  moi: boolean;
+  nombre: number;
+}
