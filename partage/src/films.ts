@@ -93,7 +93,7 @@ export interface Film {
   /** Droit de modifier, partager, supprimer. */
   modifiable: boolean;
   ajouteLe: string;
-  /** Nombre de personnes qui ont envie de ce film (phase 23). */
+  /** Nombre de personnes qui ont envie de ce film, parmi moi et les comptes que je peux voir (phase 23). */
   nbEnvies: number;
   /** Vrai si la personne connectée a envie de ce film. */
   envie: boolean;
@@ -138,7 +138,7 @@ export interface UtilisateurEnvie {
   couleur: string | null;
 }
 
-/** `PUT` et `DELETE /api/films/:id/envie` : l'état après l'appel. */
+/** `PUT` et `DELETE /api/films/:id/envie` : l'état après l'appel (`nombre` : moi et les comptes que je peux voir). */
 export interface EtatEnvie {
   filmId: string;
   moi: boolean;

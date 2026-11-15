@@ -97,9 +97,12 @@ describe('envies : REST', () => {
     await put(t.app, `/api/films/${f}/envie`, null, cleo);
     // Ben ne connaît pas Cléo (aucun partage, aucune séance en commun).
     assert.ok(!(await liste(ben)).some((x) => x.film.id === f));
-    await put(t.app, `/api/films/${f}/envie`, null, ben);
+    assert.equal(((await get(t.app, '/api/films?vue=tous', ben)).json() as Film[]).find((x) => x.id === f)!.nbEnvies, 0, 'ni comptée dans la galerie');
+    const r = await put(t.app, `/api/films/${f}/envie`, null, ben);
+    assert.deepEqual(r.json() as EtatEnvie, { filmId: f, moi: true, nombre: 1 }, 'le nombre rendu ne compte que les personnes visibles');
     const l = (await liste(ben)).find((x) => x.film.id === f)!;
     assert.deepEqual(l.personnes.map((p) => p.prenom), ['Ben']);
+    assert.equal(l.film.nbEnvies, 1);
     assert.ok((await liste(admin)).some((x) => x.film.id === f && x.personnes.length === 2), 'l\'administrateur voit tout le monde');
     t.db.prepare('DELETE FROM envies WHERE film_id = ?').run(f);
   });
@@ -116,11 +119,12 @@ describe('envies : REST', () => {
     await put(t.app, `/api/films/${commun}/envie`, null, cleo);
     const fiche = (await get(t.app, `/api/films/${commun}`, ben)).json() as Film;
     assert.equal(fiche.envie, true);
-    assert.equal(fiche.nbEnvies, 2);
+    assert.equal(fiche.nbEnvies, 1, 'Ben ne connaît pas Cléo : son envie ne compte pas pour lui');
     const galerie = (await get(t.app, '/api/films?vue=tous', ana)).json() as Film[];
     const f = galerie.find((x) => x.id === commun)!;
     assert.equal(f.envie, false);
-    assert.equal(f.nbEnvies, 2);
+    assert.equal(f.nbEnvies, 2, 'Ana connaît Ben et Cléo');
+    assert.equal(((await get(t.app, `/api/films/${commun}`, admin)).json() as Film).nbEnvies, 2, 'l\'administrateur compte tout le monde');
     await supprimer(t.app, `/api/films/${commun}/envie`, ben);
     await supprimer(t.app, `/api/films/${commun}/envie`, cleo);
   });
@@ -194,5 +198,19 @@ describe('envies : retrait une fois le film vu', () => {
     const r = await patch(env.app, `/api/seances/${id}`, { terminee: true }, hote);
     assert.equal(r.statusCode, 200);
     assert.deepEqual(envies(f), [invite.id, absent.id].sort((x, y) => x - y));
+  });
+
+  test('fin de séance : qui avait fini le film dans une autre séance et veut le revoir garde son envie', async () => {
+    const f = insererFilm(env, hote, { duree: 1000, visibilite: 'tous' });
+    const avant = inserer(env, hote, f, [invite]);
+    const id = inserer(env, hote, f, [invite]);
+    const maintenant = new Date().toISOString();
+    // L'invité a vu le film en entier dans la séance d'avant, puis l'a remis dans ses envies ; il est présent à la nouvelle séance, terminée avant le film.
+    env.db.prepare('INSERT INTO progression (utilisateur_id, film_id, position, duree, seance_id, termine, vu_le) VALUES (?, ?, 1000, 1000, ?, 1, ?)').run(invite.id, f, avant, maintenant);
+    vouloir(f, invite);
+    for (const u of [hote, invite]) env.db.prepare('INSERT INTO seances_presences (seance_id, utilisateur_id, premiere_le) VALUES (?, ?, ?)').run(id, u.id, maintenant);
+    const r = await patch(env.app, `/api/seances/${id}`, { terminee: true }, hote);
+    assert.equal(r.statusCode, 200);
+    assert.deepEqual(envies(f), [invite.id]);
   });
 });

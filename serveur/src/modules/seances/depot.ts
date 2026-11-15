@@ -6,6 +6,7 @@ import type { Film, FilmProgramme, MessageChat, MessageChatWs, ProgressionFilm, 
 import type { UtilisateurConnecte } from '../../commun/auth.ts';
 import { etatEnvie } from '../../commun/envies.ts';
 import { introuvable } from '../../commun/erreurs.ts';
+import { comptesCiblables } from '../comptes/connus.ts';
 import { estParticipant, souvenirDe } from './souvenirs.ts';
 
 export interface LigneSeance {
@@ -172,13 +173,14 @@ export function progressions(app: FastifyInstance, u: UtilisateurConnecte, filtr
       ORDER BY p.vu_le DESC`,
   ).all(u.id) as unknown as LigneProgression[];
   const sortie: ProgressionFilm[] = [];
+  const visibles = comptesCiblables(app.db, u);
   for (const l of lignes) {
     if (!app.mediatheque.peutVoir(u, l.film_id)) continue;
     const modifiable = u.role === 'admin' || l.proprietaire_id === u.id;
     const partages = modifiable
       ? (app.db.prepare('SELECT utilisateur_id FROM films_partages WHERE film_id = ?').all(l.film_id) as Array<{ utilisateur_id: number }>).map((x) => x.utilisateur_id)
       : [];
-    const envie = etatEnvie(app.db, l.film_id, u.id);
+    const envie = etatEnvie(app.db, l.film_id, u.id, visibles);
     const film: Film = {
       id: l.film_id, proprietaireId: l.proprietaire_id, proprietairePrenom: l.proprietaire_prenom, titre: l.titre, annee: l.annee,
       resume: l.resume, genres: genres(l.genres), tmdbId: l.tmdb_id, nomOrigine: l.nom_origine, taille: l.taille, duree: l.f_duree,
