@@ -2,6 +2,27 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) ; versions selon [SemVer](https://semver.org/lang/fr/).
 
+## [1.10.0] — 2026-11-15
+
+Le programme dans toute séance.
+
+### Ajouté
+
+- **Ajouter un film à une séance d'un seul film**, depuis la salle : l'hôte a maintenant le bouton « Programme » dans
+  la barre même quand la séance n'a qu'un film. Il y ajoute un deuxième film (puis d'autres) sans recréer la séance ;
+  elle devient alors une soirée, avec l'entracte entre deux films. Les invités ne voient le bouton qu'à partir de deux
+  films ; si l'hôte retire les films ajoutés, il disparaît de nouveau chez eux.
+- Le panneau s'appelle « Programme de la séance » tant qu'il n'y a qu'un film, et explique ce que fait l'ajout.
+
+### Modifié
+
+- Le programme d'une séance terminée ne se modifie plus, et le film en cours ne peut pas être remis à la suite de
+  lui-même (le serveur refuse avec un message clair).
+
+### Corrigé
+
+- Le panneau du programme ne déborde plus de l'écran quand la fenêtre change de largeur pendant qu'il est ouvert.
+
 ## [1.9.0] — 2026-11-13
 
 Une soirée à plusieurs films.
