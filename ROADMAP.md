@@ -180,7 +180,7 @@ téléchargements en cours, lancer une séance en deux clics ; une page claire s
 - [x] Analyse de l'accueil actuel (ordinateur, téléphone, compte neuf, compte chargé) et nouvelle organisation
 - [x] Interface : séance en cours ou à venir, « Reprendre », téléchargements en cours, lancement rapide d'une séance
 - [x] Essais (unitaires, Playwright), captures ordinateur et téléphone, clair et sombre
-- [ ] Release 1.6.0 et mise en production
+- [x] Release 1.6.0 et mise en production
 
 ## Phase 19 — Fin de séance et souvenir
 
@@ -190,7 +190,7 @@ gardés dans l'historique.
 - [x] Serveur : durée passée ensemble, note de chaque personne (migration, API)
 - [x] Interface : écran de fin de séance, note, souvenir visible dans l'historique
 - [x] Essais (unitaires, Playwright), captures
-- [ ] Release 1.7.0 et mise en production
+- [x] Release 1.7.0 et mise en production
 
 ## Phase 20 — Agenda et notifications
 
@@ -199,7 +199,7 @@ Ajouter une séance à son agenda ; être prévenu quand quelqu'un entre dans la
 - [x] Fichier agenda (.ics) d'une séance prévue
 - [x] Notifications Web Push « Camille est dans la salle » : accord par appareil dans le compte, envoi par le serveur
 - [x] Essais (sans contacter de vrai service de notifications), captures
-- [ ] Release 1.8.0 et mise en production
+- [x] Release 1.8.0 et mise en production
 
 ## Phase 21 — Soirée à plusieurs films
 
@@ -208,4 +208,28 @@ Enchaîner plusieurs films dans une même séance (liste d'attente), avec un ent
 - [x] Serveur : liste des films d'une séance, passage synchronisé au film suivant, entracte
 - [x] Interface : liste à la création et dans la salle (hôte), entracte avec compte à rebours
 - [x] Essais (unitaires, Playwright), captures
-- [ ] Release 1.9.0 et mise en production
+- [x] Release 1.9.0 et mise en production
+
+# Canapé 1.10 et 1.11 — programme pour toute séance, films à voir ensemble
+
+Choisis le 14/11/2026 ; une phase et une release chacune.
+
+## Phase 22 — Programme dans toute séance
+
+L'hôte peut ajouter un deuxième film (puis d'autres) à une séance prévue pour un seul film, depuis la salle, sans
+recréer la séance ; la séance devient alors une soirée avec entracte.
+
+- [x] Bouton « Programme » dans la salle pour l'hôte même avec un seul film ; les autres ne le voient qu'à partir de deux films
+- [x] Serveur : ajout de films accepté pour toute séance (règles et essais)
+- [x] Essais (unitaires, Playwright), captures ordinateur et téléphone
+- [ ] Release 1.10.0 et mise en production
+
+## Phase 23 — Films à voir ensemble
+
+Chacun marque les films de la galerie qu'il a envie de voir ; Canapé montre ceux qui plaisent à plusieurs et permet de
+lancer la séance avec les intéressés en deux clics.
+
+- [ ] Serveur : envies par personne et par film (migration, API), retirées pour ceux qui ont vu le film ensemble jusqu'au bout
+- [ ] Interface : « J'ai envie de le voir » sur la fiche et la galerie, liste « À voir ensemble » sur l'accueil (qui en a envie), lancer une séance avec eux
+- [ ] Essais (unitaires, Playwright), captures ordinateur et téléphone
+- [ ] Release 1.11.0 et mise en production

@@ -59,6 +59,28 @@ describe('séances : REST', () => {
     assert.equal((await post(env.app, '/api/seances', { filmIds: [film, 7] }, hote)).statusCode, 400);
   });
 
+  test('programme : toute séance d\'un seul film accepte des films en plus ; pas une séance terminée, ni le film en cours en double', async () => {
+    const f2 = insererFilm(env, hote, { visibilite: 'tous' });
+    const f3 = insererFilm(env, hote, { visibilite: 'tous' });
+    const id = (await post(env.app, '/api/seances', { filmId: film, invites: [invite.id] }, hote)).json().id;
+    const r = await put(env.app, `/api/seances/${id}/programme`, { filmIds: [f2] }, hote);
+    assert.equal(r.statusCode, 200);
+    assert.deepEqual(r.json().programme.map((p: { filmId: string }) => p.filmId), [film, f2]);
+    assert.equal(r.json().filmId, film);
+    assert.equal(r.json().rangCourant, 0);
+    // Puis un troisième, à la suite.
+    const r2 = await put(env.app, `/api/seances/${id}/programme`, { filmIds: [f2, f3] }, hote);
+    assert.deepEqual(r2.json().programme.map((p: { filmId: string }) => p.filmId), [film, f2, f3]);
+    // Le film en cours ne se met pas une deuxième fois à la suite.
+    assert.equal((await put(env.app, `/api/seances/${id}/programme`, { filmIds: [film] }, hote)).statusCode, 400);
+    // Séance terminée : le programme ne change plus.
+    assert.equal((await patch(env.app, `/api/seances/${id}`, { terminee: true }, hote)).statusCode, 200);
+    const t = await put(env.app, `/api/seances/${id}/programme`, { filmIds: [f2] }, hote);
+    assert.equal(t.statusCode, 409);
+    assert.equal(t.json().erreur, 'seance_terminee');
+    assert.deepEqual((await get(env.app, `/api/seances/${id}`, hote)).json().programme.map((p: { filmId: string }) => p.filmId), [film, f2, f3]);
+  });
+
   test('programme : seul l\'hôte (ou un admin) remplace les films à venir ; le film en cours reste', async () => {
     const f2 = insererFilm(env, hote, { visibilite: 'tous' });
     const f3 = insererFilm(env, hote, { visibilite: 'tous' });
