@@ -222,7 +222,7 @@ recréer la séance ; la séance devient alors une soirée avec entracte.
 - [x] Bouton « Programme » dans la salle pour l'hôte même avec un seul film ; les autres ne le voient qu'à partir de deux films
 - [x] Serveur : ajout de films accepté pour toute séance (règles et essais)
 - [x] Essais (unitaires, Playwright), captures ordinateur et téléphone
-- [ ] Release 1.10.0 (faite le 15/11/2026 : tag, paquet, release GitHub) et mise en production (reste : `sudo mettre-a-jour` par Charles)
+- [x] Release 1.10.0 et mise en production — en ligne le 15/11/2026
 
 ## Phase 23 — Films à voir ensemble
 
