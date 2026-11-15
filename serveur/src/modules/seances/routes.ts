@@ -160,12 +160,16 @@ export function enregistrerRoutes(app: FastifyInstance, salles: Salles): void {
     return sortie(ligneSeance(app, ligne.id)!);
   });
 
-  // ---- Programme de la soirée : l'hôte remplace les films à venir (après le film en cours) ----
+  // ---- Programme (toute séance, même d'un seul film) : l'hôte remplace les films à venir (après le film en cours) ----
   app.put<{ Params: { id: string } }>('/api/seances/:id/programme', pre, async (req): Promise<Seance> => {
     const u = req.utilisateur;
     const { ligne, role } = accesSeance(app, req.params.id, u);
     exigerHote(role);
     const filmIds = listeFilms(corps(req)['filmIds'], true);
+    // Toute séance a un programme, même prévue pour un seul film : ajouter un film en fait une soirée. Deux cas sans suite possible :
+    if (ligne.terminee_le !== null) throw new ErreurHttp(409, 'seance_terminee', 'La séance est terminée : son programme ne change plus.');
+    if (ligne.film_id === null && filmIds.length) throw new ErreurHttp(409, 'film_requis', 'Choisis d’abord le film de la séance.');
+    if (ligne.film_id !== null && filmIds.includes(ligne.film_id)) throw requeteInvalide('Ce film est déjà en cours.');
     for (const fid of filmIds) {
       const f = app.mediatheque.obtenir(fid);
       if (!f || !app.mediatheque.peutVoir(u, f.id)) throw introuvable('Film introuvable.');

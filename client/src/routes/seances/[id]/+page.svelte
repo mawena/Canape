@@ -6,7 +6,7 @@
   - Commandes : `commandes`, `lecture`, `lancer-ensemble`, `reculer`, `avancer`, `barre-temps`, `volumes`, `vol-film`, `vol-voix`,
     `vol-personne`, `baisse-film`, `langue-st`, `menu-langue`, `langue-<index>`, `st-aucun`, `st-<cle>`, `micro`, `camera`,
     `bouton-chat`, `je-reviens`, `inviter-seance` (hôte seulement ; ouvre `panneau-inviter`, `lien-seance`, `copier-lien-seance`, `partager-lien-seance`, `erreur-lien-seance`), `plein-ecran`, `reaction-1` à `reaction-8`
-  - Soirée (plusieurs films) : `bouton-programme` (ouvre `programme`, `programme-film`, `programme-monter`, `programme-descendre`, `programme-retirer`,
+  - Programme : `bouton-programme` (dès deux films pour tous ; pour l'hôte même avec un seul film, pour en ajouter) (ouvre `programme`, `programme-film`, `programme-monter`, `programme-descendre`, `programme-retirer`,
     `ajouter-film-programme`, `programme-recherche`, `programme-choix`, `film-suivant`, `confirmer-film-suivant` ; actions pour l'hôte seulement),
     `entracte` (dans la scène ; `entracte-film`, `entracte-temps`, `entracte-lancer`, `entracte-prolonger` pour l'hôte) ; `salle` a `data-entracte`
   - Vignettes : `vignettes`, `vignette` (attributs `data-cid`, `data-parle`, `data-moi`, `data-pair` : new|connecting|connected…), `menu-vignette`, `afficher-cameras`
