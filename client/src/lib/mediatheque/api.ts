@@ -1,5 +1,5 @@
 // Appels de l'API médiathèque.
-import type { CandidatTmdb, CorpsModifierFilm, Film, SousTitreExterne, UtilisateurPublic, VueFilms } from '@canape/partage';
+import type { CandidatTmdb, CorpsModifierFilm, EtatEnvie, Film, FilmAVoir, SousTitreExterne, UtilisateurPublic, VueFilms } from '@canape/partage';
 import { api } from '$lib/api/client.ts';
 
 export type TriFilms = 'recents' | 'titre' | 'annee';
@@ -24,3 +24,8 @@ export function ajouterSousTitre(id: string, fichier: File): Promise<SousTitreEx
 
 /** Adresse d'une image d'un film (le `?v=` change avec les images : cache HTTP long). */
 export const urlImage = (f: Pick<Film, 'id' | 'versionImages'>, quoi: 'affiche' | 'fond') => `/api/films/${f.id}/${quoi}?v=${f.versionImages}`;
+
+// ---- Films « à voir ensemble » ----
+export const listerEnvies = () => api.get<FilmAVoir[]>('/api/envies');
+export const marquerEnvie = (id: string) => api.put<EtatEnvie>(`/api/films/${id}/envie`);
+export const retirerEnvie = (id: string) => api.supprimer<EtatEnvie>(`/api/films/${id}/envie`);

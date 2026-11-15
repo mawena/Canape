@@ -1,4 +1,5 @@
 import type { FastifyPluginAsync } from 'fastify';
+import { installerEnvies } from './envies.ts';
 import { Mediatheque } from './mediatheque.ts';
 import { installerRoutes } from './routes.ts';
 import { installerTeleversement } from './televersement.ts';
@@ -11,6 +12,7 @@ const moduleMediatheque: FastifyPluginAsync = async (app) => {
   app.decorate('mediatheque', med);
   installerTeleversement(app, med);
   installerRoutes(app, med);
+  installerEnvies(app, med);
   installerTorrents(app, med);
   app.addHook('onReady', async () => {
     await med.nettoyerTeleversements().catch(() => 0);

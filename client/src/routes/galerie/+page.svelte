@@ -1,7 +1,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
-  import type { Film, VueFilms } from '@canape/partage';
+  import type { EtatEnvie, Film, VueFilms } from '@canape/partage';
   import { ErreurApi } from '$lib/api/client.ts';
   import { listerFilms, type TriFilms } from '$lib/mediatheque/api.ts';
   import GrilleFilms from '$lib/mediatheque/GrilleFilms.svelte';
@@ -75,6 +75,11 @@
     const t = setTimeout(() => { if (r !== q) naviguer({ q: r.trim() || null }); }, 250);
     return () => clearTimeout(t);
   });
+
+  /** Cœur d'une affiche : l'envie et le nombre rendus par le serveur remplacent ceux de la carte. */
+  function surEnvie(etat: EtatEnvie): void {
+    if (films) films = films.map((f) => (f.id === etat.filmId ? { ...f, envie: etat.moi, nbEnvies: etat.nombre } : f));
+  }
 
   async function charger(): Promise<void> {
     try {
@@ -173,7 +178,7 @@
       </EtatVide>
     {/if}
   {:else}
-    <GrilleFilms {films} />
+    <GrilleFilms {films} {surEnvie} />
   {/if}
 </main>
 
