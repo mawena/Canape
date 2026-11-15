@@ -1,6 +1,6 @@
 // Soirée à plusieurs films, côté client : petites fonctions pures (qui gère, état d'un film, ordre, textes de l'entracte
 // et de la fin). Les règles communes (film suivant, temps restant, « 3 films : … ») sont dans `@canape/partage`.
-import { deplacer, filmEnCours, filmSuivant, filmsAVenir, formaterMinuteur, programmeTrie, type FilmProgramme, type Seance } from '@canape/partage';
+import { deplacer, estSoiree, filmEnCours, filmSuivant, filmsAVenir, formaterMinuteur, programmeTrie, type FilmProgramme, type Seance } from '@canape/partage';
 import { formaterTempsEnsemble } from './souvenir.ts';
 
 export { formaterMinuteur };
@@ -8,6 +8,11 @@ export { formaterMinuteur };
 /** L'hôte (et lui seul, comme pour « Inviter ») gère le programme et l'entracte, tant que la séance n'est pas terminée. */
 export function peutGererProgramme(seance: Pick<Seance, 'hoteId' | 'termineeLe'> | null | undefined, moiId: number | null | undefined): boolean {
   return !!seance && moiId != null && seance.hoteId === moiId && seance.termineeLe === null;
+}
+
+/** Le bouton « Programme » : tout le monde dès deux films ; l'hôte aussi avec un seul film (pour en ajouter). */
+export function afficherProgramme(programme: readonly unknown[], estHote: boolean): boolean {
+  return estSoiree(programme) || estHote;
 }
 
 export type EtatFilmProgramme = 'vu' | 'en-cours' | 'a-venir';

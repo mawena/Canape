@@ -392,6 +392,11 @@ Serveur → client :
 `message {message}` · `souvenir {souvenir, fin}` (une note a changé, ou `fin: true` : l'hôte a terminé la séance → écran de fin) · `signal {de, donnees}` · `pong {c, s}` · `erreur {code, message}` ·
 `programme {programme, rangCourant}` (le programme de la soirée a changé : film suivant, ajout, retrait, ordre).
 
+*Réalisé (phase 22, programme dans toute séance)* : l'hôte a le bouton « Programme » même avec un seul film
+(`programmeVisible` dans `client/src/lib/seance/programme.ts` ; les invités à partir de deux films) et y ajoute des films
+depuis la salle. `PUT /api/seances/:id/programme` vaut pour toute séance, sauf : séance terminée (409 `seance_terminee`),
+séance sans film en cours (409 `film_requis`), film en cours remis à la suite (400). Essai `e2e/programme-seance.spec.ts`.
+
 `etat` = `{ filmId, lecture, position, instant, version, attente: string[], pisteAudio, sousTitres,
 compteARebours: number|null, entracteFin: number|null, serveur }` : mêmes règles qu'en 0.1 (position à l'instant serveur `instant`,
 rattrapage par saut au-delà de 1 s et par vitesse 0,95/1,05 entre 0,3 et 1 s, attente mutuelle, aucun écho

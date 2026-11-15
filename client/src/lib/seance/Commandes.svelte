@@ -35,9 +35,9 @@
   let { salle, pleinEcran, surPleinEcran, menu = $bindable(), peutInviter = false }: Props = $props();
 
   const basculer = (nom: string): void => { menu = menu === nom ? null : nom; };
-  // Le programme n'a plus qu'un film (l'hôte a retiré les autres) : son bouton disparaît, son panneau aussi ; le menu se
-  // ferme pour que la barre puisse de nouveau se masquer pendant la lecture.
-  $effect(() => { if (menu === 'programme' && !salle.estSoiree) menu = null; });
+  // Le programme n'a plus qu'un film et ce n'est pas l'hôte (il a retiré les autres) : le bouton disparaît, le panneau aussi ;
+  // le menu se ferme pour que la barre puisse de nouveau se masquer pendant la lecture. L'hôte garde son bouton.
+  $effect(() => { if (menu === 'programme' && !salle.afficheProgramme) menu = null; });
   const casqueConseille = $derived(!salle.prefs.casque && !salle.casqueDetecte);
   const emojisVisibles = $derived(EMOJIS);
 
@@ -134,7 +134,7 @@
         aria-label={salle.moi?.camera ? 'Couper la caméra' : 'Réactiver la caméra'} title="Caméra (V)" data-test="camera">
         {#if salle.moi?.camera}<Video size={22} />{:else}<VideoOff size={22} />{/if}
       </button>
-      {#if salle.estSoiree}
+      {#if salle.afficheProgramme}
         <ProgrammeSoiree {salle} bind:ouvert={() => menu === 'programme', (v) => { menu = v ? 'programme' : null; }} />
       {/if}
       {#if peutInviter}
