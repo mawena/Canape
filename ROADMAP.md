@@ -222,14 +222,14 @@ recréer la séance ; la séance devient alors une soirée avec entracte.
 - [x] Bouton « Programme » dans la salle pour l'hôte même avec un seul film ; les autres ne le voient qu'à partir de deux films
 - [x] Serveur : ajout de films accepté pour toute séance (règles et essais)
 - [x] Essais (unitaires, Playwright), captures ordinateur et téléphone
-- [ ] Release 1.10.0 et mise en production
+- [x] Release 1.10.0 et mise en production — en ligne le 15/11/2026
 
 ## Phase 23 — Films à voir ensemble
 
 Chacun marque les films de la galerie qu'il a envie de voir ; Canapé montre ceux qui plaisent à plusieurs et permet de
 lancer la séance avec les intéressés en deux clics.
 
-- [ ] Serveur : envies par personne et par film (migration, API), retirées pour ceux qui ont vu le film ensemble jusqu'au bout
-- [ ] Interface : « J'ai envie de le voir » sur la fiche et la galerie, liste « À voir ensemble » sur l'accueil (qui en a envie), lancer une séance avec eux
-- [ ] Essais (unitaires, Playwright), captures ordinateur et téléphone
+- [x] Serveur : envies par personne et par film (migration, API), retirées pour ceux qui ont vu le film ensemble jusqu'au bout
+- [x] Interface : « J'ai envie de le voir » sur la fiche et la galerie, liste « À voir ensemble » sur l'accueil (qui en a envie), lancer une séance avec eux
+- [x] Essais (unitaires, Playwright), captures ordinateur et téléphone
 - [ ] Release 1.11.0 et mise en production

@@ -5,9 +5,11 @@ import path from 'node:path';
 import type { Analyse, Film, SousTitreExterne } from '@canape/partage';
 import type { FilmService, RegleAcces, ServiceMediatheque } from '../../commun/services.ts';
 import type { UtilisateurConnecte } from '../../commun/auth.ts';
+import { etatEnvie } from '../../commun/envies.ts';
 import { idBase32, maintenantIso } from '../../commun/identifiants.ts';
 import type { Config } from '../../config.ts';
 import { transaction, type Base } from '../../db/index.ts';
+import { comptesCiblables } from '../comptes/connus.ts';
 import { analyserFichier } from './analyse.ts';
 import { couleurDeImage, extraireImages } from './images.ts';
 import { analyserNomFichier, extensionDe } from './noms.ts';
@@ -308,17 +310,19 @@ export class Mediatheque implements ServiceMediatheque {
 
   // ----- Représentation API -----
 
-  versFilm(l: LigneFilm, u: UtilisateurConnecte, detail = false): Film {
+  /** `visibles` : les comptes dont `u` voit les envies (`comptesCiblables`) ; à passer quand on convertit une liste, pour ne le calculer qu'une fois. */
+  versFilm(l: LigneFilm, u: UtilisateurConnecte, detail = false, visibles: ReadonlySet<number> = comptesCiblables(this.db, u)): Film {
     const modifiable = u.role === 'admin' || l.proprietaire_id === u.id;
     const proprio = this.db.prepare('SELECT prenom FROM utilisateurs WHERE id = ?').get(l.proprietaire_id) as { prenom: string } | undefined;
     let genres: string[] = [];
     try { genres = l.genres ? (JSON.parse(l.genres) as string[]) : []; } catch { /* genres illisibles */ }
+    const envie = etatEnvie(this.db, l.id, u.id, visibles);
     const film: Film = {
       id: l.id, proprietaireId: l.proprietaire_id, proprietairePrenom: proprio?.prenom ?? '', titre: l.titre, annee: l.annee,
       resume: l.resume, genres, tmdbId: l.tmdb_id, nomOrigine: l.nom_origine, taille: l.taille, duree: l.duree, etat: l.etat,
       erreur: l.erreur, visibilite: l.visibilite, partages: modifiable ? this.partages(l.id) : [],
       aAffiche: !!l.affiche, aFond: !!l.fond, couleur: l.couleur, versionImages: this.versionImages(l),
-      modifiable, ajouteLe: l.ajoute_le,
+      modifiable, ajouteLe: l.ajoute_le, nbEnvies: envie.nombre, envie: envie.moi,
     };
     if (detail) {
       film.analyse = l.analyse ? (JSON.parse(l.analyse) as Analyse) : null;

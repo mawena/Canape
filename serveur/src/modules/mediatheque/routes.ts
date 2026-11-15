@@ -49,7 +49,8 @@ export function installerRoutes(app: FastifyInstance, med: Mediatheque): void {
       if (tri === 'annee') return (b.annee ?? 0) - (a.annee ?? 0) || a.titre.localeCompare(b.titre, 'fr');
       return b.ajoute_le.localeCompare(a.ajoute_le);
     });
-    return retenues.map((l) => med.versFilm(l, u));
+    const visibles = comptesCiblables(app.db, u);
+    return retenues.map((l) => med.versFilm(l, u, false, visibles));
   });
 
   app.get('/api/films/:id', pre, async (req): Promise<Film> => {

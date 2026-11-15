@@ -1,13 +1,14 @@
 <script lang="ts">
-  import type { Film } from '@canape/partage';
+  import type { EtatEnvie, Film } from '@canape/partage';
   import CarteAffiche from './CarteAffiche.svelte';
 
-  let { films }: { films: Film[] } = $props();
+  /** `surEnvie` : avec ce rappel, chaque film prêt porte le cœur « J'ai envie de le voir ». */
+  let { films, surEnvie }: { films: Film[]; surEnvie?: (e: EtatEnvie) => void } = $props();
 </script>
 
 <ul class="grille">
   {#each films as film (film.id)}
-    <li><CarteAffiche {film} /></li>
+    <li><CarteAffiche {film} {surEnvie} /></li>
   {/each}
 </ul>
 
