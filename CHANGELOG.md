@@ -2,6 +2,22 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) ; versions selon [SemVer](https://semver.org/lang/fr/).
 
+## [1.11.0] — 2026-11-15
+
+Les films à voir ensemble.
+
+### Ajouté
+
+- **« J'ai envie de le voir »** : dans la galerie, un cœur posé sur chaque affiche marque le film d'un toucher, sans
+  ouvrir la fiche ; le même bouton est sur la fiche du film. Le nombre à côté du cœur dit combien de personnes en ont
+  envie.
+- **« À voir ensemble » sur l'accueil** : les films qui plaisent, ceux voulus par plusieurs en tête, avec les personnes
+  qui en ont envie. « Lancer une séance » ouvre la création déjà remplie avec le film et les personnes intéressées ; on
+  peut aussi retirer son envie depuis la liste, avec « Annuler » pour la remettre.
+- L'envie disparaît toute seule quand on a regardé le film jusqu'au bout pendant une séance.
+- Vie privée : un film privé n'apparaît jamais chez qui ne peut pas le voir, et les envies des personnes qu'on ne
+  connaît pas ne sont ni montrées ni comptées.
+
 ## [1.10.0] — 2026-11-15
 
 Le programme dans toute séance.
