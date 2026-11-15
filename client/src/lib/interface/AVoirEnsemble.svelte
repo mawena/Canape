@@ -2,7 +2,7 @@
   /**
    * « À voir ensemble » (phase 23) : les films de la galerie que des personnes ont envie de voir, ceux voulus par plusieurs en tête.
    * Chaque film : qui en a envie, « Lancer une séance » (page de création pré-remplie avec le film et les intéressés) et ma bascule d'envie.
-   * Sans envie : un état vide qui invite à marquer des films depuis la galerie.
+   * Sans envie : un état vide qui invite à marquer des films depuis la galerie (le cœur de chaque affiche).
    */
   import type { EtatEnvie, FilmAVoir, UtilisateurEnvie } from '@canape/partage';
   import { Badge, Bouton, EtatVide, MiniAffiche, PileAvatars } from '$lib/ui/index.ts';
@@ -24,7 +24,7 @@
 
   {#if films.length === 0}
     <div data-test="a-voir-vide">
-      <EtatVide icone="coeur" titre="Aucune envie pour l’instant." texte="Sur la fiche d’un film, touche « J’ai envie de le voir » : il apparaît ici, avec les films que les autres ont envie de voir.">
+      <EtatVide icone="coeur" titre="Aucune envie pour l’instant." texte="Dans la galerie, touche le cœur d’un film : il apparaît ici, avec les films que les autres ont envie de voir.">
         {#snippet actions()}<Bouton variante="secondaire" icone="film" href={liens.galerie}>Ouvrir la galerie</Bouton>{/snippet}
       </EtatVide>
     </div>
