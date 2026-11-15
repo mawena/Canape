@@ -50,7 +50,7 @@
   $effect(() => {
     if (ouvert && !etaitOuvert) {
       etaitOuvert = true;
-      versDroite = (declencheur?.getBoundingClientRect().right ?? Infinity) < 420;
+      placer();
       void tick().then(() => panneau?.focus());
     } else if (!ouvert && etaitOuvert) {
       etaitOuvert = false;
@@ -61,6 +61,8 @@
     }
   });
 
+  /** Le sens d'ouverture suit la place du bouton, à l'ouverture et quand la fenêtre change de largeur (la barre se replie ou se déplie). */
+  function placer(): void { versDroite = (declencheur?.getBoundingClientRect().right ?? Infinity) < 420; }
   function fermer(): void { ouvert = false; }
   function clavier(e: KeyboardEvent): void {
     // Dans le panneau, les raccourcis de la salle (espace, flèches…) ne s'appliquent pas.
@@ -124,6 +126,8 @@
     fermer();
   }
 </script>
+
+<svelte:window onresize={() => { if (ouvert) placer(); }} />
 
 <div class="programme-ancre">
   <button bind:this={declencheur} type="button" class="rond" class:actif={ouvert} onclick={() => (ouvert = !ouvert)} aria-expanded={ouvert}

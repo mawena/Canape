@@ -70,7 +70,6 @@ test.describe('Programme ajouté à une séance d’un seul film', () => {
       await expect(progA.getByTestId('programme-film')).toHaveCount(1);
       await expect(progA.getByTestId('programme-retirer')).toHaveCount(0);
       await expect(progA.getByTestId('film-suivant')).toHaveCount(0);
-      console.log('DEBUG', await progA.evaluate((el) => `${el.className} left=${getComputedStyle(el).left} rect=${JSON.stringify(el.getBoundingClientRect())} iw=${innerWidth} btn=${JSON.stringify(document.querySelector('[data-test=bouton-programme]')!.getBoundingClientRect())}`));
       await capturer(a, 'programme-un-film');
 
       // L'hôte ajoute le second film.
@@ -99,14 +98,16 @@ test.describe('Programme ajouté à une séance d’un seul film', () => {
       await progA.getByTestId('ajouter-film-programme').click();
       await progA.getByTestId('programme-choix').filter({ hasText: SECOND }).click();
       await expect(progA.getByTestId('programme-film')).toHaveCount(2);
+      // L'invitée ouvre son programme avant le changement : le film d'essai est court, l'écran de fin le couvrirait vite.
+      await b.getByTestId('bouton-programme').click();
+      await expect(b.getByTestId('programme').getByTestId('programme-film').first()).toHaveAttribute('data-etat', 'en-cours');
       await progA.getByTestId('film-suivant').click();
       await progA.getByTestId('confirmer-film-suivant').click();
+      await expect(b.getByTestId('programme').getByTestId('programme-film').first()).toHaveAttribute('data-etat', 'vu');
+      await expect(b.getByTestId('programme').getByTestId('programme-film').nth(1)).toHaveAttribute('data-etat', 'en-cours');
       for (const p of [a, b]) {
         await expect(p.getByTestId('salle')).toHaveAttribute('data-lecture', 'true', { timeout: 30_000 });
       }
-      await b.getByTestId('bouton-programme').click();
-      await expect(b.getByTestId('programme').getByTestId('programme-film').first()).toHaveAttribute('data-etat', 'vu');
-      await expect(b.getByTestId('programme').getByTestId('programme-film').nth(1)).toHaveAttribute('data-etat', 'en-cours');
     } finally {
       for (const c of contextes) await c.close();
       await requeteAdmin?.dispose();
