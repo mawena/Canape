@@ -219,9 +219,9 @@ Choisis le 14/11/2026 ; une phase et une release chacune.
 L'hôte peut ajouter un deuxième film (puis d'autres) à une séance prévue pour un seul film, depuis la salle, sans
 recréer la séance ; la séance devient alors une soirée avec entracte.
 
-- [ ] Bouton « Programme » dans la salle pour l'hôte même avec un seul film ; les autres ne le voient qu'à partir de deux films
-- [ ] Serveur : ajout de films accepté pour toute séance (règles et essais)
-- [ ] Essais (unitaires, Playwright), captures ordinateur et téléphone
+- [x] Bouton « Programme » dans la salle pour l'hôte même avec un seul film ; les autres ne le voient qu'à partir de deux films
+- [x] Serveur : ajout de films accepté pour toute séance (règles et essais)
+- [x] Essais (unitaires, Playwright), captures ordinateur et téléphone
 - [ ] Release 1.10.0 et mise en production
 
 ## Phase 23 — Films à voir ensemble
