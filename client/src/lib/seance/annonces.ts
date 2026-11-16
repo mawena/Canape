@@ -26,11 +26,6 @@ export function libelleLangue(plan: ContexteAnnonce['plan'], piste: number | nul
   return p ? p.libelle : null;
 }
 
-export function libelleSousTitres(plan: ContexteAnnonce['plan'], cle: string | null): string | null {
-  if (cle === null) return null;
-  return plan?.sousTitres.find((x) => x.cle === cle)?.libelle ?? null;
-}
-
 /** Texte de l'annonce, ou `null` si ce changement ne mérite pas d'annonce. */
 export function texteAnnonce(c: ContexteAnnonce): string | null {
   const nom = c.nom ?? 'Quelqu’un';
@@ -47,11 +42,6 @@ export function texteAnnonce(c: ContexteAnnonce): string | null {
     case 'audio': {
       const l = libelleLangue(c.plan, c.etat.pisteAudio);
       return `${nom} a changé la langue${l ? ` : ${l}` : ''}. Tout le monde est en pause.`;
-    }
-    case 'sous_titres': {
-      if (c.etat.sousTitres === null) return `${nom} a retiré les sous-titres`;
-      const l = libelleSousTitres(c.plan, c.etat.sousTitres);
-      return `${nom} a mis les sous-titres${l ? ` : ${l}` : ''}`;
     }
     case 'compte_a_rebours': return c.nom ? `${nom} a lancé le compte à rebours.` : null;
     case 'reprise': return 'Tout le monde est prêt, on reprend';
@@ -103,7 +93,7 @@ export function etatSynchro(o: { ouvert: boolean; filmId: string | null; lecture
   return { niveau: 'mal', texte: 'Synchro perdue — Resynchroniser' };
 }
 
-/** Choisit la piste de texte du lecteur qui correspond à la clé partagée (identifiant, libellé, puis ordre du plan). */
+/** Choisit la piste de texte du lecteur qui correspond à la clé choisie (identifiant, libellé, puis ordre du plan). */
 export function indexPisteTexte(
   pistes: Array<{ id: string; label: string }>,
   plan: Pick<PlanDeLecture, 'sousTitres'> | null,

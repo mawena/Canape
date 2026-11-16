@@ -6,7 +6,7 @@ import { accroche, autresPersonnes, filmsPourLancer, salleOuverte, seanceDeCeSoi
 function seance(p: Partial<Seance>): Seance {
   return {
     id: 's1', hoteId: 2, hotePrenom: 'Léa', filmId: 'f1', filmTitre: 'Les Heures bleues', titre: null, prevueLe: null,
-    aUnLien: false, pisteAudio: null, sousTitres: null, position: 0, creeLe: '2026-11-12T10:00:00Z', termineeLe: null,
+    aUnLien: false, pisteAudio: null, position: 0, creeLe: '2026-11-12T10:00:00Z', termineeLe: null,
     invites: [{ id: 1, prenom: 'Awa', couleur: null }], programme: [], rangCourant: 0, presents: 0, ...p,
   };
 }

@@ -4,7 +4,7 @@ import { etatSynchro, indexPisteTexte, phraseAttente, retiresAttente, texteAnnon
 import type { EtatSeance } from './types.ts';
 
 const etat = (p: Partial<EtatSeance> = {}): EtatSeance => ({
-  filmId: 'f', lecture: false, position: 4440, instant: 0, version: 1, attente: [], pisteAudio: 2, sousTitres: 'p3', compteARebours: null, entracteFin: null, serveur: 0, ...p,
+  filmId: 'f', lecture: false, position: 4440, instant: 0, version: 1, attente: [], pisteAudio: 2, compteARebours: null, entracteFin: null, serveur: 0, ...p,
 });
 const plan = {
   pistesAudio: [{ index: 2, langue: 'eng', libelle: 'Anglais (VO)', canaux: 2, parDefaut: false }],
@@ -21,8 +21,6 @@ test('gestes nommés', () => {
   assert.equal(texteAnnonce(ctx('aller', { avant: 100 })), 'Léa a avancé à 1 h 14 min');
   assert.equal(texteAnnonce(ctx('aller', { avant: 9000 })), 'Léa a reculé à 1 h 14 min');
   assert.equal(texteAnnonce(ctx('audio')), 'Léa a changé la langue : Anglais (VO). Tout le monde est en pause.');
-  assert.equal(texteAnnonce(ctx('sous_titres')), 'Léa a mis les sous-titres : Français');
-  assert.equal(texteAnnonce(ctx('sous_titres', { etat: etat({ sousTitres: null }) })), 'Léa a retiré les sous-titres');
 });
 
 test('départ : perte de connexion nommée ; fin du compte à rebours et tampon sans annonce', () => {

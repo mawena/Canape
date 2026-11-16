@@ -57,7 +57,6 @@ export interface SalleActive {
 }
 
 const EMOJIS_OK: ReadonlySet<string> = new Set(EMOJIS);
-const CLE_SOUS_TITRES = /^[pe]\d{1,6}$/;
 
 export const publicDe = (u: Pick<UtilisateurConnecte, 'id' | 'prenom' | 'couleur'>): UtilisateurPublic => ({ id: u.id, prenom: u.prenom, couleur: u.couleur });
 
@@ -120,12 +119,12 @@ export class Salles {
     this.diffuser(a, { t: 'etat', etat: a.salle.instantane(), raison, par });
   }
 
-  /** Écrit film, position, piste audio, sous-titres et temps passé ensemble dans `seances`. */
+  /** Écrit film, position, piste audio et temps passé ensemble dans `seances`. */
   private enregistrer(a: SalleActive): void {
     const e = a.salle.aEnregistrer();
     try {
-      this.app.db.prepare('UPDATE seances SET film_id = ?, position = ?, piste_audio = ?, sous_titres = ?, ensemble_secondes = ? WHERE id = ?')
-        .run(e.filmId, e.position, e.pisteAudio, e.sousTitres, a.salle.secondesEnsemble(), a.id);
+      this.app.db.prepare('UPDATE seances SET film_id = ?, position = ?, piste_audio = ?, ensemble_secondes = ? WHERE id = ?')
+        .run(e.filmId, e.position, e.pisteAudio, a.salle.secondesEnsemble(), a.id);
     } catch (err) {
       this.app.log.warn({ err }, 'séance : état non enregistré');
     }
@@ -134,13 +133,13 @@ export class Salles {
   private ouvrir(id: string): SalleActive {
     let a = this.actives.get(id);
     if (a) return a;
-    const l = this.app.db.prepare('SELECT film_id, position, piste_audio, sous_titres, ensemble_secondes FROM seances WHERE id = ?').get(id) as
-      { film_id: string | null; position: number; piste_audio: number | null; sous_titres: string | null; ensemble_secondes: number } | undefined;
+    const l = this.app.db.prepare('SELECT film_id, position, piste_audio, ensemble_secondes FROM seances WHERE id = ?').get(id) as
+      { film_id: string | null; position: number; piste_audio: number | null; ensemble_secondes: number } | undefined;
     a = {
       id,
       salle: new Salle(l?.film_id
-        ? { filmId: l.film_id, position: l.position, pisteAudio: l.piste_audio, sousTitres: l.sous_titres, ensemble: l.ensemble_secondes }
-        : { filmId: null, position: 0, pisteAudio: null, sousTitres: null, ...(l ? { ensemble: l.ensemble_secondes } : {}) }, this.maintenant),
+        ? { filmId: l.film_id, position: l.position, pisteAudio: l.piste_audio, ensemble: l.ensemble_secondes }
+        : { filmId: null, position: 0, pisteAudio: null, ...(l ? { ensemble: l.ensemble_secondes } : {}) }, this.maintenant),
       connexions: new Map(),
       minuteur: null,
       entracte: null,
@@ -258,10 +257,8 @@ export class Salles {
         if (!Number.isInteger(msg.piste) || msg.piste < 0 || msg.piste > 255) return this.erreur(c, 'piste_invalide', 'Piste audio invalide.');
         return etat(s.audio(c.cid, msg.piste));
       case 'sous_titres':
-        if (msg.cle !== null && (typeof msg.cle !== 'string' || !CLE_SOUS_TITRES.test(msg.cle))) {
-          return this.erreur(c, 'piste_invalide', 'Sous-titres invalides.');
-        }
-        return etat(s.sousTitresChoix(c.cid, msg.cle));
+        // Depuis 1.12.0, chacun choisit ses sous-titres chez lui : message d'un ancien client, ignoré.
+        return;
       case 'compte_a_rebours': {
         const r = s.demarrerCompteARebours(c.cid);
         if (!r) return;

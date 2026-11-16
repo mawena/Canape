@@ -200,7 +200,7 @@ CREATE TABLE seances (
   film_id TEXT REFERENCES films(id) ON DELETE SET NULL,
   titre TEXT, prevue_le TEXT,
   lien_hash TEXT UNIQUE,                               -- lien pour rejoindre (NULL = pas de lien)
-  piste_audio INTEGER, sous_titres TEXT,               -- choix partagés
+  piste_audio INTEGER, sous_titres TEXT,               -- langue partagée ; sous_titres inutilisé depuis 1.12.0
   position REAL NOT NULL DEFAULT 0,
   cree_le TEXT NOT NULL, terminee_le TEXT
 );
@@ -379,7 +379,7 @@ onglets). Champ de type : `t`.
 
 Client → serveur :
 `ping {c}` · `lecture {position}` · `pause {position, fin?}` · `aller {position}` · `film {filmId}` ·
-`audio {piste}` · `sous_titres {cle|null}` · `compte_a_rebours {}` (lecture lancée pour tous 3 s plus tard) ·
+`audio {piste}` · `sous_titres {cle|null}` (obsolète depuis 1.12.0 : ignoré, chacun choisit ses sous-titres chez lui) · `compte_a_rebours {}` (lecture lancée pour tous 3 s plus tard) ·
 `tampon {enCours}` · `media {micro, camera}` · `reaction {emoji}` (liste fermée : 😂 ❤️ 😱 😭 🔥 👏 😮 🍿) ·
 `message {texte}` (≤ 500 caractères) · `progression {position}` (toutes les 10 s) · `signal {a, donnees}` ·
 soirée (hôte ou administrateur, sinon `erreur {code: 'interdit'}`) : `entracte_lancer {}` (pendant l'entracte : le film
@@ -397,7 +397,7 @@ Serveur → client :
 depuis la salle. `PUT /api/seances/:id/programme` vaut pour toute séance, sauf : séance terminée (409 `seance_terminee`),
 séance sans film en cours (409 `film_requis`), film en cours remis à la suite (400). Essai `e2e/programme-seance.spec.ts`.
 
-`etat` = `{ filmId, lecture, position, instant, version, attente: string[], pisteAudio, sousTitres,
+`etat` = `{ filmId, lecture, position, instant, version, attente: string[], pisteAudio,
 compteARebours: number|null, entracteFin: number|null, serveur }` : mêmes règles qu'en 0.1 (position à l'instant serveur `instant`,
 rattrapage par saut au-delà de 1 s et par vitesse 0,95/1,05 entre 0,3 et 1 s, attente mutuelle, aucun écho
 d'événement). Changer de piste audio ou de film remet tout le monde en pause à la même position.
@@ -410,7 +410,7 @@ entre dans l'historique de chaque présent comme une fin ordinaire. Pendant l'en
 (lecture, pause, saut, pistes et compte à rebours ignorés ; une deuxième `fin` aussi) ; le chat, les caméras et les
 réactions continuent. `entracte_prolonger` renvoie `etat` raison `entracte` avec la nouvelle heure. À l'heure dite (ou sur
 `entracte_lancer` / `film_suivant`), le serveur passe au film suivant pour tous : `etat` raison `film` (`par` : le `cid` de
-l'hôte, ou `null` à la fin du minuteur), position 0, langue et sous-titres par défaut, compte à rebours de 3 s, puis
+l'hôte, ou `null` à la fin du minuteur), position 0, langue par défaut, compte à rebours de 3 s, puis
 attente mutuelle habituelle ; puis `programme` avec le nouveau `rangCourant`. Si plus aucun film ne suit (retiré pendant
 l'entracte), l'entracte finit en `fin` (écran de fin). Si tout le monde part pendant l'entracte, la séance passe au film
 suivant, en pause au début. Le dernier film fini donne `fin` comme avant. Durée : `CANAPE_ENTRACTE_SECONDES` (300 s).
@@ -598,7 +598,7 @@ est dans ta galerie » et la carte du film apparaît (en analyse puis prête).
    seulement quand la charge est sous 0,8 par cœur, suspendues pendant toute conversion à la volée ; fichiers dans
    `CANAPE_FILMS/<id>/preparations/<audio>.mp4`. Les adresses `/media/*` répondent 404 sans session.
 5. Sous-titres texte intégrés extraits en WebVTT à la demande (cache) ; pistes image (PGS, VobSub) signalées comme
-   non lisibles. Libellés : langue, « forcés », « SDH ».
+   non lisibles. Libellés : langue, « forcés », « sourds et malentendants » ; deux libellés identiques sont numérotés (« Français 1 », « Français 2 »).
 
 ## Interface
 

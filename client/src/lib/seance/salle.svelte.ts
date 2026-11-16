@@ -12,6 +12,7 @@ import { ClientWs, urlWsSeance } from './client-ws.ts';
 import { detecteurVoix, lirePeripheriques, type Peripheriques } from './medias.ts';
 import { MoteurSynchro } from './moteur.ts';
 import { ecrirePrefs, lirePrefs, type Coin, type PrefsSalle } from './prefs.ts';
+import { choisirSousTitres, decrireChoix, type TailleSousTitres } from './sous-titres.ts';
 import { afficherProgramme, estEnchainement, filmsLances, peutGererProgramme } from './programme.ts';
 import { ajouterReaction, annonceReactions, FabriqueReactions, purgerReactions, type ReactionFlottante, DUREE_REACTION } from './reactions.ts';
 import { aUnCasque, BaisseFilm, volumeFilm, Voix } from './son.ts';
@@ -66,6 +67,8 @@ export class Salle {
   plan: PlanDeLecture | null = $state(null);
   erreurPlan: string | null = $state(null);
   prefs: PrefsSalle = $state(lirePrefs());
+  /** Sous-titres affichés chez moi (clé du plan), choisis par moi seul. */
+  sousTitres: string | null = $state(null);
   peripheriques: Peripheriques = $state({ micros: [], cameras: [], sorties: [] });
   casqueDetecte = $state(false);
 
@@ -337,6 +340,7 @@ export class Salle {
       const plan = await chargerPlan(etat.filmId, etat.pisteAudio ?? -1);
       if (jeton !== this.jetonPlan || !this.video) return;
       this.plan = plan;
+      this.sousTitres = choisirSousTitres(plan, this.prefs.sousTitres, etat.pisteAudio);
       this.moteur.surChargement();
       this.detacher = attacherLecture(this.video, plan);
       this.appliquerSousTitres();
@@ -351,7 +355,7 @@ export class Salle {
     const v = this.video;
     if (!v) return;
     const pistes = Array.from(v.textTracks);
-    const i = indexPisteTexte(pistes.map((t) => ({ id: t.id, label: t.label })), this.plan, this.etat?.sousTitres ?? null);
+    const i = indexPisteTexte(pistes.map((t) => ({ id: t.id, label: t.label })), this.plan, this.sousTitres);
     pistes.forEach((t, k) => { t.mode = k === i ? 'showing' : 'disabled'; });
   }
 
@@ -678,7 +682,18 @@ export class Salle {
   /** Pas de message d'annulation dans le protocole : la pause du compte à rebours le suspend. */
   annulerCompteARebours(): void { this.ws?.envoyer({ t: 'pause', position: this.video?.currentTime ?? 0 }); }
   changerLangue(piste: number): void { if (piste !== this.etat?.pisteAudio) this.ws?.envoyer({ t: 'audio', piste }); }
-  changerSousTitres(cle: string | null): void { this.ws?.envoyer({ t: 'sous_titres', cle }); }
+  /** Rien que pour moi : pas de pause, rien d'envoyé à la salle ; l'appareil retient la langue pour les films suivants. */
+  changerSousTitres(cle: string | null): void {
+    this.sousTitres = cle;
+    this.prefs.sousTitres = decrireChoix(this.plan, cle);
+    this.sauverPrefs();
+    this.appliquerSousTitres();
+  }
+
+  changerTailleSousTitres(taille: TailleSousTitres): void {
+    this.prefs.tailleSousTitres = taille;
+    this.sauverPrefs();
+  }
   ignorerAttente(cid: string): void { this.ws?.envoyer({ t: 'ignorer_attente', cid }); }
   depuisLeDebut(): void { this.reprise = null; this.aller(0); }
   changerFilm(filmId: string): void { this.fini = false; this.finFermee = false; this.souvenir = null; this.ws?.envoyer({ t: 'film', filmId }); }

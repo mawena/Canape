@@ -46,7 +46,6 @@ export interface EtatSeance {
   /** `cid` qui mettent en mémoire : la lecture attend. */
   attente: string[];
   pisteAudio: number | null;
-  sousTitres: string | null;
   /** Secondes restantes avant le lancement, ou `null`. */
   compteARebours: number | null;
   /** Heure de fin de l'entracte (ms, horloge du serveur, comme `serveur` et `instant`), ou `null` s'il n'y en a pas. */
@@ -72,6 +71,7 @@ export type MessageClient =
   | { t: 'aller'; position: number }
   | { t: 'film'; filmId: string }
   | { t: 'audio'; piste: number }
+  /** Obsolète depuis 1.12.0 (sous-titres choisis par chacun) : ignoré par le serveur. */
   | { t: 'sous_titres'; cle: string | null }
   | { t: 'compte_a_rebours' }
   /** Hôte : lance tout de suite le film suivant (pendant l'entracte). */
@@ -92,7 +92,7 @@ export type MessageClient =
 
 /**
  * Pourquoi l'état a changé (`par` = `cid` de l'auteur, `null` si c'est le serveur : fin du compte à rebours, film supprimé).
- * - `lecture` `pause` `aller` `film` `audio` `sous_titres` `compte_a_rebours` : commande de `par` ;
+ * - `lecture` `pause` `aller` `film` `audio` `compte_a_rebours` : commande de `par` ;
  * - `fin` : `par` a signalé la fin du film (`pause` avec `fin`) ;
  * - `tampon` : la liste `attente` a changé (et la lecture s'est arrêtée si elle tournait) ;
  * - `reprise` : plus personne n'attend, la lecture suspendue reprend ;
@@ -107,7 +107,7 @@ export type MessageClient =
  *   ou reste `false` avec `attente` non vide si quelqu'un met encore en mémoire).
  */
 export type RaisonEtat =
-  | 'lecture' | 'pause' | 'aller' | 'film' | 'audio' | 'sous_titres' | 'compte_a_rebours'
+  | 'lecture' | 'pause' | 'aller' | 'film' | 'audio' | 'compte_a_rebours'
   | 'tampon' | 'reprise' | 'depart' | 'attente-ignoree' | 'fin' | 'entracte';
 
 /** Codes de `erreur {code}` (la connexion reste ouverte sauf mention contraire). */

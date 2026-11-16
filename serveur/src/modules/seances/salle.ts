@@ -10,7 +10,6 @@ export interface EtatInitial {
   filmId: string | null;
   position: number;
   pisteAudio: number | null;
-  sousTitres: string | null;
   /** Secondes déjà passées à deux personnes ou plus (reprise après redémarrage). */
   ensemble?: number;
 }
@@ -31,7 +30,6 @@ export class Salle {
   private instant: number;
   private version = 0;
   private pisteAudio: number | null;
-  private sousTitres: string | null;
   /** La lecture reprendra quand plus personne n'attend. */
   private reprise = false;
   private compteFin: number | null = null;
@@ -46,7 +44,6 @@ export class Salle {
     this.filmId = initial.filmId;
     this.position = positionValide(initial.position) ? initial.position : 0;
     this.pisteAudio = initial.pisteAudio;
-    this.sousTitres = initial.sousTitres;
     this.instant = maintenant();
     this.ensemble = typeof initial.ensemble === 'number' && Number.isFinite(initial.ensemble) && initial.ensemble > 0 ? initial.ensemble : 0;
     this.dernierEnsemble = this.instant;
@@ -124,7 +121,6 @@ export class Salle {
       version: this.version,
       attente: [...this.tampons],
       pisteAudio: this.pisteAudio,
-      sousTitres: this.sousTitres,
       compteARebours: this.compteFin === null ? null : Math.max(0, Math.ceil((this.compteFin - t) / 1000)),
       entracteFin: this.entracteFin,
       serveur: t,
@@ -133,16 +129,15 @@ export class Salle {
 
   /** Valeurs à persister dans `seances`. */
   aEnregistrer(): EtatInitial {
-    return { filmId: this.filmId, position: this.positionAttendue(), pisteAudio: this.pisteAudio, sousTitres: this.sousTitres };
+    return { filmId: this.filmId, position: this.positionAttendue(), pisteAudio: this.pisteAudio };
   }
 
-  private fixer(changes: Partial<Pick<EtatSeance, 'filmId' | 'lecture' | 'position' | 'pisteAudio' | 'sousTitres'>>, garderCompte = false): void {
+  private fixer(changes: Partial<Pick<EtatSeance, 'filmId' | 'lecture' | 'position' | 'pisteAudio'>>, garderCompte = false): void {
     if (!garderCompte) this.compteFin = null;
     this.filmId = changes.filmId !== undefined ? changes.filmId : this.filmId;
     this.lecture = changes.lecture ?? this.lecture;
     this.position = changes.position ?? this.position;
     this.pisteAudio = changes.pisteAudio !== undefined ? changes.pisteAudio : this.pisteAudio;
-    this.sousTitres = changes.sousTitres !== undefined ? changes.sousTitres : this.sousTitres;
     this.instant = this.maintenant();
     this.version += 1;
   }
@@ -217,7 +212,7 @@ export class Salle {
     this.entracteFin = null;
     this.tampons.clear();
     this.reprise = false;
-    this.fixer({ filmId, lecture: false, position: 0, pisteAudio: null, sousTitres: null });
+    this.fixer({ filmId, lecture: false, position: 0, pisteAudio: null });
     return 'film';
   }
 
@@ -226,13 +221,6 @@ export class Salle {
     this.reprise = false;
     this.fixer({ pisteAudio: piste, lecture: false, position: this.positionAttendue() });
     return 'audio';
-  }
-
-  sousTitresChoix(cid: string, cle: string | null): RaisonEtat | null {
-    if (!this.participants.has(cid) || this.entracteFin !== null) return null;
-    this.reprise = false;
-    this.fixer({ sousTitres: cle, lecture: false, position: this.positionAttendue() });
-    return 'sous_titres';
   }
 
   /** Pause à la position courante puis compte à rebours ; la lecture démarre à `finCompteARebours`. */

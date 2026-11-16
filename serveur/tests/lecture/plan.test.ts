@@ -3,7 +3,7 @@ import { describe, test } from 'node:test';
 import type { Analyse, PisteVideoAnalysee } from '@canape/partage';
 import { argsHls, argsPreparation, dimensionsCible, filtreVideo, PRESETS, X264_HLS } from '../../src/modules/lecture/commandes.ts';
 import { debutsSegmentsCopie, dureesDepuisDebuts, dureesFixes, listeDeLecture } from '../../src/modules/lecture/images-cles.ts';
-import { libelleAudio, libelleSousTitres, nomLangue } from '../../src/modules/lecture/libelles.ts';
+import { libelleAudio, libelleSousTitres, nomLangue, numeroterDoublons, sdhEnClair } from '../../src/modules/lecture/libelles.ts';
 import { analyserPlage } from '../../src/modules/lecture/media.ts';
 import { retirerListesEdition } from '../../src/modules/lecture/mp4.ts';
 import { choisirPiste, decider } from '../../src/modules/lecture/plan.ts';
@@ -93,7 +93,12 @@ describe('lecture : libellés', () => {
   test('pistes', () => {
     assert.equal(libelleAudio({ index: 1, codec: 'eac3', langue: 'fra', titre: null, canaux: 6, debit: null, parDefaut: true }), 'Français · 5.1');
     assert.equal(libelleSousTitres('eng', true, false), 'Anglais (forcés)');
-    assert.equal(libelleSousTitres('fra', false, true), 'Français (SDH)');
+    assert.equal(libelleSousTitres('fra', false, true), 'Français (sourds et malentendants)');
+    assert.equal(sdhEnClair('Anglais (SDH)'), 'Anglais (sourds et malentendants)');
+    assert.equal(sdhEnClair('English SDH'), 'English (sourds et malentendants)');
+    assert.equal(sdhEnClair('Français (fichier)'), 'Français (fichier)');
+    assert.deepEqual(numeroterDoublons([{ libelle: 'Français' }, { libelle: 'Anglais' }, { libelle: 'Français' }]).map((p) => p.libelle),
+      ['Français 1', 'Anglais', 'Français 2']);
     assert.equal(libelleSousTitres(null, false, false), 'Langue inconnue');
   });
 });

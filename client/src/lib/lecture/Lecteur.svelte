@@ -15,10 +15,13 @@
    * Changer de piste audio recharge le plan et reprend à la même position. Les sous-titres sont ceux du plan
    * (`<track>` ajoutés par `attacherLecture`), activés ici par le menu.
    */
+  import { untrack } from 'svelte';
   import type { PlanDeLecture } from '@canape/partage';
   import { ErreurApi } from '../api/client.ts';
   import { Chargement, EtatVide } from '../ui/index.ts';
   import { attacherLecture, chargerPlan, EVENEMENT_ERREUR_LECTURE } from './attacher.ts';
+  import { ecrirePrefs, lirePrefs } from '../seance/prefs.ts';
+  import { choisirSousTitres, decrireChoix } from '../seance/sous-titres.ts';
 
   interface Props {
     filmId: string;
@@ -73,7 +76,7 @@
     };
     v.addEventListener('loadedmetadata', aLaMetadonnee, { once: true });
     v.addEventListener(EVENEMENT_ERREUR_LECTURE, surErreur);
-    sousTitresChoisis = '';
+    sousTitresChoisis = choisirSousTitres(p, lirePrefs().sousTitres, untrack(() => audioChoisi)) ?? '';
     return () => {
       v.removeEventListener(EVENEMENT_ERREUR_LECTURE, surErreur);
       detacher();
@@ -85,6 +88,12 @@
     if (!v || !plan) return;
     for (const piste of Array.from(v.querySelectorAll('track'))) piste.track.mode = piste.id === sousTitresChoisis ? 'showing' : 'disabled';
   });
+
+  /** Même choix que dans les séances : l'appareil le retient pour les films suivants. */
+  function retenirSousTitres(): void {
+    const prefs = lirePrefs();
+    ecrirePrefs({ ...prefs, sousTitres: decrireChoix(plan, sousTitresChoisis || null) });
+  }
 
   function changerAudio(index: number): void {
     reprise = video?.currentTime ?? 0;
@@ -113,7 +122,7 @@
       {/if}
       {#if plan.sousTitres.length > 0}
         <label>Sous-titres
-          <select bind:value={sousTitresChoisis}>
+          <select bind:value={sousTitresChoisis} onchange={retenirSousTitres}>
             <option value="">Aucun</option>
             {#each plan.sousTitres as s (s.cle)}<option value={s.cle}>{s.libelle}</option>{/each}
           </select>
