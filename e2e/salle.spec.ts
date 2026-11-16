@@ -145,6 +145,17 @@ test.describe('Salle à deux : lecture synchronisée', () => {
     await expect.poll(() => a.getByTestId('film').evaluate(pisteAffichee)).toBe(1);
     await a.getByTestId('st-taille-grande').check();
     await expect(a.getByTestId('film')).toHaveAttribute('data-taille-st', 'grande');
+    // Recaler ses sous-titres : le premier (1 s à l'origine) arrive 1 s plus tard, retenu pour ce film.
+    const premierRepere = (v: HTMLVideoElement) => Array.from(v.textTracks).find((t) => t.mode === 'showing')?.cues?.[0]?.startTime ?? null;
+    for (let i = 0; i < 3; i++) await a.getByTestId('st-plus-tard').click();
+    await a.getByTestId('st-plus-tot').click();
+    await expect(a.getByTestId('st-decalage')).toHaveText('+1 s');
+    await expect.poll(() => a.getByTestId('film').evaluate(premierRepere)).toBe(2);
+    const decalages = await a.evaluate(() => JSON.parse(localStorage.getItem('canape.sous-titres.decalages') ?? '{}'));
+    expect(Object.values(decalages)).toEqual([1]);
+    await a.getByTestId('st-decalage-zero').click();
+    await expect(a.getByTestId('st-decalage')).toHaveText('0 s');
+    await expect.poll(() => a.getByTestId('film').evaluate(premierRepere)).toBe(1);
     // Chez l'autre : ni sous-titres, ni pause, ni annonce.
     await expect(b.getByTestId('salle')).toHaveAttribute('data-lecture', 'true');
     await expect(a.getByTestId('salle')).toHaveAttribute('data-lecture', 'true');

@@ -13,6 +13,7 @@ import { detecteurVoix, lirePeripheriques, type Peripheriques } from './medias.t
 import { MoteurSynchro } from './moteur.ts';
 import { ecrirePrefs, lirePrefs, type Coin, type PrefsSalle } from './prefs.ts';
 import { choisirSousTitres, decrireChoix, type TailleSousTitres } from './sous-titres.ts';
+import { bornerDecalage, decalerPiste, lireDecalage, retenirDecalage } from '../lecture/decalage.ts';
 import { afficherProgramme, estEnchainement, filmsLances, peutGererProgramme } from './programme.ts';
 import { ajouterReaction, annonceReactions, FabriqueReactions, purgerReactions, type ReactionFlottante, DUREE_REACTION } from './reactions.ts';
 import { aUnCasque, BaisseFilm, volumeFilm, Voix } from './son.ts';
@@ -69,6 +70,8 @@ export class Salle {
   prefs: PrefsSalle = $state(lirePrefs());
   /** Sous-titres affichés chez moi (clé du plan), choisis par moi seul. */
   sousTitres: string | null = $state(null);
+  /** Décalage des sous-titres affichés (s), retenu par l'appareil pour ce film et cette piste. */
+  decalageSousTitres = $state(0);
   peripheriques: Peripheriques = $state({ micros: [], cameras: [], sorties: [] });
   casqueDetecte = $state(false);
 
@@ -357,6 +360,13 @@ export class Salle {
     const pistes = Array.from(v.textTracks);
     const i = indexPisteTexte(pistes.map((t) => ({ id: t.id, label: t.label })), this.plan, this.sousTitres);
     pistes.forEach((t, k) => { t.mode = k === i ? 'showing' : 'disabled'; });
+    this.decalageSousTitres = lireDecalage(this.etat?.filmId, this.sousTitres);
+    this.appliquerDecalage();
+  }
+
+  private appliquerDecalage(): void {
+    const el = Array.from(this.video?.querySelectorAll('track') ?? []).find((t) => t.id === this.sousTitres);
+    if (el) decalerPiste(el, this.decalageSousTitres);
   }
 
   // ---- Volumes et son ---------------------------------------------------------------------------------------
@@ -688,6 +698,15 @@ export class Salle {
     this.prefs.sousTitres = decrireChoix(this.plan, cle);
     this.sauverPrefs();
     this.appliquerSousTitres();
+  }
+
+  /** Rien que pour moi : `pas` positif = sous-titres plus tard, `null` = remise à zéro. */
+  decalerSousTitres(pas: number | null): void {
+    const filmId = this.etat?.filmId;
+    if (!filmId || !this.sousTitres) return;
+    this.decalageSousTitres = pas === null ? 0 : bornerDecalage(this.decalageSousTitres + pas);
+    retenirDecalage(filmId, this.sousTitres, this.decalageSousTitres);
+    this.appliquerDecalage();
   }
 
   changerTailleSousTitres(taille: TailleSousTitres): void {

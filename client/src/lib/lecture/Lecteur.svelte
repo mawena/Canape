@@ -22,6 +22,7 @@
   import { attacherLecture, chargerPlan, EVENEMENT_ERREUR_LECTURE } from './attacher.ts';
   import { ecrirePrefs, lirePrefs } from '../seance/prefs.ts';
   import { choisirSousTitres, decrireChoix } from '../seance/sous-titres.ts';
+  import { bornerDecalage, decalerPiste, lireDecalage, PAS_DECALAGE, retenirDecalage, texteDecalage } from './decalage.ts';
 
   interface Props {
     filmId: string;
@@ -36,6 +37,7 @@
   let erreur = $state<string | null>(null);
   let audioChoisi = $state(-1);
   let sousTitresChoisis = $state('');
+  let decalage = $state(0);
   let reprise = $state(0);
 
   $effect(() => {
@@ -87,7 +89,20 @@
     const v = video;
     if (!v || !plan) return;
     for (const piste of Array.from(v.querySelectorAll('track'))) piste.track.mode = piste.id === sousTitresChoisis ? 'showing' : 'disabled';
+    decalage = lireDecalage(filmId, sousTitresChoisis);
   });
+
+  $effect(() => {
+    const el = Array.from(video?.querySelectorAll('track') ?? []).find((t) => t.id === sousTitresChoisis);
+    if (el && plan) decalerPiste(el, decalage);
+  });
+
+  /** `pas` positif = sous-titres plus tard ; `null` = remise à zéro. Retenu pour ce film et cette piste. */
+  function decaler(pas: number | null): void {
+    if (!sousTitresChoisis) return;
+    decalage = pas === null ? 0 : bornerDecalage(decalage + pas);
+    retenirDecalage(filmId, sousTitresChoisis, decalage);
+  }
 
   /** Même choix que dans les séances : l'appareil le retient pour les films suivants. */
   function retenirSousTitres(): void {
@@ -128,6 +143,14 @@
           </select>
         </label>
       {/if}
+      {#if sousTitresChoisis}
+        <span class="decalage" role="group" aria-label="Décalage des sous-titres">
+          <button type="button" onclick={() => decaler(-PAS_DECALAGE)} aria-label="Sous-titres 0,5 seconde plus tôt" data-test="st-plus-tot">Plus tôt</button>
+          <output aria-live="polite" data-test="st-decalage">{texteDecalage(decalage)}</output>
+          <button type="button" onclick={() => decaler(PAS_DECALAGE)} aria-label="Sous-titres 0,5 seconde plus tard" data-test="st-plus-tard">Plus tard</button>
+          {#if decalage !== 0}<button type="button" onclick={() => decaler(null)} data-test="st-decalage-zero">Remettre à zéro</button>{/if}
+        </span>
+      {/if}
       {#if plan.sousTitresImage?.length}
         <span class="doux">Ces sous-titres sont des images : ils ne peuvent pas s’afficher ici.</span>
       {/if}
@@ -141,5 +164,8 @@
   .barre { display: flex; flex-wrap: wrap; gap: var(--espace-4); align-items: center; color: var(--doux); font-size: 0.9rem; }
   .raison { margin-right: auto; }
   label { display: inline-flex; gap: var(--espace-2); align-items: center; }
+  .decalage { display: inline-flex; gap: var(--espace-2); align-items: center; }
+  .decalage output { min-width: 4.5em; text-align: center; font-variant-numeric: tabular-nums; color: var(--creme); }
+  .decalage button { background: var(--fond-3); color: var(--creme); border: 1px solid var(--bordure); border-radius: var(--rayon-s); padding: var(--espace-1) var(--espace-2); font: inherit; }
   select { background: var(--fond-3); color: var(--creme); border: 1px solid var(--bordure); border-radius: var(--rayon-s); padding: var(--espace-1) var(--espace-2); }
 </style>
