@@ -251,3 +251,12 @@ Chacun choisit ses sous-titres sans changer ceux des autres ni mettre la salle e
 - [x] Release 1.12.0 et mise en production (16/11/2026)
 - [ ] Essais Transmission : de temps en temps, un téléchargement n'atteint jamais « terminé » en 40 s (déjà vu en 1.11.0, un essai différent à chaque fois) — à examiner
 
+## Phase 25 — Recaler ses sous-titres
+
+Des sous-titres en avance ou en retard se recalent chez soi, sans toucher aux autres ; l'appareil retient le réglage.
+
+- [x] Décalage par pas de 0,5 s (± 60 s), appliqué aux repères de la piste affichée, retenu par film et par piste
+- [x] Boutons « Plus tôt » / « Plus tard » / « Remettre à zéro » dans la salle et dans « Regarder seul »
+- [x] Essais (unitaires, Playwright)
+- [ ] Release 1.13.0 (faite le 16/11/2026) et mise en production
+

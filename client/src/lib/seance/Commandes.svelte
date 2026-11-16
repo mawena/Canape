@@ -22,6 +22,7 @@
   import ProgrammeSoiree from './ProgrammeSoiree.svelte';
   import { libelleAppareil } from './medias.ts';
   import { TAILLES_SOUS_TITRES } from './sous-titres.ts';
+  import { PAS_DECALAGE, texteDecalage } from '../lecture/decalage.ts';
   import type { Salle } from './salle.svelte.ts';
 
   interface Props {
@@ -124,6 +125,19 @@
                 <label class="case"><input type="radio" name="st" checked={salle.sousTitres === s.cle} onchange={() => salle.changerSousTitres(s.cle)} data-test="st-{s.cle}" /> {s.libelle}</label>
               {/each}
             </fieldset>
+            {#if salle.sousTitres != null}
+              <fieldset>
+                <legend>Décalage des sous-titres</legend>
+                <div class="decalage">
+                  <button type="button" onclick={() => salle.decalerSousTitres(-PAS_DECALAGE)} aria-label="Sous-titres 0,5 seconde plus tôt" data-test="st-plus-tot">Plus tôt</button>
+                  <output aria-live="polite" data-test="st-decalage">{texteDecalage(salle.decalageSousTitres)}</output>
+                  <button type="button" onclick={() => salle.decalerSousTitres(PAS_DECALAGE)} aria-label="Sous-titres 0,5 seconde plus tard" data-test="st-plus-tard">Plus tard</button>
+                </div>
+                {#if salle.decalageSousTitres !== 0}
+                  <button type="button" class="lien" onclick={() => salle.decalerSousTitres(null)} data-test="st-decalage-zero">Remettre à zéro</button>
+                {/if}
+              </fieldset>
+            {/if}
             {#if salle.plan?.sousTitres.length}
               <fieldset>
                 <legend>Taille des sous-titres</legend>
@@ -186,6 +200,11 @@
   .popover select { background: var(--s3, #282532); border: 1px solid var(--bord-champ, #7d7790); color: inherit; border-radius: 8px; padding: 6px; }
   fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 6px; }
   legend { font-size: 0.8rem; color: var(--discret, #9f99ad); margin-bottom: 4px; }
+  .decalage { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: center; }
+  .decalage button { border: 1px solid var(--bord-champ, #7d7790); background: var(--s3, #282532); border-radius: 8px; padding: 6px 8px; font-size: 0.85rem; }
+  .decalage button:hover { background: rgba(255, 255, 255, 0.12); }
+  .decalage output { min-width: 4.5em; text-align: center; font-variant-numeric: tabular-nums; }
+  .lien { justify-self: start; border: 0; background: none; padding: 0; text-decoration: underline; font-size: 0.8rem; color: var(--doux, #c0bacb); }
   .vide { margin: 0; color: var(--discret, #9f99ad); font-size: 0.85rem; }
   @media (max-width: 640px) {
     .commandes { padding: 8px 12px 12px; background: var(--s1, #15141c); }

@@ -2,6 +2,17 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) ; versions selon [SemVer](https://semver.org/lang/fr/).
 
+## [1.13.0] — 2026-11-16
+
+Recaler ses sous-titres.
+
+### Ajouté
+
+- **Décalage des sous-titres**, rien que pour soi : dans la salle (menu « Langue et sous-titres ») et dans « Regarder
+  seul », « Plus tôt » et « Plus tard » recalent les sous-titres affichés par pas de 0,5 s (jusqu'à ± 60 s),
+  « Remettre à zéro » annule. Les autres ne voient rien changer. L'appareil retient le réglage pour ce film et cette
+  piste.
+
 ## [1.12.0] — 2026-11-16
 
 Les sous-titres pour chacun.
