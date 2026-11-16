@@ -249,4 +249,5 @@ Chacun choisit ses sous-titres sans changer ceux des autres ni mettre la salle e
 - [x] Client : choix personnel retenu d'un film à l'autre (langue et variante), « forcés » de la langue du film par défaut, taille des sous-titres ; aussi dans « Regarder seul »
 - [x] Essais (unitaires, Playwright)
 - [ ] Release 1.12.0 et mise en production
+- [ ] Essais Transmission : de temps en temps, un téléchargement n'atteint jamais « terminé » en 40 s (déjà vu en 1.11.0, un essai différent à chaque fois) — à examiner
 

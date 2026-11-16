@@ -97,6 +97,8 @@ describe('moteur Transmission (faux RPC)', () => {
     assert.equal(fin.enPartage, false);
     assert.equal(fin.progression, 1);
     // Retiré de Transmission avec ses données ; le film reste (lien physique), aucun dossier ne traîne.
+    // « terminé » est enregistré avant le ménage (sûr en cas d'arrêt brutal) : on attend la fin du ménage.
+    await attendre(async () => (appelsRetrait().length && !existsSync(dossierDe(id)) ? true : undefined), 10_000, 50, 'ménage jamais fait');
     const retrait = appelsRetrait().at(-1)!;
     assert.equal(retrait.args['delete-local-data'], true);
     assert.equal(t.faux.torrents.size, 0);
@@ -180,7 +182,7 @@ describe('moteur Transmission (faux RPC)', () => {
     t.faux.torrents.delete(hash);
     await attendre(async () => { const y = await ligne(id); return y && !y.enPartage ? y : undefined; }, 10_000, 50, 'disparition jamais vue');
     assert.equal((await films()).length, 1);
-    assert.equal(existsSync(dossierDe(id)), false);
+    await attendre(async () => (existsSync(dossierDe(id)) ? undefined : true), 10_000, 50, 'dossier jamais effacé');
   });
 
   test('reprise : un partage repart au démarrage de Canapé (Transmission le retrouve), sans rien retélécharger', async () => {
