@@ -9,7 +9,7 @@ const u = (id: number, prenom: string) => ({ id, prenom, couleur: null });
 
 function salle(film: string | null = 'f1') {
   let t = 1_000_000;
-  const s = new Salle({ filmId: film, position: 0, pisteAudio: null, sousTitres: null }, () => t);
+  const s = new Salle({ filmId: film, position: 0, pisteAudio: null }, () => t);
   s.ajouter('a', u(1, 'Ana'));
   s.ajouter('b', u(2, 'Ben'));
   return { s, avancer: (ms: number) => { t += ms; } };
@@ -43,21 +43,19 @@ describe('salle : état partagé', () => {
 
   test('changer de film remet tout le monde en pause à 0, sans pistes', () => {
     const { s } = salle();
-    s.lire('a', 50); s.audio('a', 2); s.sousTitresChoix('a', 'p1');
+    s.lire('a', 50); s.audio('a', 2);
     assert.equal(s.film('a', 'f2'), 'film');
     const e = s.instantane();
-    assert.deepEqual([e.filmId, e.lecture, e.position, e.pisteAudio, e.sousTitres], ['f2', false, 0, null, null]);
+    assert.deepEqual([e.filmId, e.lecture, e.position, e.pisteAudio], ['f2', false, 0, null]);
   });
 
-  test('audio et sous-titres mettent en pause à la même position', () => {
+  test('la langue met en pause à la même position (les sous-titres, choisis par chacun, ne passent plus par la salle)', () => {
     const { s, avancer } = salle();
     s.lire('a', 20); avancer(1000);
     assert.equal(s.audio('b', 1), 'audio');
     let e = s.instantane();
     assert.equal(e.lecture, false); assert.equal(e.position, 21); assert.equal(e.pisteAudio, 1);
-    assert.equal(s.sousTitresChoix('a', 'e4'), 'sous_titres');
-    e = s.instantane();
-    assert.equal(e.sousTitres, 'e4'); assert.equal(e.position, 21);
+    assert.equal('sousTitres' in e, false);
   });
 
   test('version croissante à chaque changement', () => {

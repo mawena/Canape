@@ -128,7 +128,7 @@ describe('séances : WebSocket', () => {
     a.fermer(); b.fermer();
   });
 
-  test('changement de piste audio et de sous-titres : pause à la même position', async () => {
+  test('changement de piste audio : pause à la même position ; sous-titres d’un ancien client ignorés', async () => {
     const id = nouvelle();
     const a = await connecter(env, id, hote);
     const b = await connecter(env, id, invite);
@@ -141,15 +141,16 @@ describe('séances : WebSocket', () => {
     assert.equal(e.etat.position, 75);
     a.envoyer({ t: 'audio', piste: -1 });
     assert.equal((await a.attendre('erreur')).code, 'piste_invalide');
+    // Sous-titres d'un ancien client : ignorés, sans pause ni erreur (chacun choisit les siens depuis 1.12.0).
     b.envoyer({ t: 'sous_titres', cle: 'e3' });
-    assert.equal((await a.attendre('etat', (m) => m.raison === 'sous_titres')).etat.sousTitres, 'e3');
     b.envoyer({ t: 'sous_titres', cle: '../x' });
-    assert.equal((await b.attendre('erreur')).code, 'piste_invalide');
+    a.envoyer({ t: 'aller', position: 80 });
+    const suivant = await b.attendre('etat', (m) => m.raison === 'aller' && m.etat.position === 80);
+    assert.equal(suivant.etat.version, e.etat.version + 1);
     a.fermer(); b.fermer();
     await new Promise((r) => setTimeout(r, 100));
-    const ligne = env.db.prepare('SELECT piste_audio, sous_titres, position FROM seances WHERE id = ?').get(id);
+    const ligne = env.db.prepare('SELECT piste_audio, position FROM seances WHERE id = ?').get(id);
     assert.equal(ligne?.['piste_audio'], 2);
-    assert.equal(ligne?.['sous_titres'], 'e3');
   });
 
   test('compte à rebours : lecture 3 s plus tard, annulable par une pause', async () => {

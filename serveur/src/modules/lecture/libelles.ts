@@ -1,4 +1,4 @@
-// Libellés en français des pistes (langue, canaux, « forcés », « SDH »).
+// Libellés en français des pistes (langue, canaux, « forcés », « sourds et malentendants »).
 import type { PisteAudioAnalysee, PisteSousTitresAnalysee } from '@canape/partage';
 
 /** Codes ISO 639-2/B (ou autres) que `Intl` ne connaît pas → code à deux lettres. */
@@ -41,8 +41,26 @@ export function libelleAudio(p: PisteAudioAnalysee): string {
 export function libelleSousTitres(langue: string | null, force: boolean, sdh: boolean): string {
   let l = nomLangue(langue) ?? 'Langue inconnue';
   if (force) l += ' (forcés)';
-  if (sdh) l += ' (SDH)';
+  if (sdh) l += ' (sourds et malentendants)';
   return l;
+}
+
+/** « Français (SDH) » écrit par une ancienne version ou par la personne qui a déposé le fichier → mots en clair. */
+export function sdhEnClair(libelle: string): string {
+  return libelle.replace(/\(\s*SDH\s*\)|\bSDH\b/g, '(sourds et malentendants)');
+}
+
+/** Libellés identiques (deux pistes « Français ») → « Français 1 », « Français 2 », dans l'ordre. */
+export function numeroterDoublons<T extends { libelle: string }>(pistes: T[]): T[] {
+  const total = new Map<string, number>();
+  for (const p of pistes) total.set(p.libelle, (total.get(p.libelle) ?? 0) + 1);
+  const vus = new Map<string, number>();
+  return pistes.map((p) => {
+    if ((total.get(p.libelle) ?? 0) < 2) return p;
+    const n = (vus.get(p.libelle) ?? 0) + 1;
+    vus.set(p.libelle, n);
+    return { ...p, libelle: `${p.libelle} ${n}` };
+  });
 }
 
 export function libelleSousTitresPiste(p: PisteSousTitresAnalysee): string {

@@ -50,5 +50,5 @@ export function deviner(nomFichier: string): { langue: string | null; libelle: s
   const force = morceaux.slice(0, 3).some((m) => /^forced|forces?|forcés?$/i.test(m));
   const sdh = morceaux.slice(0, 3).some((m) => /^sdh$/i.test(m));
   const base = langue ? NOMS_LANGUES[langue] ?? langue : sansExt.slice(0, 60) || 'Sous-titres';
-  return { langue, libelle: `${base}${force ? ' (forcés)' : ''}${sdh ? ' (SDH)' : ''}` };
+  return { langue, libelle: `${base}${force ? ' (forcés)' : ''}${sdh ? ' (sourds et malentendants)' : ''}` };
 }

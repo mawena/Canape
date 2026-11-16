@@ -223,7 +223,7 @@
 
     <div class="scene" ondblclick={doubleClic} role="presentation">
       <!-- svelte-ignore a11y_media_has_caption -->
-      <video bind:this={video} playsinline onclick={cliquerFilm} data-test="film" aria-label="Film"></video>
+      <video bind:this={video} playsinline onclick={cliquerFilm} data-test="film" data-taille-st={salle.prefs.tailleSousTitres} aria-label="Film"></video>
       {#if salle.enEntracte}<Entracte {salle} />{/if}
     </div>
 
@@ -275,6 +275,9 @@
   .lueur { position: absolute; inset: 0; background: radial-gradient(ellipse at center, rgba(96, 165, 250, 0.16), transparent 70%); filter: blur(40px); }
   .scene { position: relative; flex: 1; min-height: 0; display: grid; place-items: center; z-index: 1; }
   video { width: 100%; height: 100%; object-fit: contain; background: transparent; }
+  /* Taille des sous-titres choisie par chacun (menu Langue et sous-titres). */
+  video[data-taille-st='petite']::cue { font-size: 75%; }
+  video[data-taille-st='grande']::cue { font-size: 140%; }
   .haut {
     position: absolute; top: 0; left: 0; right: 0; z-index: 5; display: flex; align-items: center; gap: 12px; padding: 12px 20px 40px;
     background: linear-gradient(rgba(6, 5, 10, 0.85), transparent); transition: opacity 220ms; pointer-events: none;

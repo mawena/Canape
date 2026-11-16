@@ -10,7 +10,7 @@ const u = (id: number, prenom: string) => ({ id, prenom, couleur: null });
 
 function salle() {
   let t = 1_000_000;
-  const s = new Salle({ filmId: 'f1', position: 0, pisteAudio: null, sousTitres: null }, () => t);
+  const s = new Salle({ filmId: 'f1', position: 0, pisteAudio: null }, () => t);
   s.ajouter('a', u(1, 'Ana'));
   s.ajouter('b', u(2, 'Ben'));
   return { s, avancer: (ms: number) => { t += ms; }, maintenant: () => t };
@@ -43,7 +43,6 @@ describe('soirée : salle (logique pure)', () => {
     assert.equal(s.lire('a', 0), null);
     assert.equal(s.aller('a', 10), null);
     assert.equal(s.audio('a', 1), null);
-    assert.equal(s.sousTitresChoix('a', 'p1'), null);
     assert.equal(s.demarrerCompteARebours('a'), null);
     assert.equal(s.instantane().entracteFin, fin);
     assert.equal(s.instantane().position, 6000);
@@ -61,11 +60,11 @@ describe('soirée : salle (logique pure)', () => {
 
   test('passer au film suivant : tout le monde au début, sans pistes, compte à rebours pour la reprise', () => {
     const { s } = salle();
-    s.lire('a', 10); s.audio('a', 2); s.sousTitresChoix('a', 'p1');
+    s.lire('a', 10); s.audio('a', 2);
     s.pause('a', 6000, true, 300_000);
     assert.equal(s.enchainer('f2', true), 'film');
     const e = s.instantane();
-    assert.deepEqual([e.filmId, e.lecture, e.position, e.pisteAudio, e.sousTitres, e.entracteFin], ['f2', false, 0, null, null, null]);
+    assert.deepEqual([e.filmId, e.lecture, e.position, e.pisteAudio, e.entracteFin], ['f2', false, 0, null, null]);
     assert.equal(e.compteARebours, LIMITES_WS.compteARebours);
     assert.equal(s.compteEnCours, true);
   });

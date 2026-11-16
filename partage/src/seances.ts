@@ -24,7 +24,6 @@ export interface Seance {
   /** Il existe un lien pour rejoindre. */
   aUnLien: boolean;
   pisteAudio: number | null;
-  sousTitres: string | null;
   position: number;
   creeLe: string;
   termineeLe: string | null;

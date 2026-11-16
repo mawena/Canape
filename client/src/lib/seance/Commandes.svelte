@@ -21,6 +21,7 @@
   import InviterSeance from './InviterSeance.svelte';
   import ProgrammeSoiree from './ProgrammeSoiree.svelte';
   import { libelleAppareil } from './medias.ts';
+  import { TAILLES_SOUS_TITRES } from './sous-titres.ts';
   import type { Salle } from './salle.svelte.ts';
 
   interface Props {
@@ -105,7 +106,7 @@
 
     <div class="groupe">
       <div class="menu-ancre">
-        <button type="button" class="rond" class:actif={salle.etat?.sousTitres != null} onclick={() => basculer('langue')} aria-label="Langue et sous-titres"
+        <button type="button" class="rond" class:actif={salle.sousTitres != null} onclick={() => basculer('langue')} aria-label="Langue et sous-titres"
           aria-expanded={menu === 'langue'} title="Langue et sous-titres (S)" data-test="langue-st"><Captions size={22} /></button>
         {#if menu === 'langue'}
           <div class="popover" role="dialog" aria-label="Langue et sous-titres" data-test="menu-langue">
@@ -117,12 +118,21 @@
               {:else}<p class="vide">Une seule langue.</p>{/each}
             </fieldset>
             <fieldset>
-              <legend>Sous-titres (pour tout le monde)</legend>
-              <label class="case"><input type="radio" name="st" checked={salle.etat?.sousTitres == null} onchange={() => salle.changerSousTitres(null)} data-test="st-aucun" /> Aucun</label>
+              <legend>Sous-titres (rien que pour toi)</legend>
+              <label class="case"><input type="radio" name="st" checked={salle.sousTitres == null} onchange={() => salle.changerSousTitres(null)} data-test="st-aucun" /> Aucun</label>
               {#each salle.plan?.sousTitres ?? [] as s (s.cle)}
-                <label class="case"><input type="radio" name="st" checked={salle.etat?.sousTitres === s.cle} onchange={() => salle.changerSousTitres(s.cle)} data-test="st-{s.cle}" /> {s.libelle}</label>
+                <label class="case"><input type="radio" name="st" checked={salle.sousTitres === s.cle} onchange={() => salle.changerSousTitres(s.cle)} data-test="st-{s.cle}" /> {s.libelle}</label>
               {/each}
             </fieldset>
+            {#if salle.plan?.sousTitres.length}
+              <fieldset>
+                <legend>Taille des sous-titres</legend>
+                {#each TAILLES_SOUS_TITRES as t (t.taille)}
+                  <label class="case"><input type="radio" name="st-taille" checked={salle.prefs.tailleSousTitres === t.taille}
+                    onchange={() => salle.changerTailleSousTitres(t.taille)} data-test="st-taille-{t.taille}" /> {t.libelle}</label>
+                {/each}
+              </fieldset>
+            {/if}
           </div>
         {/if}
       </div>
