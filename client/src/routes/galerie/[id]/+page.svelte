@@ -240,7 +240,7 @@
             <ul class="liste">
               {#each f.analyse.sousTitres as s (s.index)}
                 <li>{nomLangue(s.langue)}{s.titre ? ` — ${s.titre}` : ''}
-                  <span class="discret">· {s.force ? 'forcés · ' : ''}{s.sdh ? 'malentendants · ' : ''}{s.texte ? 'texte' : 'image (non affichable)'}</span></li>
+                  <span class="discret">· {s.force ? 'forcés · ' : ''}{s.sdh ? 'sourds et malentendants · ' : ''}{s.texte ? 'texte' : 'image (non affichable)'}</span></li>
               {/each}
               {#each f.sousTitresExternes ?? [] as s (s.id)}
                 <li>{s.libelle} <span class="discret">· ajouté</span>

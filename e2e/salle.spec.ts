@@ -127,7 +127,7 @@ test.describe('Salle à deux : lecture synchronisée', () => {
     await expect(a.getByTestId('attente')).toHaveCount(0, { timeout: 10_000 });
   });
 
-  test('changement de sous-titres annoncé chez l\'autre', async ({ ouvrir, monde }) => {
+  test('sous-titres choisis par chacun : rien chez l\'autre, pas de pause, choix retenu', async ({ ouvrir, monde }) => {
     const srt = '1\n00:00:01,000 --> 00:00:03,000\nBonsoir\n\n2\n00:00:04,000 --> 00:00:06,000\nBonne séance\n';
     const { a, b } = await deuxDansLaSalle(monde, ouvrir, async (filmId) => {
       const r = await monde.requeteAdmin.post(`${monde.serveur.url}/api/films/${filmId}/sous-titres`, {
@@ -136,8 +136,23 @@ test.describe('Salle à deux : lecture synchronisée', () => {
       });
       expect(r.status(), await r.text()).toBeLessThan(300);
     });
+    const pisteAffichee = (v: HTMLVideoElement) => Array.from(v.textTracks).filter((t) => t.mode === 'showing').length;
+    await a.getByTestId('lecture').click();
+    await expect(b.getByTestId('salle')).toHaveAttribute('data-lecture', 'true');
     await a.getByTestId('langue-st').click();
-    await a.locator('[data-test^="st-"]:not([data-test="st-aucun"])').first().check();
-    await expect(b.getByTestId('annonce').filter({ hasText: /sous-titres/ })).toBeVisible();
+    await expect(a.getByTestId('menu-langue')).toContainText('rien que pour toi');
+    await a.locator('[data-test^="st-e"]').first().check();
+    await expect.poll(() => a.getByTestId('film').evaluate(pisteAffichee)).toBe(1);
+    await a.getByTestId('st-taille-grande').check();
+    await expect(a.getByTestId('film')).toHaveAttribute('data-taille-st', 'grande');
+    // Chez l'autre : ni sous-titres, ni pause, ni annonce.
+    await expect(b.getByTestId('salle')).toHaveAttribute('data-lecture', 'true');
+    await expect(a.getByTestId('salle')).toHaveAttribute('data-lecture', 'true');
+    expect(await b.getByTestId('film').evaluate(pisteAffichee)).toBe(0);
+    await expect(b.getByTestId('annonce').filter({ hasText: /sous-titres/ })).toHaveCount(0);
+    // L'appareil retient la langue et la taille pour les films suivants.
+    const prefs = await a.evaluate(() => JSON.parse(localStorage.getItem('canape.salle.prefs') ?? '{}'));
+    expect(prefs.sousTitres).toEqual({ langue: 'fr', force: false, sdh: false });
+    expect(prefs.tailleSousTitres).toBe('grande');
   });
 });

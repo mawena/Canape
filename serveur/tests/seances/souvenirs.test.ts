@@ -8,7 +8,7 @@ import { connecter, creerEnv, inserer, insererFilm, type Env } from './aides-sea
 const u = (id: number, prenom: string) => ({ id, prenom, couleur: null });
 const nouvelleSalle = (ensemble?: number) => {
   let t = 1_000_000;
-  const s = new Salle({ filmId: 'f', position: 0, pisteAudio: null, sousTitres: null, ...(ensemble === undefined ? {} : { ensemble }) }, () => t);
+  const s = new Salle({ filmId: 'f', position: 0, pisteAudio: null, ...(ensemble === undefined ? {} : { ensemble }) }, () => t);
   return { s, avancer: (ms: number) => { t += ms; } };
 };
 

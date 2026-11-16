@@ -1,3 +1,5 @@
+import { choixValide, tailleValide, type ChoixSousTitres, type TailleSousTitres } from './sous-titres.ts';
+
 // Préférences de la salle, mémorisées par appareil (le stockage peut être indisponible : on ne plante jamais).
 export type Coin = 'haut-gauche' | 'haut-droite' | 'bas-gauche' | 'bas-droite';
 export const COINS: Array<{ coin: Coin; libelle: string }> = [
@@ -20,11 +22,15 @@ export interface PrefsSalle {
   chatOuvert: boolean;
   micro: string | null;
   camera: string | null;
+  /** Sous-titres de cet appareil, retrouvés d'un film à l'autre. */
+  sousTitres: ChoixSousTitres;
+  tailleSousTitres: TailleSousTitres;
 }
 
 export const PREFS_DEFAUT: PrefsSalle = {
   volFilm: 0.8, volVoix: 1, baisseFilm: true, casque: false, conseilCasqueVu: false, coin: 'haut-droite',
   rangee: null, vignettesMasquees: false, grandes: false, chatOuvert: false, micro: null, camera: null,
+  sousTitres: 'auto', tailleSousTitres: 'normale',
 };
 
 const CLE = 'canape.salle.prefs';
@@ -33,7 +39,8 @@ export function lirePrefs(stock: Pick<Storage, 'getItem'> | null = typeof localS
   try {
     const brut = stock?.getItem(CLE);
     if (!brut) return { ...PREFS_DEFAUT };
-    return { ...PREFS_DEFAUT, ...(JSON.parse(brut) as Partial<PrefsSalle>) };
+    const p = { ...PREFS_DEFAUT, ...(JSON.parse(brut) as Partial<PrefsSalle>) };
+    return { ...p, sousTitres: choixValide(p.sousTitres), tailleSousTitres: tailleValide(p.tailleSousTitres) };
   } catch {
     return { ...PREFS_DEFAUT };
   }

@@ -233,3 +233,20 @@ lancer la séance avec les intéressés en deux clics.
 - [x] Interface : « J'ai envie de le voir » sur la fiche et la galerie, liste « À voir ensemble » sur l'accueil (qui en a envie), lancer une séance avec eux
 - [x] Essais (unitaires, Playwright), captures ordinateur et téléphone
 - [x] Release 1.11.0 (faite le 15/11/2026) et mise en production — en ligne le 16/11/2026
+
+---
+
+# Canapé 1.12 — sous-titres pour chacun
+
+Choisi le 16/11/2026.
+
+## Phase 24 — Sous-titres par personne
+
+Chacun choisit ses sous-titres sans changer ceux des autres ni mettre la salle en pause ; l'appareil retient le choix.
+
+- [x] Serveur : sous-titres retirés de l'état partagé de la salle (message `sous_titres` d'un ancien client ignoré)
+- [x] Libellés en clair (« sourds et malentendants ») et doublons numérotés (« Français 1 », « Français 2 »)
+- [x] Client : choix personnel retenu d'un film à l'autre (langue et variante), « forcés » de la langue du film par défaut, taille des sous-titres ; aussi dans « Regarder seul »
+- [x] Essais (unitaires, Playwright)
+- [ ] Release 1.12.0 et mise en production
+

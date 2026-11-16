@@ -67,7 +67,7 @@ describe('lecture : routes (sans ffmpeg)', () => {
     assert.equal(p.duree, 14);
     assert.equal(p.raison, 'Image convertie pendant la lecture (HEVC 10 bits, HDR)');
     assert.deepEqual(p.pistesAudio.map((a) => [a.index, a.libelle, a.parDefaut]), [[1, 'Français · 5.1', true], [2, 'Anglais · 5.1', false]]);
-    assert.deepEqual(p.sousTitres.map((s) => [s.cle, s.libelle, s.sdh]), [['p3', 'Français', false], ['p4', 'Anglais (SDH)', true], ['e1', 'Français (fichier)', false]]);
+    assert.deepEqual(p.sousTitres.map((s) => [s.cle, s.libelle, s.sdh]), [['p3', 'Français', false], ['p4', 'Anglais (sourds et malentendants)', true], ['e1', 'Français (fichier)', false]]);
     assert.equal(p.sousTitres[0]!.url, `/media/${hevc}/sous-titres/p3.vtt`);
     assert.deepEqual(p.sousTitresImage, [{ langue: 'fra', libelle: 'Français (forcés)' }]);
     assert.equal(p.preparation, null);

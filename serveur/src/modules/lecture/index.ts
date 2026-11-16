@@ -11,7 +11,7 @@ import { ErreurHttp, introuvable, requeteInvalide } from '../../commun/erreurs.t
 import type { FilmService } from '../../commun/services.ts';
 import { purger, tailleDossier } from './cache.ts';
 import { GestionnaireConversions, type Cible } from './conversions.ts';
-import { libelleAudio, libelleSousTitres, libelleSousTitresPiste } from './libelles.ts';
+import { libelleAudio, libelleSousTitres, libelleSousTitresPiste, numeroterDoublons, sdhEnClair } from './libelles.ts';
 import { servirFichier } from './media.ts';
 import { GestionnairePreparations } from './preparations.ts';
 import { choisirPiste, decider } from './plan.ts';
@@ -148,14 +148,14 @@ const modulelecture: FastifyPluginAsync = async (app) => {
         const force = /forc/i.test(e.libelle);
         const sdh = /\bsdh\b|malentendant/i.test(e.libelle);
         sousTitres.push({
-          cle: `e${e.id}`, langue: e.langue, libelle: e.libelle || libelleSousTitres(e.langue, force, sdh), force, sdh,
+          cle: `e${e.id}`, langue: e.langue, libelle: e.libelle ? sdhEnClair(e.libelle) : libelleSousTitres(e.langue, force, sdh), force, sdh,
           url: `/media/${film.id}/sous-titres/e${e.id}.vtt`,
         });
       }
       const plan: PlanDeLecture = {
         mode, url, duree: analyse.duree,
         pistesAudio: analyse.audio.map((a) => ({ index: a.index, langue: a.langue, libelle: libelleAudio(a), canaux: a.canaux, parDefaut: a.parDefaut })),
-        sousTitres, raison, preparation: prep ? { etat: prep.etat, progression: prep.progression } : null,
+        sousTitres: numeroterDoublons(sousTitres), raison, preparation: prep ? { etat: prep.etat, progression: prep.progression } : null,
       };
       if (images.length) plan.sousTitresImage = images;
       return plan;
