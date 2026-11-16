@@ -258,5 +258,5 @@ Des sous-titres en avance ou en retard se recalent chez soi, sans toucher aux au
 - [x] Décalage par pas de 0,5 s (± 60 s), appliqué aux repères de la piste affichée, retenu par film et par piste
 - [x] Boutons « Plus tôt » / « Plus tard » / « Remettre à zéro » dans la salle et dans « Regarder seul »
 - [x] Essais (unitaires, Playwright)
-- [ ] Release 1.13.0 et mise en production
+- [ ] Release 1.13.0 (faite le 16/11/2026) et mise en production
 
