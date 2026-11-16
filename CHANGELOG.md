@@ -2,6 +2,32 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) ; versions selon [SemVer](https://semver.org/lang/fr/).
 
+## [1.12.0] — 2026-11-16
+
+Les sous-titres pour chacun.
+
+### Modifié
+
+- **Sous-titres choisis par chacun** : dans la salle, le menu « Langue et sous-titres » change les sous-titres rien que
+  pour soi. Les autres ne sont plus mis en pause et ne voient rien changer ; la langue du film, elle, reste commune.
+- L'appareil **retient le choix** d'un film à l'autre (la langue et sa variante), dans les séances comme dans « Regarder
+  seul ». Sans choix, les sous-titres « forcés » de la langue du film s'affichent tout seuls ; « Aucun » les retire.
+- Libellés en clair : « sourds et malentendants » au lieu de « SDH », et deux pistes de même nom deviennent
+  « Français 1 » et « Français 2 ».
+
+### Ajouté
+
+- **Taille des sous-titres** (petits, normaux, grands), réglée par chacun et retenue par l'appareil.
+
+### Corrigé
+
+- Essais Transmission : deux vérifications faites trop tôt échouaient au hasard.
+
+### Technique
+
+- `EtatSeance.sousTitres` et `Seance.sousTitres` retirés ; le message `sous_titres` d'un ancien client est ignoré
+  (colonne `seances.sous_titres` laissée en place, inutilisée).
+
 ## [1.11.0] — 2026-11-15
 
 Les films à voir ensemble.
