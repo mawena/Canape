@@ -599,6 +599,9 @@ est dans ta galerie » et la carte du film apparaît (en analyse puis prête).
    `CANAPE_FILMS/<id>/preparations/<audio>.mp4`. Les adresses `/media/*` répondent 404 sans session.
 5. Sous-titres texte intégrés extraits en WebVTT à la demande (cache) ; pistes image (PGS, VobSub) signalées comme
    non lisibles. Libellés : langue, « forcés », « sourds et malentendants » ; deux libellés identiques sont numérotés (« Français 1 », « Français 2 »).
+   Chacun peut recaler ses sous-titres (« Plus tôt » / « Plus tard », pas de 0,5 s, ± 60 s) : seul le navigateur
+   décale les repères de la piste affichée (`client/src/lib/lecture/decalage.ts`), rien n'est envoyé au serveur ;
+   l'appareil retient le décalage par film et par piste (100 derniers films).
 
 ## Interface
 
