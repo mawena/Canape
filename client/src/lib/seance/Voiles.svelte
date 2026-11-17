@@ -69,9 +69,9 @@
 {/if}
 
 <style>
-  .voile { position: absolute; inset: 0; z-index: 4; display: grid; place-content: center; justify-items: center; gap: 10px; text-align: center; padding: 24px; background: rgba(10, 11, 28, 0.55); color: #fff; }
+  .voile { position: absolute; inset: 0; z-index: 4; display: grid; place-content: center; justify-items: center; gap: 10px; text-align: center; padding: 24px; background: rgba(20, 18, 16, 0.55); color: #fff; }
   .voile.carte { inset: auto; left: 50%; top: 50%; transform: translate(-50%, -50%); background: var(--fond-verre); backdrop-filter: var(--flou-verre); -webkit-backdrop-filter: var(--flou-verre); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: var(--r-xl, 28px); padding: 28px 32px; z-index: 7; box-shadow: var(--ombre-4); max-width: min(440px, 90vw); }
-  .voile.compte { background: rgba(6, 7, 18, 0.4); backdrop-filter: blur(2px); z-index: 7; }
+  .voile.compte { background: rgba(10, 9, 8, 0.4); backdrop-filter: blur(2px); z-index: 7; }
   h2, .grand { font: 700 1.5rem / 1.25 var(--texte-police); letter-spacing: -0.02em; margin: 0; }
   .chiffre { font: 400 104px/1 var(--titre); margin: 0; animation: fondu 200ms; }
   .auteur, .petit { margin: 0; color: var(--doux, #c0bacb); }

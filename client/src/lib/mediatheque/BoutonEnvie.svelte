@@ -50,7 +50,7 @@
 <style>
   .envie {
     display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 18px; border-radius: var(--r-m);
-    background: var(--s1); border: 1px solid var(--bord-vif); box-shadow: var(--ombre-1); color: var(--texte); font: 650 15px/20px var(--texte-police); cursor: pointer;
+    background: transparent; border: 1px solid var(--texte); color: var(--texte); font: 650 15px/20px var(--texte-police); cursor: pointer;
     transition: background var(--d-1) var(--ease), border-color var(--d-1) var(--ease), color var(--d-1) var(--ease), transform var(--d-1) var(--ease);
   }
   .envie:active:not(:disabled) { transform: scale(0.97); }
@@ -71,7 +71,7 @@
   .rond { display: grid; place-items: center; min-width: 44px; height: 44px; padding: 5px; border: 0; background: none; color: #fff; cursor: pointer; border-radius: var(--r-pill); }
   .pastille {
     display: inline-flex; align-items: center; justify-content: center; gap: 5px; min-width: 34px; height: 34px; padding: 0 8px; border-radius: var(--r-pill);
-    background: rgba(10, 11, 28, 0.72); backdrop-filter: blur(10px) saturate(1.4); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12); font: 700 13px/1 var(--texte-police);
+    background: rgba(20, 18, 16, 0.72); backdrop-filter: blur(10px) saturate(1.4); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12); font: 700 13px/1 var(--texte-police);
     transition: transform var(--d-1) var(--ease), background var(--d-1) var(--ease);
   }
   /* Marqué : cœur plein, au bleu d'action comme sur la fiche (la forme pleine le dit aussi, jamais la couleur seule) */
@@ -81,6 +81,6 @@
   .rond:disabled { cursor: progress; opacity: 0.7; }
   .rond:focus-visible { outline: none; }
   .rond:focus-visible .pastille { outline: 3px solid var(--lampe); outline-offset: 2px; }
-  @media (hover: hover) { .rond:hover:not(:disabled) .pastille { background: rgba(10, 11, 28, 0.92); } }
+  @media (hover: hover) { .rond:hover:not(:disabled) .pastille { background: rgba(20, 18, 16, 0.92); } }
   @media (prefers-reduced-motion: reduce) { .pastille { transition: none; } }
 </style>

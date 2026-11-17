@@ -1,6 +1,6 @@
 <script lang="ts">
   /**
-   * <Lueur couleur="#3b3fd8" intensite={0.4} />  (dans un parent `position: relative; isolation: isolate`)
+   * <Lueur couleur="#b3201b" intensite={0.4} />  (dans un parent `position: relative; isolation: isolate`)
    * « La lueur » : halo flou décoratif (`aria-hidden`) qui dépose la couleur du film derrière un élément.
    * `couleur` : `#rrggbb` (repli : lampe). `intensite` : 0 à 1. `position` : où se pose le halo (`gauche` | `centre` | `haut-droite`).
    * Jamais de texte posé dessus sans fond opaque.
@@ -11,7 +11,7 @@
     position?: 'gauche' | 'centre' | 'haut-droite';
   }
   let { couleur = null, intensite = 0.35, position = 'gauche' }: Props = $props();
-  const c = $derived(couleur && /^#[0-9a-f]{6}$/i.test(couleur) ? couleur : '#3b3fd8');
+  const c = $derived(couleur && /^#[0-9a-f]{6}$/i.test(couleur) ? couleur : '#b3201b');
 </script>
 
 <span class="lueur {position}" style:--c={c} style:--i={intensite} aria-hidden="true"></span>

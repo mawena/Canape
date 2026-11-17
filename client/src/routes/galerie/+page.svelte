@@ -202,14 +202,14 @@
 
 <style>
   main { padding: 0 0 64px; display: grid; gap: var(--e-5); }
-  .entete { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-  h1 { font-family: var(--titre); font-size: clamp(2.25rem, 5vw, 3rem); line-height: 1.02; margin: 0; font-weight: 400; letter-spacing: -0.01em; }
-  .outils { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
-  .onglets { display: flex; gap: 2px; background: var(--s1); border: 1px solid var(--bord); border-radius: var(--r-m); padding: 4px; overflow-x: auto; max-width: 100%; scrollbar-width: none; }
-  .onglets button { background: none; border: 0; border-radius: 9px; padding: 0 16px; height: 40px; color: var(--doux); white-space: nowrap; font-weight: 600; font-size: 14.5px; }
+  .entete { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; padding-bottom: var(--e-4); border-bottom: 2px solid var(--filet); }
+  h1 { font-family: var(--titre); font-size: clamp(2.75rem, 7vw, 4.5rem); line-height: 0.97; margin: 0; font-weight: 400; letter-spacing: -0.01em; }
+  .outils { display: flex; flex-wrap: wrap; gap: 12px 28px; align-items: center; }
+  .onglets { display: flex; gap: var(--e-6); overflow-x: auto; max-width: 100%; scrollbar-width: none; }
+  .onglets button { background: none; border: 0; border-bottom: 2px solid transparent; border-radius: 0; padding: 0; height: 44px; color: var(--doux); white-space: nowrap; font: 650 12.5px/1 var(--texte-police); letter-spacing: 0.1em; text-transform: uppercase; }
   .onglets button:hover:not(.actif) { color: var(--texte); }
-  .onglets button.actif { background: var(--s3); color: var(--texte); box-shadow: inset 0 1px 0 var(--reflet), 0 1px 3px rgba(0, 0, 0, 0.4); }
-  .recherche, select { background: var(--s2); border: 1px solid var(--bord-champ); border-radius: var(--r-m); padding: 0 14px; color: var(--texte); height: 48px; font-size: 16px; }
+  .onglets button.actif { color: var(--texte); border-bottom-color: var(--lampe); }
+  .recherche, select { background: var(--s1); border: 1px solid var(--bord-champ); border-radius: var(--r-m); padding: 0 14px; color: var(--texte); height: 48px; font-size: 16px; }
   .recherche { flex: 1; min-width: 180px; }
   .recherche::placeholder { color: var(--discret); }
   .recherche:focus, select:focus { outline: none; border-color: var(--lampe); box-shadow: 0 0 0 1px var(--lampe), 0 0 0 5px var(--lampe-fond); }
@@ -221,6 +221,6 @@
   .option > :global(svg) { color: var(--lampe); flex: none; }
   .option span { display: grid; gap: 2px; }
   .option .t-petit { color: var(--doux); }
-  .voile { position: fixed; inset: 0; z-index: 50; background: rgba(6, 7, 18, 0.7); display: grid; place-items: center; pointer-events: none; }
+  .voile { position: fixed; inset: 0; z-index: 50; background: rgba(10, 9, 8, 0.7); display: grid; place-items: center; pointer-events: none; }
   .voile p { margin: 0; padding: 48px 72px; border: 2px dashed var(--lampe); background: var(--lampe-fond); border-radius: var(--r-xl); font-family: var(--titre); font-size: 1.9rem; }
 </style>

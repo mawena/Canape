@@ -13,6 +13,6 @@
 </ul>
 
 <style>
-  .grille { list-style: none; margin: 0; padding: 0; display: grid; gap: 24px 18px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  @media (min-width: 640px) { .grille { grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); } }
+  .grille { list-style: none; margin: 0; padding: 0; display: grid; gap: 36px 24px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (min-width: 640px) { .grille { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); } }
 </style>

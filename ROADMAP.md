@@ -295,3 +295,17 @@ revenir au tout sombre (refusé en phase 14). Clair par défaut, sombre en optio
 - [x] Captures avant / après (ordinateur), DESIGN.md, README, CHANGELOG 1.15.0 à jour
 - [x] Essais Playwright : suite complète chromium + téléphone verte (61 réussis) ; la transition View Transitions perdait un clic rapide après navigation, remplacée par un fondu Web Animations
 - [x] Release (mineure)
+
+## Phase 28 — Direction artistique 4 : « éditorial cinéma »
+
+La 1.15.0 ne changeait presque rien à l'écran (« je vois pas vraiment de changement »). Charles choisit une direction
+éditoriale : un programme de cinéma imprimé. Sobre (peu d'effets), mais la composition et la typographie changent.
+
+- [x] Jetons : papier crème, encre noire, accent rouge cinéma (AA vérifié), angles plus vifs, ombres presque nulles, thème sombre assorti
+- [x] Typographie : titres de section à empattements, surtitres en capitales espacées, filets
+- [x] Kit : boutons, cartes, affiches, onglets, badges, états vides, champs
+- [x] Navigation : bandeau de journal (logo, rubriques en capitales, filet), onglets du téléphone
+- [x] Accueil « À l'affiche » sur papier (grande affiche, grand titre), sections à filets, galerie à grandes affiches
+- [x] Pages publiques, salle, sas, lecteur, icônes alignés
+- [x] Captures avant / après, essais touchés, documentation, release
+

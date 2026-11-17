@@ -52,25 +52,22 @@
   .bouton:active:not(:disabled):not([aria-disabled='true']) { transform: scale(0.97); transition-duration: 60ms; }
   .bouton:disabled, .bouton[aria-disabled='true'] { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
   .bouton[aria-disabled='true'] { pointer-events: none; }
-  .s { min-height: 36px; padding: 0 14px; font-size: 14px; border-radius: 10px; }
-  .l { min-height: 56px; padding: 0 28px; font-size: 16.5px; border-radius: 16px; }
+  .s { min-height: 36px; padding: 0 14px; font-size: 14px; }
+  .l { min-height: 52px; padding: 0 28px; font-size: 16px; }
   .rond { width: 44px; padding: 0; border-radius: 50%; }
   .rond.s { width: 36px; }
   .rond.l { width: 56px; }
 
-  /* Primaire : indigo en relief (dégradé, filet de lumière en haut, ombre de contact + halo) */
-  .primaire {
-    background: var(--lampe-degrade); color: var(--lampe-sur); border-color: color-mix(in srgb, var(--lampe) 70%, #000);
-    box-shadow: var(--halo-lampe), inset 0 1px 0 rgba(255, 255, 255, 0.28), inset 0 -1px 0 rgba(0, 0, 0, 0.12);
-  }
-  /* Secondaire : carte claire à bord doux (le libellé suffit à l'identifier) */
-  .secondaire { background: var(--s1); border-color: var(--bord-vif); color: var(--texte); box-shadow: var(--ombre-1), inset 0 1px 0 var(--reflet); }
+  /* Primaire : aplat rouge cinéma, sans relief */
+  .primaire { background: var(--lampe); color: var(--lampe-sur); border-color: var(--lampe); }
+  /* Secondaire : trait d'encre sur le papier */
+  .secondaire { background: transparent; border-color: var(--texte); color: var(--texte); }
   .discret { background: transparent; color: var(--doux); }
   .danger { background: transparent; border-color: var(--mal); color: var(--mal); }
   .danger.confirme { background: var(--mal); color: var(--mal-sur); }
   @media (hover: hover) {
-    .primaire:hover:not(:disabled) { filter: brightness(1.06); box-shadow: var(--halo-lampe-fort), inset 0 1px 0 rgba(255, 255, 255, 0.34), inset 0 -1px 0 rgba(0, 0, 0, 0.12); }
-    .secondaire:hover:not(:disabled) { background: var(--s2); border-color: var(--bord-champ); }
+    .primaire:hover:not(:disabled) { background: var(--lampe-vive); border-color: var(--lampe-vive); }
+    .secondaire:hover:not(:disabled) { background: var(--texte); color: var(--fond); }
     .discret:hover:not(:disabled) { background: var(--s2); color: var(--texte); }
     .danger:hover:not(:disabled) { background: var(--mal-fond); }
     .danger.confirme:hover:not(:disabled) { background: var(--mal); filter: brightness(1.08); }

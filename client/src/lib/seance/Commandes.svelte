@@ -177,7 +177,7 @@
 </div>
 
 <style>
-  .commandes { display: grid; gap: 4px; padding: 40px 24px 16px; background: linear-gradient(transparent, rgba(6, 7, 18, 0.9)); color: #fff; }
+  .commandes { display: grid; gap: 4px; padding: 40px 24px 16px; background: linear-gradient(transparent, rgba(10, 9, 8, 0.9)); color: #fff; }
   .rangee { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
   .groupe { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
   button { color: inherit; font: inherit; }
@@ -189,7 +189,7 @@
   .rond:disabled, .lecture:disabled { opacity: 0.4; cursor: not-allowed; }
   .lecture { width: 52px; height: 52px; background: var(--texte, #f7f3ee); color: var(--fond, #0d0c12); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4); }
   .texte { display: inline-flex; gap: 6px; align-items: center; border: 0; padding: 8px 14px; border-radius: 999px; background: var(--lampe-fond); color: var(--lampe); font-weight: 600; }
-  .puce { display: inline-flex; gap: 4px; align-items: center; padding: 3px 10px; border-radius: 999px; background: rgba(10, 11, 28, 0.7); font-size: 12px; color: var(--alerte, #ffd166); }
+  .puce { display: inline-flex; gap: 4px; align-items: center; padding: 3px 10px; border-radius: 999px; background: rgba(20, 18, 16, 0.7); font-size: 12px; color: var(--alerte, #ffd166); }
   .reactions { background: var(--fond-verre); backdrop-filter: var(--flou-verre); -webkit-backdrop-filter: var(--flou-verre); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 999px; padding: 2px 6px; gap: 0; }
   .emoji { width: 40px; height: 40px; font-size: 20px; }
   .pastille { position: absolute; top: 8px; right: 8px; width: 10px; height: 10px; border-radius: 50%; background: var(--lampe); }
