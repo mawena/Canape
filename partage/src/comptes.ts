@@ -36,6 +36,8 @@ export interface EtatApi {
   installationRequise: boolean;
   /** Les inscriptions libres sont ouvertes (lien « Créer un compte » sur la page de connexion). */
   inscriptionOuverte: boolean;
+  /** Connexion par Portier proposée (bouton « Se connecter via Portier ») ; absent ou `false` si désactivée. */
+  portier?: boolean;
 }
 
 /** `GET /api/inscription` (libre) */

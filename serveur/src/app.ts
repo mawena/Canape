@@ -16,6 +16,7 @@ import { hachagesScriptsEnLigne, installerEntetesSecurite } from './commun/secur
 import type { Config } from './config.ts';
 import { migrer, ouvrirBase, type Base } from './db/index.ts';
 import moduleComptes from './modules/comptes/index.ts';
+import modulePortier from './modules/comptes/portier.ts';
 import moduleLecture from './modules/lecture/index.ts';
 import moduleMediatheque from './modules/mediatheque/index.ts';
 import moduleNotifications from './modules/notifications/index.ts';
@@ -32,6 +33,8 @@ export interface OptionsApp {
   journal?: string;
   /** Fastify HTTPS (certificat lu depuis la configuration). */
   https?: { key: Buffer; cert: Buffer };
+  /** `fetch` utilisé pour parler à Portier (essais : un faux fournisseur). */
+  fetchPortier?: typeof fetch;
 }
 
 const PREFIXES_API = ['/api/', '/media/', '/ws/'];
@@ -73,6 +76,8 @@ export async function creerApp(config: Config, options: OptionsApp = {}): Promis
 
   // Les cinq modules, dans l'ordre (la lecture s'abonne à la médiathèque).
   await app.register(sansEncapsulation(moduleComptes));
+  // Connexion par Portier, en plus du mot de passe : rien n'est enregistré si CANAPE_PORTIER n'est pas activé.
+  if (config.portier) await app.register(modulePortier, options.fetchPortier ? { fetch: options.fetchPortier } : {});
   await app.register(sansEncapsulation(moduleMediatheque));
   await app.register(sansEncapsulation(moduleLecture));
   await app.register(sansEncapsulation(moduleNotifications));

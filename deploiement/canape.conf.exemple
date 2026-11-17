@@ -63,3 +63,14 @@ CANAPE_TELECHARGEMENTS=/srv/canape/telechargements
 # HTTPS servi directement par Node : inutile derrière nginx.
 #CANAPE_TLS_CERT=
 #CANAPE_TLS_CLE=
+
+# Connexion par Portier (OpenID Connect), EN PLUS de l'identifiant et du mot de passe : désactivée par défaut.
+# Adresse de retour à déclarer dans Portier : <CANAPE_URL_PUBLIQUE>/api/portier/retour. Détails : docs/PORTIER.md.
+#CANAPE_PORTIER=0
+#CANAPE_PORTIER_EMETTEUR=https://portier.mawena.cloud
+#CANAPE_PORTIER_CLIENT_ID=canape
+#CANAPE_PORTIER_SECRET=
+#CANAPE_PORTIER_SECRET_FICHIER=/etc/canape/portier.secret
+#CANAPE_PORTIER_RETOUR=https://canape.exemple.fr/api/portier/retour
+# Comptes liés (jamais de création) : nom-portier:identifiant-canape (le nom peut être un e-mail vérifié).
+#CANAPE_PORTIER_COMPTES=charles-gamligo:charles
