@@ -117,5 +117,5 @@
   .pop > [aria-disabled='true'] { opacity: 0.45; cursor: not-allowed; }
   .danger { color: var(--mal) !important; }
   hr { border: 0; border-top: 1px solid var(--bord); margin: 6px 4px; }
-  @keyframes entree { from { opacity: 0; transform: translateY(-6px) scale(0.97); } }
+  @keyframes entree { from { opacity: 0; transform: translateY(-4px); } }
 </style>

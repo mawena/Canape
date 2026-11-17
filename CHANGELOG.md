@@ -2,6 +2,25 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) ; versions selon [SemVer](https://semver.org/lang/fr/).
 
+## [1.15.0] — 2026-11-17
+
+Nouvelle direction artistique, sobre : « la nuit, une lampe allumée ».
+
+### Modifié
+
+- **Couleurs** : papier chaud au lieu du gris bleuté, texte bleu nuit, **indigo** comme seule couleur d'action, un point
+  de lampe ambre discret (logo, page courante). Thème sombre accordé (nuit bleutée, blanc chaud, pervenche). Contrastes AA
+  vérifiés par script.
+- **Kit** : boutons en léger relief, champs blancs avec anneau de focus, onglets et barre du haut en segments, menus et
+  notifications en verre dépoli, modales sur voile flouté, affiches avec filet intérieur et lueur légère au survol, états
+  vides plus calmes, surtitres discrets.
+- **Téléphone** : barre d'onglets en capsule flottante ; notifications placées au-dessus.
+- **Carte « Ce soir »**, connexion, inscription, invitation et règles : fond nuit uni (grain de film très léger sur les
+  pages publiques).
+- **Transitions de page** en fondu court (API View Transitions), coupées en mouvement réduit et autour de la salle.
+- **Icônes, favicon et écrans de démarrage iOS** redessinés (fond nuit, point de lampe) ; les écrans de démarrage
+  n'ont plus de coins noirs. `theme-color` et manifeste suivent les nouveaux fonds.
+
 ## [1.14.0] — 2026-11-17
 
 Se connecter via Portier.

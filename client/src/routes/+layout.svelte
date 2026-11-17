@@ -199,7 +199,7 @@
   }
   .nav a[aria-current='page'] { color: var(--texte); background: var(--s1); box-shadow: var(--ombre-1), inset 0 1px 0 var(--reflet); }
   .nav a[aria-current='page']::before {
-    content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--ambre); box-shadow: 0 0 10px var(--ambre-lueur);
+    content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--ambre);
   }
   @media (hover: hover) { .nav a:not([aria-current='page']):hover { color: var(--texte); background: color-mix(in srgb, var(--s1) 60%, transparent); } }
   .actions-haut { display: flex; align-items: center; gap: var(--e-4); }

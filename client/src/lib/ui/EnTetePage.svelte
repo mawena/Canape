@@ -1,8 +1,7 @@
 <script lang="ts">
   /**
    * <EnTetePage titre="Films" surtitre="Vendredi 13 novembre" description="…" taille="titre1">{#snippet actions()}<Bouton>…</Bouton>{/snippet}</EnTetePage>
-   * Titre de page en Instrument Serif (`titre1` 56 px, `affiche` 72 px, `titre2` 36 px) dans un <h1>, `surtitre` en petites capitales
-   * avec le point de lampe au-dessus, `description` dessous, `actions` (boutons) à droite sur ordinateur, dessous sur téléphone.
+   * Titre de page en Instrument Serif (`titre1` 56 px, `affiche` 72 px, `titre2` 36 px) dans un <h1>, `surtitre` discret au-dessus, `description` dessous, `actions` (boutons) à droite sur ordinateur, dessous sur téléphone.
    */
   import type { Snippet } from 'svelte';
 
@@ -18,7 +17,7 @@
 
 <header class="tete">
   <div class="textes">
-    {#if surtitre}<p class="surtitre t-surtitre lampe">{surtitre}</p>{/if}
+    {#if surtitre}<p class="surtitre t-surtitre">{surtitre}</p>{/if}
     <h1 class="t-{taille}">{titre}</h1>
     {#if description}<p class="description">{description}</p>{/if}
   </div>

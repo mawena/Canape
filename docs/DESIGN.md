@@ -1,11 +1,70 @@
-# Design — Canapé (1.0, puis version 2)
+# Design — Canapé (1.0, version 2, puis version 3)
 
 Direction artistique et produit de Canapé 1.0. Ce document est le contrat de l'agent « interface » : les valeurs
 (couleurs, tailles, durées) sont exactes et reprises telles quelles dans `docs/maquettes/canape.html`, qui est la
 référence visuelle (à ouvrir dans un navigateur). En cas d'écart entre les deux, c'est ce document qui l'emporte.
 
-Sommaire : **Version 2 (phase 14)** · 1 Positionnement · 2 Recherche · 3 Système de design · 4 Composants · 5 Écrans · 6 Ton et textes ·
+Sommaire : **Version 3 (phase 27)** · Version 2 (phase 14) · 1 Positionnement · 2 Recherche · 3 Système de design · 4 Composants · 5 Écrans · 6 Ton et textes ·
 7 Accessibilité et PWA · 8 Fonctions supplémentaires recommandées · 9 Sources.
+
+---
+
+## Version 3 (phase 27) : « la nuit, une lampe allumée », en sobre
+
+**Cette section l'emporte** sur la version 2 et sur les valeurs plus bas quand elles diffèrent. Mêmes noms de jetons
+(`client/src/lib/ui/jetons.css`), mêmes polices (Figtree, Instrument Serif), même structure d'écrans.
+
+**Constat.** La version 2 était propre mais générique : un bleu et un dégradé indigo-violet « logiciel » qu'on voit
+partout, sans rien qui rappelle le cinéma ni l'intimité du projet. **Retour de l'utilisateur** sur une première passe
+plus démonstrative (grain marqué, halos ambre, affiche inclinée, reflets, rebonds) : « un truc un peu plus sobre ».
+La version 3 garde donc l'identité et retire presque tous les effets.
+
+**Recherche (novembre 2026).** Tendances : retour à des mises en page éditoriales, calmes, où la typographie porte
+l'identité ; verre dépoli réservé à ce qui flotte (barres, menus, notifications), jamais au contenu (consignes Liquid
+Glass d'Apple) ; ombres en couches très légères plutôt que bordures lourdes ; neutres légèrement teintés (pas de gris pur).
+
+**Parti pris.**
+- *Papier chaud* au lieu du gris bleuté : fond `#f7f5f1`, cartes blanches, neutres crème. Encre *bleu nuit* pour le texte.
+- *Indigo* `#3b3fd8` : seule couleur d'action (boutons, liens, focus, sélection d'onglet sur téléphone).
+- *La lampe* : un point ambre `#f2a23a`, **décoratif et rare** : dans le logo et devant la page courante de la barre du haut.
+  Jamais porteur de texte sur fond clair.
+- *La nuit* : carte « Ce soir », connexion, inscription, invitation, règles. Fond nuit uni (`#1c1f52 → #22266b`,
+  dégradé à peine visible), texte blanc (≥ 11 : 1). Sur les pages publiques seulement, un grain de film à 4,5 % d'opacité.
+- *Mouvement* : courts, sans rebond ; une transition de page en fondu (API View Transitions, coupée en mouvement réduit
+  et autour de la salle).
+
+**Palette claire** (ratios WCAG 2.x calculés par script ; seuils AA : texte 4,5, contours de champs 3) :
+
+| Jeton | Valeur | sur `--fond` | sur `--s3` (pire cas) |
+|---|---|---|---|
+| `--fond` / `--s1` / `--s2` / `--s3` | `#f7f5f1` / `#ffffff` / `#f3f0ea` / `#e9e5dd` | | |
+| `--bord` / `--bord-vif` | `#e8e3da` / `#d8d0c3` (décoratifs) | | |
+| `--bord-champ` | `#7a7466` | 4,4 | 3,7 |
+| `--texte` | `#16152b` | 16,4 | |
+| `--doux` | `#4b4a63` | 7,8 | |
+| `--discret` | `#5d5c74` | 5,9 | 5,2 |
+| `--lampe` (indigo) | `#3b3fd8` (blanc dessus : 7,3) | 6,7 | 5,8 |
+| `--rose` | `#c2185b` | 5,9 sur blanc | |
+| `--ok` / `--alerte` / `--mal` / `--info` | inchangés | | 4,6 / 5,3 / 4,6 / 4,7 |
+| `--ambre` | `#f2a23a` (décoratif) ; `--ambre-texte` `#8f4a06` | | |
+
+**Palette sombre** (« la salle ») : `--fond` `#0c0e1a`, `--s1` `#13162a`, `--s2` `#191d35`, `--s3` `#232843` ; texte blanc
+chaud `#f3f1ec` (12,8 sur `--s3`), `--doux` `#b9b8c9` (7,4), `--discret` `#9796ad` (5,0), `--bord-champ` `#6c7396` (3,1),
+`--lampe` pervenche `#8f95ff` (5,4 ; texte `#0c0e1a` dessus : 7,2), `--rose` `#ff8fc0` (6,8), `--ambre` `#ffb547` (8,2).
+
+**Composants.**
+- Boutons : primaire indigo plein (dégradé à peine perceptible, filet clair en haut, petite ombre) ; secondaire blanc à
+  bord doux `--bord-vif` et ombre de contact (le libellé suffit à l'identifier, WCAG 1.4.11) ; pas de levée au survol.
+- Champs : fond blanc, contour `--bord-champ` (≥ 3 : 1), focus = contour indigo épaissi + anneau `--lampe-fond`.
+- Navigation : la barre du haut est un rail de segments, la page courante est une pastille blanche avec le point de lampe ;
+  sur téléphone, la barre d'onglets est une capsule de verre détachée des bords.
+- Onglets : même rail en segments. Menus, notifications : verre dépoli. Modales : fond blanc, voile flouté.
+- Affiches : filet intérieur, levée de 3 px et lueur légère de la couleur du film au survol ; barre de reprise blanche.
+- États vides : contour pointillé, icône dans un rond blanc, sans halo.
+
+**Icônes et écrans de démarrage.** Icône : fond nuit, coussins pervenche et rose, assise blanche, point de lampe ambre.
+Écrans de démarrage iOS : papier chaud, icône centrée (les anciens avaient des coins noirs). Dessinés par le Chromium de
+Playwright (script jetable de la phase 27) ; `theme-color` et manifeste : `#f7f5f1` / `#0c0e1a`.
 
 ---
 

@@ -47,7 +47,7 @@
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
     min-height: 44px; padding: 0 20px; border: 1px solid transparent; border-radius: var(--r-m);
     font: 650 15px/20px var(--texte-police); letter-spacing: -0.005em; text-decoration: none; white-space: nowrap; user-select: none;
-    transition: background var(--d-1) var(--ease), transform var(--d-2) var(--ressort), border-color var(--d-1) var(--ease), color var(--d-1) var(--ease), box-shadow var(--d-2) var(--ease), filter var(--d-1) var(--ease);
+    transition: background var(--d-1) var(--ease), transform var(--d-1) var(--ease), border-color var(--d-1) var(--ease), color var(--d-1) var(--ease), box-shadow var(--d-2) var(--ease), filter var(--d-1) var(--ease);
   }
   .bouton:active:not(:disabled):not([aria-disabled='true']) { transform: scale(0.97); transition-duration: 60ms; }
   .bouton:disabled, .bouton[aria-disabled='true'] { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
@@ -69,7 +69,7 @@
   .danger { background: transparent; border-color: var(--mal); color: var(--mal); }
   .danger.confirme { background: var(--mal); color: var(--mal-sur); }
   @media (hover: hover) {
-    .primaire:hover:not(:disabled) { filter: brightness(1.06) saturate(1.05); box-shadow: var(--halo-lampe-fort), inset 0 1px 0 rgba(255, 255, 255, 0.34), inset 0 -1px 0 rgba(0, 0, 0, 0.12); transform: translateY(-1px); }
+    .primaire:hover:not(:disabled) { filter: brightness(1.06); box-shadow: var(--halo-lampe-fort), inset 0 1px 0 rgba(255, 255, 255, 0.34), inset 0 -1px 0 rgba(0, 0, 0, 0.12); }
     .secondaire:hover:not(:disabled) { background: var(--s2); border-color: var(--bord-champ); }
     .discret:hover:not(:disabled) { background: var(--s2); color: var(--texte); }
     .danger:hover:not(:disabled) { background: var(--mal-fond); }

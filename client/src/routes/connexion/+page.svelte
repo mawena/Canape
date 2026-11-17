@@ -84,7 +84,7 @@
 <style>
   main {
     min-height: 100%; display: grid; place-content: center; justify-items: center; gap: var(--e-5); padding: var(--e-7) var(--e-4); text-align: center;
-    background: radial-gradient(640px 460px at 50% 18%, rgba(255, 186, 104, 0.26), rgba(255, 160, 80, 0.06) 45%, transparent 70%), var(--hero-degrade);
+    background: radial-gradient(640px 460px at 50% 18%, rgba(255, 255, 255, 0.08), transparent 70%), var(--hero-degrade);
   }
   .marque { text-decoration: none; margin-bottom: var(--e-2); --texte: #fff; --logo-1: #c7caff; --logo-2: #fbcfe8; --logo-assise: #fff; }
   h1 { color: #fff; text-shadow: 0 2px 30px rgba(10, 10, 50, 0.45); font: 400 clamp(2.1rem, 6vw, 3.25rem) / 1.04 var(--titre); letter-spacing: -0.01em; max-width: 16ch; text-wrap: balance; margin-bottom: var(--e-3); }

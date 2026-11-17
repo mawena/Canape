@@ -69,15 +69,15 @@
 {/if}
 
 <style>
-  .voile { position: absolute; inset: 0; z-index: 4; display: grid; place-content: center; justify-items: center; gap: 10px; text-align: center; padding: 24px; background: rgba(13, 12, 18, 0.55); color: #fff; }
+  .voile { position: absolute; inset: 0; z-index: 4; display: grid; place-content: center; justify-items: center; gap: 10px; text-align: center; padding: 24px; background: rgba(10, 11, 28, 0.55); color: #fff; }
   .voile.carte { inset: auto; left: 50%; top: 50%; transform: translate(-50%, -50%); background: var(--fond-verre); backdrop-filter: var(--flou-verre); -webkit-backdrop-filter: var(--flou-verre); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: var(--r-xl, 28px); padding: 28px 32px; z-index: 7; box-shadow: var(--ombre-4); max-width: min(440px, 90vw); }
-  .voile.compte { background: rgba(6, 5, 10, 0.4); backdrop-filter: blur(2px); z-index: 7; }
+  .voile.compte { background: rgba(6, 7, 18, 0.4); backdrop-filter: blur(2px); z-index: 7; }
   h2, .grand { font: 700 1.5rem / 1.25 var(--texte-police); letter-spacing: -0.02em; margin: 0; }
   .chiffre { font: 400 104px/1 var(--titre); margin: 0; animation: fondu 200ms; }
   .auteur, .petit { margin: 0; color: var(--doux, #c0bacb); }
   p { margin: 0; }
   .actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 8px; }
-  .anneau { width: 56px; height: 56px; border-radius: 50%; border: 4px solid rgba(255, 255, 255, 0.15); border-top-color: var(--lampe, #1f5ce0); animation: tour 1.1s linear infinite; }
+  .anneau { width: 56px; height: 56px; border-radius: 50%; border: 4px solid rgba(255, 255, 255, 0.15); border-top-color: var(--lampe); animation: tour 1.1s linear infinite; }
   .voile.attente { pointer-events: none; }
   .voile.attente :global(button) { pointer-events: auto; }
   @keyframes tour { to { transform: rotate(360deg); } }

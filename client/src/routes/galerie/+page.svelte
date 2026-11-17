@@ -221,6 +221,6 @@
   .option > :global(svg) { color: var(--lampe); flex: none; }
   .option span { display: grid; gap: 2px; }
   .option .t-petit { color: var(--doux); }
-  .voile { position: fixed; inset: 0; z-index: 50; background: rgba(6, 5, 10, 0.7); display: grid; place-items: center; pointer-events: none; }
-  .voile p { margin: 0; padding: 48px 72px; border: 2px dashed var(--lampe, #1f5ce0); background: var(--lampe-fond); border-radius: var(--r-xl); font-family: var(--titre); font-size: 1.9rem; }
+  .voile { position: fixed; inset: 0; z-index: 50; background: rgba(6, 7, 18, 0.7); display: grid; place-items: center; pointer-events: none; }
+  .voile p { margin: 0; padding: 48px 72px; border: 2px dashed var(--lampe); background: var(--lampe-fond); border-radius: var(--r-xl); font-family: var(--titre); font-size: 1.9rem; }
 </style>

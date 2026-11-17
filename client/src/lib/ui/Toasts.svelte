@@ -33,7 +33,7 @@
     display: flex; align-items: center; gap: 12px; width: fit-content; max-width: 100%; pointer-events: auto;
     background: var(--fond-verre); backdrop-filter: var(--flou-verre); -webkit-backdrop-filter: var(--flou-verre);
     border: 1px solid var(--bord-vif); border-radius: 18px;
-    padding: 8px 8px 8px 10px; font-size: 15px; font-weight: 500; box-shadow: var(--ombre-4), inset 0 1px 0 var(--reflet); animation: entree var(--d-3) var(--ressort);
+    padding: 8px 8px 8px 10px; font-size: 15px; font-weight: 500; box-shadow: var(--ombre-4), inset 0 1px 0 var(--reflet); animation: entree var(--d-2) var(--ease);
   }
   .ic { display: grid; place-items: center; width: 28px; height: 28px; flex: none; border-radius: 50%; background: var(--lampe-fond); color: var(--lampe); }
   .ok .ic { background: var(--ok-fond); color: var(--ok); }
@@ -43,6 +43,6 @@
   @media (hover: hover) { .action:hover { background: var(--lampe-fond); } }
   .x { display: grid; place-items: center; width: 32px; height: 32px; flex: none; border: 0; border-radius: 50%; background: transparent; color: var(--doux); }
   @media (hover: hover) { .x:hover { background: var(--s3); color: var(--texte); } }
-  @keyframes entree { from { opacity: 0; transform: translateY(14px) scale(0.96); } }
+  @keyframes entree { from { opacity: 0; transform: translateY(10px); } }
   @supports not (backdrop-filter: blur(1px)) { .toast { background: var(--s1); } }
 </style>

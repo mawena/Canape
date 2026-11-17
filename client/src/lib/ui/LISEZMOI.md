@@ -1,6 +1,6 @@
 # Kit d'interface de Canapé (`$lib/ui`)
 
-Direction artistique : `docs/DESIGN.md` (« un salon la nuit, une lampe allumée »). Un seul thème, sombre. L'interface **tutoie**.
+Direction artistique : `docs/DESIGN.md`, « Version 3 » (« la nuit, une lampe allumée », en sobre). Clair par défaut, sombre en option. L'interface **tutoie**.
 Catalogue visuel de tout le kit : `/apercu-ui` (administrateurs, ou mode développement).
 
 ```ts
@@ -9,7 +9,7 @@ import { Bouton, Champ, AfficheFilm, toast, formaterDuree } from '$lib/ui/index.
 Les jetons (couleurs, rayons, ombres, mouvement, polices hébergées dans `static/polices/`) sont dans `jetons.css`, importé une fois par `routes/+layout.svelte`.
 Utilise **toujours les variables** (`var(--lampe)`, `var(--s2)`, `var(--r-m)`, `var(--e-4)`…), jamais de couleur en dur. Les anciens noms (`--or`, `--creme`, `--fond-2`…) existent encore comme alias, à abandonner.
 
-Règles : la lampe (`--lampe`) est la **seule** couleur d'action, un seul bouton primaire par écran ; le rose est réservé à l'autre personne ; cibles ≥ 44 px ; focus visible (déjà global) ; jamais d'état par la couleur seule ; textes en français, tutoiement, espace insécable avant `? ! : ;`. Classes utilitaires globales : `t-affiche`, `t-titre1`, `t-titre2`, `t-titre3`, `t-petit`, `t-legende`, `tn` (chiffres tabulaires), `vh` (masqué visuellement).
+Règles : l'indigo (`--lampe`) est la **seule** couleur d'action ; l'ambre (`--ambre`) est décoratif et rare (logo, page courante) ; un seul bouton primaire par écran ; le rose est réservé à l'autre personne ; cibles ≥ 44 px ; focus visible (déjà global) ; jamais d'état par la couleur seule ; textes en français, tutoiement, espace insécable avant `? ! : ;`. Classes utilitaires globales : `t-affiche`, `t-titre1`, `t-titre2`, `t-titre3`, `t-petit`, `t-legende`, `t-surtitre`, `tn` (chiffres tabulaires), `vh` (masqué visuellement), `grain` (grain de film, surfaces nuit).
 
 ## Composants (l'API détaillée est en tête de chaque fichier)
 

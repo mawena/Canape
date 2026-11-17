@@ -58,7 +58,7 @@
     box-shadow: var(--ombre-4); overflow: auto; margin: auto;
   }
   dialog.large { width: min(640px, calc(100vw - 32px)); }
-  dialog[open] { animation: entree var(--d-3) var(--ressort); }
+  dialog[open] { animation: entree var(--d-2) var(--ease); }
   dialog::backdrop { background: var(--voile); backdrop-filter: blur(6px) saturate(1.2); -webkit-backdrop-filter: blur(6px) saturate(1.2); }
   .poignee { display: none; }
   header { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--e-3); margin-bottom: var(--e-2); }
@@ -67,7 +67,7 @@
   @media (hover: hover) { .x:hover { color: var(--texte); background: var(--s3); } }
   .corps { display: grid; gap: var(--e-3); color: var(--doux); }
   footer { display: flex; justify-content: flex-end; gap: var(--e-3); margin-top: var(--e-5); flex-wrap: wrap; }
-  @keyframes entree { from { opacity: 0; transform: translateY(12px) scale(0.96); } }
+  @keyframes entree { from { opacity: 0; transform: translateY(8px) scale(0.98); } }
 
   @media (max-width: 640px) {
     dialog {

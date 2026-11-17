@@ -105,7 +105,7 @@
 <style>
   main {
     min-height: 100%; display: grid; place-content: center; justify-items: center; gap: var(--e-5); padding: var(--e-7) var(--e-4);
-    background: radial-gradient(640px 460px at 50% 12%, rgba(255, 186, 104, 0.26), rgba(255, 160, 80, 0.06) 45%, transparent 70%), var(--hero-degrade);
+    background: radial-gradient(640px 460px at 50% 12%, rgba(255, 255, 255, 0.08), transparent 70%), var(--hero-degrade);
   }
   .marque { text-decoration: none; --texte: #fff; --logo-1: #c7caff; --logo-2: #fbcfe8; --logo-assise: #fff; }
   main :global(.carte) { width: min(440px, calc(100vw - 2 * var(--e-4))); box-shadow: var(--ombre-3); border-radius: var(--r-xl); padding: var(--e-7); }
