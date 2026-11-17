@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import { onMount } from 'svelte';
-  import { goto, onNavigate } from '$app/navigation';
+  import { afterNavigate, goto } from '$app/navigation';
   import { page } from '$app/state';
   import { Avatar, Bouton, EtatVide, Icone, Logo, Menu, Modale, Toasts, toast, type ElementMenu, type NomIcone } from '$lib/ui/index.ts';
   import { estRouteLibre, estSalle, sectionActive } from '$lib/interface/routes.ts';
@@ -100,14 +100,17 @@
   });
 
   function ouvrirMoi(): void { moiOuvert = true; }
-  // Transitions de page : fondu court par l'API View Transitions quand le navigateur la connaît (sinon rien ne change).
-  // Jamais vers ou depuis la salle (plein cadre, vidéo) ; le mouvement réduit est respecté par jetons.css.
-  onNavigate((nav) => {
-    if (!document.startViewTransition || !nav.to || estSalle(nav.to.url.pathname) || estSalle(page.url.pathname)) return;
-    if (nav.from?.url.pathname === nav.to.url.pathname) return;
-    return new Promise((fin) => {
-      document.startViewTransition(async () => { fin(); await nav.complete; });
-    });
+  // Arrivée sur une page : le contenu apparaît en fondu court (Web Animations). Rien ne bloque les clics pendant ce
+  // temps (l'API View Transitions fige l'affichage et perd un clic rapide). Jamais vers ou depuis la salle ; rien en
+  // mouvement réduit.
+  afterNavigate((nav) => {
+    if (nav.type === 'enter' || !principal?.animate || salle) return;
+    if (nav.from?.url.pathname === nav.to?.url.pathname) return;
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    principal.animate(
+      [{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }],
+      { duration: 220, easing: 'cubic-bezier(0.2, 0, 0, 1)' },
+    );
   });
 </script>
 
@@ -204,7 +207,7 @@
   @media (hover: hover) { .nav a:not([aria-current='page']):hover { color: var(--texte); background: color-mix(in srgb, var(--s1) 60%, transparent); } }
   .actions-haut { display: flex; align-items: center; gap: var(--e-4); }
 
-  main { max-width: 1440px; margin: 0 auto; padding: 48px var(--gouttiere) 88px; outline: none; view-transition-name: contenu; }
+  main { max-width: 1440px; margin: 0 auto; padding: 48px var(--gouttiere) 88px; outline: none; }
 
   .haut-mobile, .onglets-bas { display: none; }
 

@@ -30,7 +30,7 @@ Glass d'Apple) ; ombres en couches très légères plutôt que bordures lourdes 
   Jamais porteur de texte sur fond clair.
 - *La nuit* : carte « Ce soir », connexion, inscription, invitation, règles. Fond nuit uni (`#1c1f52 → #22266b`,
   dégradé à peine visible), texte blanc (≥ 11 : 1). Sur les pages publiques seulement, un grain de film à 4,5 % d'opacité.
-- *Mouvement* : courts, sans rebond ; une transition de page en fondu (API View Transitions, coupée en mouvement réduit
+- *Mouvement* : courts, sans rebond ; le contenu arrive en fondu à chaque page (Web Animations, ne bloque aucun clic ; coupé en mouvement réduit
   et autour de la salle).
 
 **Palette claire** (ratios WCAG 2.x calculés par script ; seuils AA : texte 4,5, contours de champs 3) :

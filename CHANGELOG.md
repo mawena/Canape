@@ -17,7 +17,7 @@ Nouvelle direction artistique, sobre : « la nuit, une lampe allumée ».
 - **Téléphone** : barre d'onglets en capsule flottante ; notifications placées au-dessus.
 - **Carte « Ce soir »**, connexion, inscription, invitation et règles : fond nuit uni (grain de film très léger sur les
   pages publiques).
-- **Transitions de page** en fondu court (API View Transitions), coupées en mouvement réduit et autour de la salle.
+- **Transitions de page** : le contenu arrive en fondu court (Web Animations, sans bloquer les clics), coupé en mouvement réduit et autour de la salle.
 - **Icônes, favicon et écrans de démarrage iOS** redessinés (fond nuit, point de lampe) ; les écrans de démarrage
   n'ont plus de coins noirs. `theme-color` et manifeste suivent les nouveaux fonds.
 

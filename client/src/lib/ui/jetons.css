@@ -287,14 +287,3 @@ img, svg { max-width: 100%; }
   background-image: var(--grain); background-size: 160px; opacity: 0.045; mix-blend-mode: overlay;
 }
 
-/* Transitions de page (View Transitions, posées par +layout.svelte) : fondu court, montée légère. */
-@keyframes vt-sortie { to { opacity: 0; } }
-@keyframes vt-entree { from { opacity: 0; transform: translateY(6px); } }
-::view-transition-old(contenu) { animation: vt-sortie 140ms var(--ease) both; }
-::view-transition-new(contenu) { animation: vt-entree 260ms var(--ease) 60ms both; }
-@media (prefers-reduced-motion: reduce) {
-  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
-}
-:root[data-mouvement="reduit"]::view-transition-group(*),
-:root[data-mouvement="reduit"]::view-transition-old(*),
-:root[data-mouvement="reduit"]::view-transition-new(*) { animation: none !important; }

@@ -293,5 +293,5 @@ revenir au tout sombre (refusé en phase 14). Clair par défaut, sombre en optio
 - [x] Salle, sas et lecteur alignés (verre, lampe ambre), icônes et écrans de démarrage
 - [x] Version sobre demandée par Charles (moins d'effets : pas d'affiche inclinée, peu de halos, pas de rebond)
 - [x] Captures avant / après (ordinateur), DESIGN.md, README, CHANGELOG 1.15.0 à jour
-- [ ] Essais Playwright touchés (accessibilite accueil comptes pwa galerie telephone inscription a-voir, chromium + telephone) : interrompus par la mise à jour de CCS, à relancer
+- [x] Essais Playwright : suite complète chromium + téléphone verte (61 réussis) ; la transition View Transitions perdait un clic rapide après navigation, remplacée par un fondu Web Animations
 - [ ] Release (mineure)
