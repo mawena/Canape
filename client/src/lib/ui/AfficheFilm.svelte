@@ -7,7 +7,7 @@
    * - `film` : un `Film` de `@canape/partage` (ou `{ id, titre, annee, duree, etat, aAffiche, visibilite? }`) ; sert de valeurs par défaut.
    * - `titre`, `annee`, `dureeSecondes`, `imageSrc` (URL ; `/api/films/<id>/affiche` si `film.aAffiche`), `couleur`, `etat`
    *   (`pret` | `analyse` | `erreur`), `preparation` (0–1, affiche « Préparation 62 % »), `partage`, `nouveau`.
-   * - `progression` : 0–1, barre de reprise (5 px lampe au pied). `sousTitre` : remplace « année · durée ».
+   * - `progression` : 0–1, barre de reprise (4 px blanche, en bas de l'affiche). `sousTitre` : remplace « année · durée ».
    * - `taille` : `normal` ou `petit` (rangées défilantes du téléphone). `selectionnable`/`selectionne`/`surSelection` : case en coin.
    */
   import { couleurValide, formaterDuree, teinteTitre } from './format.ts';
@@ -63,7 +63,7 @@
   const avecImage = $derived(!!src && !imageEnErreur);
   const teinte = $derived(teinteTitre(t));
   // Couleur dominante calculée par la médiathèque (`film.couleur`), sauf couleur donnée explicitement.
-  const lueur = $derived(couleurValide(couleur ?? film?.couleur ?? null) ?? (avecImage ? '#3b82f6' : `hsl(${teinte} 60% 55%)`));
+  const lueur = $derived(couleurValide(couleur ?? film?.couleur ?? null) ?? (avecImage ? '#3b3fd8' : `hsl(${teinte} 60% 55%)`));
   const detail = $derived([a, d ? formaterDuree(d) : ''].filter(Boolean).join(' · '));
   const pctPrep = $derived(preparation === null ? null : Math.round(preparation * 100));
   const nomEtat = $derived(e === 'pret' ? 'prêt' : e === 'analyse' ? 'préparation en cours' : 'illisible');
@@ -127,11 +127,16 @@
   .lien:focus-visible .affiche { outline: 3px solid var(--lampe-vive); outline-offset: 3px; }
   .affiche {
     position: relative; display: block; aspect-ratio: 2 / 3; border-radius: var(--r-affiche); overflow: hidden; isolation: isolate;
-    background: var(--s2); box-shadow: var(--ombre-2), 0 0 0 1px rgba(255, 255, 255, 0.06);
+    background: var(--s2); box-shadow: var(--ombre-2);
     transition: transform var(--d-2) var(--ease), box-shadow var(--d-2) var(--ease);
   }
+  /* Filet intérieur : un bord net sur papier comme sur nuit */
+  .affiche::after {
+    content: ''; position: absolute; inset: 0; z-index: 3; border-radius: inherit; pointer-events: none;
+    box-shadow: inset 0 0 0 1px rgba(20, 16, 10, 0.08);
+  }
   @media (hover: hover) {
-    .lien:hover .affiche { transform: translateY(-4px); box-shadow: 0 18px 36px rgba(0, 0, 0, 0.5), 0 0 40px -6px var(--lueur); }
+    .lien:hover .affiche { transform: translateY(-3px); box-shadow: var(--ombre-3), 0 0 32px -10px var(--lueur); }
   }
   img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .affiche.sans { background: linear-gradient(160deg, var(--h1), var(--h2)); }
@@ -144,16 +149,16 @@
   .annee-affiche { position: absolute; left: 12px; bottom: 12px; z-index: 1; color: rgba(255, 255, 255, 0.85); font: 500 12px / 1 var(--texte-police); }
   .petit .titre-affiche { font-size: 19px; bottom: 28px; left: 9px; right: 9px; }
   .badges { position: absolute; top: 8px; left: 8px; z-index: 2; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
-  .progres { position: absolute; left: 0; right: 0; bottom: 0; height: 5px; background: rgba(0, 0, 0, 0.5); z-index: 2; }
-  .progres i { display: block; height: 100%; background: var(--lampe); }
+  .progres { position: absolute; left: 8px; right: 8px; bottom: 8px; height: 4px; border-radius: 4px; overflow: hidden; background: rgba(255, 255, 255, 0.28); z-index: 2; }
+  .progres i { display: block; height: 100%; border-radius: inherit; background: #fff; }
   .textes { display: grid; gap: 2px; min-width: 0; }
-  .nom { font: 650 15px / 1.25 var(--texte-police); display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .nom { transition: color var(--d-1) var(--ease); font: 650 15px / 1.25 var(--texte-police); letter-spacing: -0.01em; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .detail { color: var(--discret); font-size: 14px; line-height: 20px; }
   .petit .nom { font-size: 14px; }
   .petit .detail { font-size: 13px; }
   .case { position: absolute; top: 8px; right: 8px; z-index: 3; width: 28px; height: 28px; cursor: pointer; }
   .case input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
-  .coche { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: rgba(13, 12, 18, 0.8); border: 2px solid #fff; color: transparent; }
+  .coche { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: rgba(10, 11, 28, 0.8); border: 2px solid #fff; color: transparent; }
   .case input:checked + .vh + .coche { background: var(--lampe); border-color: var(--lampe); color: var(--lampe-sur); }
   .case input:focus-visible + .vh + .coche { outline: 3px solid var(--lampe-vive); outline-offset: 3px; }
 </style>

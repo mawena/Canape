@@ -272,7 +272,7 @@
   }
   .salle.plein-cadre { position: fixed; inset: 0; z-index: 100; }
   .salle.repos { cursor: none; }
-  .lueur { position: absolute; inset: 0; background: radial-gradient(ellipse at center, rgba(96, 165, 250, 0.16), transparent 70%); filter: blur(40px); }
+  .lueur { position: absolute; inset: 0; background: radial-gradient(ellipse at center, rgba(143, 149, 255, 0.16), transparent 70%); filter: blur(40px); }
   .scene { position: relative; flex: 1; min-height: 0; display: grid; place-items: center; z-index: 1; }
   video { width: 100%; height: 100%; object-fit: contain; background: transparent; }
   /* Taille des sous-titres choisie par chacun (menu Langue et sous-titres). */
@@ -280,13 +280,13 @@
   video[data-taille-st='grande']::cue { font-size: 140%; }
   .haut {
     position: absolute; top: 0; left: 0; right: 0; z-index: 5; display: flex; align-items: center; gap: 12px; padding: 12px 20px 40px;
-    background: linear-gradient(rgba(6, 5, 10, 0.85), transparent); transition: opacity 220ms; pointer-events: none;
+    background: linear-gradient(rgba(6, 7, 18, 0.85), transparent); transition: opacity 220ms; pointer-events: none;
   }
   .haut > * { pointer-events: auto; }
   .retour { border: 0; background: rgba(255, 255, 255, 0.1); color: #fff; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; }
   h1 { font: 400 1.5rem 'Instrument Serif', Georgia, serif; margin: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .a-droite { position: relative; display: flex; align-items: center; gap: 10px; }
-  .synchro { display: inline-flex; align-items: center; gap: 8px; border: 0; border-radius: 999px; padding: 6px 12px; background: rgba(13, 12, 18, 0.7); color: #fff; font-size: 13px; }
+  .synchro { display: inline-flex; align-items: center; gap: 8px; border: 0; border-radius: 999px; padding: 6px 12px; background: rgba(10, 11, 28, 0.7); color: #fff; font-size: 13px; }
   .point { width: 10px; height: 10px; border-radius: 50%; background: var(--discret, #9f99ad); }
   .ok .point { background: var(--ok, #5fdcae); }
   .moyen .point { background: var(--alerte, #ffd166); }
@@ -297,11 +297,11 @@
   .av { margin-left: -10px; display: inline-flex; }
   .av:first-child { margin-left: 0; }
   .annonces { position: absolute; top: 64px; left: 50%; transform: translateX(-50%); z-index: 9; display: grid; gap: 6px; justify-items: center; pointer-events: none; }
-  .annonce { margin: 0; padding: 8px 16px; border-radius: 999px; background: rgba(13, 12, 18, 0.85); backdrop-filter: blur(8px); font-size: 0.95rem; animation: entre 180ms ease-out; }
+  .annonce { margin: 0; padding: 8px 16px; border-radius: 999px; background: rgba(10, 11, 28, 0.85); backdrop-filter: blur(8px); font-size: 0.95rem; animation: entre 180ms ease-out; }
   @keyframes entre { from { opacity: 0; transform: translateY(-6px); } }
-  .apercu { position: absolute; z-index: 6; bottom: 130px; left: 50%; transform: translateX(-50%); margin: 0; max-width: 280px; padding: 6px 14px; border-radius: 999px; background: rgba(13, 12, 18, 0.85); font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .conseil { position: absolute; z-index: 6; top: 64px; left: 16px; margin: 0; padding: 8px 14px; border-radius: 12px; background: rgba(13, 12, 18, 0.85); font-size: 0.85rem; max-width: 360px; }
-  .conseil button { background: none; border: 0; color: var(--lampe, #1f5ce0); text-decoration: underline; padding: 0 0 0 6px; }
+  .apercu { position: absolute; z-index: 6; bottom: 130px; left: 50%; transform: translateX(-50%); margin: 0; max-width: 280px; padding: 6px 14px; border-radius: 999px; background: rgba(10, 11, 28, 0.85); font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .conseil { position: absolute; z-index: 6; top: 64px; left: 16px; margin: 0; padding: 8px 14px; border-radius: 12px; background: rgba(10, 11, 28, 0.85); font-size: 0.85rem; max-width: 360px; }
+  .conseil button { background: none; border: 0; color: var(--lampe); text-decoration: underline; padding: 0 0 0 6px; }
   .bas { position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; transition: opacity 220ms; }
   .repos .haut, .repos .bas { opacity: 0; pointer-events: none; }
   .repos .conseil { display: none; }

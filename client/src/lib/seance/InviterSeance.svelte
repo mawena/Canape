@@ -125,7 +125,7 @@
   .inviter > button:first-child { position: relative; z-index: 32; }
   .rond { min-width: 44px; padding: 0 12px; border-radius: 999px; }
   .rond:hover { background: rgba(255, 255, 255, 0.12); }
-  .rond.actif { background: var(--lampe-fond); color: var(--lampe, #1f5ce0); }
+  .rond.actif { background: var(--lampe-fond); color: var(--lampe); }
   .secondaire { padding: 0 18px; border-radius: var(--r-m, 12px); background: var(--s3); border: 1px solid var(--bord-vif); font-weight: 600; }
   .libelle { font-size: 14.5px; font-weight: 600; display: none; }
   .secondaire .libelle { display: inline; }
@@ -156,7 +156,7 @@
   @media (max-width: 640px) {
     /* La feuille du bas passe devant toute la barre, boutons compris (le voile sombre la ferme d'une touche). */
     .inviter > button:first-child { z-index: auto; }
-    .voile { background: rgba(6, 5, 10, 0.55); }
+    .voile { background: rgba(6, 7, 18, 0.55); }
     .panneau { position: fixed; left: 0; right: 0; bottom: 0; width: auto; border-radius: 22px 22px 0 0; border-bottom: 0; padding-bottom: calc(20px + env(safe-area-inset-bottom)); animation: monte 200ms var(--ease, ease-out); }
     .bouton .panneau { left: 0; }
     .poignee { display: block; width: 36px; height: 4px; border-radius: 2px; background: var(--bord-champ); margin: -6px auto 0; }

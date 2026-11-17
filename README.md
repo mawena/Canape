@@ -47,7 +47,7 @@ même temps, chacun avec son volume. Les caméras et les micros circulent direct
 - Fin de séance : à la fin du film (ou quand l'hôte termine la séance), un écran « C'était bien. 1 h 52 ensemble » avec les présents et une note d'un mot (coup de cœur, bien, bof) que chacun voit arriver en direct ; « Revoir la fin » le ferme, il ne revient pas tout seul. L'historique garde le souvenir de chaque séance (présents, temps ensemble, notes) et permet de noter après coup.
 
 **Application**
-- Interface en français, installable sur téléphone et ordinateur (PWA).
+- Interface en français, installable sur téléphone et ordinateur (PWA). Thème clair par défaut (papier chaud, encre bleu nuit, indigo d'action), sombre en option ou selon l'appareil ; direction artistique dans `docs/DESIGN.md`.
 - Mise en production automatique par GitHub Actions, avec retour arrière automatique en cas d'échec.
 
 ## Comment ça marche

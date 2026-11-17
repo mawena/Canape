@@ -153,7 +153,7 @@
     <!-- 1. La séance en cours ou la prochaine ; sinon le lancement rapide -->
     {#if ceSoir}
       <section class="hero ce-soir" aria-labelledby="titre-ce-soir" data-test="seance-hero" data-etat={enCours ? 'en-cours' : 'prevue'}>
-        <Lueur couleur={lueurCouleur} intensite={0.34} position="gauche" />
+        <Lueur couleur={lueurCouleur} intensite={0.18} position="gauche" />
         <div class="affiche-hero">
           <AfficheFilm
             {...(filmDeSeance ? { film: filmDeSeance } : { titre: ceSoir.filmTitre ?? 'Film' })}
@@ -263,26 +263,30 @@
     position: relative; isolation: isolate; overflow: hidden; display: grid; grid-template-columns: 220px 1fr; gap: 36px; align-items: center;
     padding: var(--e-8); border-radius: var(--r-xl); background: var(--s1); border: 1px solid var(--bord); box-shadow: var(--ombre-3);
   }
-  /* Carte vedette : dégradé bleu → indigo, texte blanc, jetons locaux pour que tout reste lisible dessus (AA calculé) */
+  /* Carte vedette : fond nuit uni (léger dégradé). Thème sombre local
+     (jetons locaux) : texte clair, focus clair ; le bouton principal devient blanc à texte nuit. */
   .hero.ce-soir {
-    --texte: #ffffff; --doux: #e8edff; --discret: #dbe2ff;
-    background: var(--hero-degrade); border-color: transparent; color: #fff;
-    box-shadow: 0 24px 56px -16px rgba(55, 48, 163, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    --texte: #ffffff; --doux: #e4e3f5; --discret: #d4d3ec; --lampe-vive: #c7caff;
+    background: var(--hero-degrade); border-color: rgba(255, 255, 255, 0.08); color: #fff;
+    box-shadow: var(--ombre-3), inset 0 1px 0 rgba(255, 255, 255, 0.08);
   }
-  .hero .puces :global(.badge) { background: rgba(255, 255, 255, 0.2); color: #fff; }
-  .hero .compte { color: #fff; }
-  .hero :global(.bouton.primaire) { background: #fff; color: #1e3a8a; box-shadow: 0 10px 24px -8px rgba(15, 23, 42, 0.5); }
-  .hero :global(.bouton.primaire:hover:not(:disabled)) { background: #eef2ff; box-shadow: 0 14px 30px -8px rgba(15, 23, 42, 0.6); }
-  .hero :global(.bouton.secondaire) { background: rgba(255, 255, 255, 0.14); border-color: rgba(255, 255, 255, 0.55); color: #fff; box-shadow: none; }
-  .hero :global(.bouton.secondaire:hover:not(:disabled)) { background: rgba(255, 255, 255, 0.24); }
+  .hero .puces :global(.badge) { background: rgba(255, 255, 255, 0.12); color: #fff; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16); }
+  .hero .compte { color: var(--ambre); }
+  .hero :global(.bouton.primaire) {
+    background: linear-gradient(180deg, #ffffff, #eeedf7); color: #1b1d5c; border-color: rgba(255, 255, 255, 0.6);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2), 0 8px 20px -8px rgba(0, 0, 0, 0.5);
+  }
+  .hero :global(.bouton.primaire:hover:not(:disabled)) { filter: none; background: #ffffff; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2), 0 10px 24px -8px rgba(0, 0, 0, 0.55); }
+  .hero :global(.bouton.secondaire) { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.4); color: #fff; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12); }
+  .hero :global(.bouton.secondaire:hover:not(:disabled)) { background: rgba(255, 255, 255, 0.2); border-color: rgba(255, 255, 255, 0.6); }
   .hero.chargement { align-items: start; }
   .lignes { display: grid; gap: 14px; }
-  .affiche-hero { filter: drop-shadow(0 0 60px color-mix(in srgb, var(--lampe) 30%, transparent)); }
+  
   .affiche-hero :global(.affiche) { box-shadow: var(--lueur-hero); }
   .contenu { display: grid; gap: var(--e-3); min-width: 0; justify-items: start; }
   .puces { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
   .compte { font-weight: 600; color: var(--lampe); font-size: 16px; }
-  .hero h2 { font: 400 clamp(2.25rem, 5vw, 3.375rem) / 1 var(--titre); letter-spacing: -0.01em; text-wrap: balance; }
+  .hero h2 { font: 400 clamp(2.25rem, 5vw, 3.5rem) / 1 var(--titre); letter-spacing: -0.01em; text-wrap: balance; }
   .programme-soiree { margin: 0; font-weight: 600; opacity: 0.9; max-width: 52ch; }
   .resume { color: var(--doux); max-width: 60ch; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .qui { display: flex; align-items: center; gap: 14px; color: var(--doux); margin: 6px 0 4px; }
@@ -300,14 +304,15 @@
   .reprises { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--e-3); grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); }
   .reprise {
     display: flex; align-items: center; gap: 14px; padding: var(--e-4); min-height: 44px; border-radius: var(--r-l); text-decoration: none; color: var(--texte);
-    background: var(--s1); border: 1px solid var(--bord); box-shadow: var(--ombre-1, none);
+    background: var(--s1); border: 1px solid var(--bord); box-shadow: var(--ombre-1);
+    transition: border-color var(--d-1) var(--ease), box-shadow var(--d-2) var(--ease), transform var(--d-2) var(--ease);
   }
   .reprise:focus-visible { outline: 3px solid var(--lampe); outline-offset: 2px; }
-  @media (hover: hover) { .reprise:hover { border-color: var(--lampe); } }
+  @media (hover: hover) { .reprise:hover { border-color: var(--bord-vif); box-shadow: var(--ombre-2); } }
   .reprise .texte { display: grid; gap: 6px; min-width: 0; flex: 1; }
   .reprise .nom { font-weight: 600; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
   .reprise .sous { color: var(--doux); font-size: 14px; }
-  .reprise .jouer { flex: none; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: var(--lampe); color: #fff; }
+  .reprise .jouer { flex: none; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: var(--lampe-degrade); color: var(--lampe-sur); box-shadow: var(--halo-lampe); }
   .alerte { display: flex; align-items: center; gap: 8px; color: var(--alerte); font-size: 14px; }
   .lien-bouton { background: none; border: 0; padding: 0 4px; color: var(--lampe); font: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; min-height: 24px; }
 

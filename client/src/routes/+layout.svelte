@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import { onMount } from 'svelte';
-  import { goto } from '$app/navigation';
+  import { afterNavigate, goto } from '$app/navigation';
   import { page } from '$app/state';
   import { Avatar, Bouton, EtatVide, Icone, Logo, Menu, Modale, Toasts, toast, type ElementMenu, type NomIcone } from '$lib/ui/index.ts';
   import { estRouteLibre, estSalle, sectionActive } from '$lib/interface/routes.ts';
@@ -100,6 +100,18 @@
   });
 
   function ouvrirMoi(): void { moiOuvert = true; }
+  // Arrivée sur une page : le contenu apparaît en fondu court (Web Animations). Rien ne bloque les clics pendant ce
+  // temps (l'API View Transitions fige l'affichage et perd un clic rapide). Jamais vers ou depuis la salle ; rien en
+  // mouvement réduit.
+  afterNavigate((nav) => {
+    if (nav.type === 'enter' || !principal?.animate || salle) return;
+    if (nav.from?.url.pathname === nav.to?.url.pathname) return;
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    principal.animate(
+      [{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }],
+      { duration: 220, easing: 'cubic-bezier(0.2, 0, 0, 1)' },
+    );
+  });
 </script>
 
 <a class="evitement" href="#contenu">Aller au contenu</a>
@@ -117,7 +129,7 @@
   <div class="plein" role="status" aria-label="Chargement"><span class="logo-attente"><Logo taille={56} /></span></div>
 {:else}
   <header class="haut">
-    <a class="marque" href="/" aria-label="Canapé, accueil"><Logo taille={32} mot /></a>
+    <a class="marque" href="/" aria-label="Canapé, accueil"><Logo taille={30} mot /></a>
     <nav class="nav" aria-label="Navigation principale">
       {#each ONGLETS as o (o.id)}
         <a href={o.href} aria-current={section === o.id ? 'page' : undefined}>{o.libelle}</a>
@@ -173,49 +185,57 @@
   .haut {
     position: sticky; top: 0; z-index: 40; display: flex; align-items: center; gap: 28px; height: var(--barre-haute);
     padding: 0 var(--gouttiere); padding-top: env(safe-area-inset-top);
-    background: var(--fond-verre); backdrop-filter: var(--flou-verre); -webkit-backdrop-filter: var(--flou-verre); border-bottom: 1px solid var(--bord);
+    background: var(--fond-verre); backdrop-filter: var(--flou-verre); -webkit-backdrop-filter: var(--flou-verre);
+    border-bottom: 1px solid color-mix(in srgb, var(--bord) 70%, transparent);
   }
   @supports not (backdrop-filter: blur(1px)) { .haut { background: var(--s1); } }
   .marque { display: inline-flex; border-radius: var(--r-s); text-decoration: none; }
-  .nav { display: flex; gap: 4px; margin-right: auto; }
+  /* Navigation en segments : la page courante est une pastille claire posée sur un rail (avec le point de lampe). */
+  .nav {
+    display: flex; gap: 2px; margin-right: auto; padding: 4px; border-radius: var(--r-pill);
+    background: color-mix(in srgb, var(--s3) 55%, transparent); box-shadow: inset 0 1px 2px rgba(20, 16, 10, 0.06);
+  }
   .nav a {
-    position: relative; display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px; border-radius: var(--r-m);
-    color: var(--doux); text-decoration: none; font-weight: 600; transition: color var(--d-1) var(--ease), background var(--d-1) var(--ease);
+    position: relative; display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 16px; border-radius: var(--r-pill);
+    color: var(--doux); text-decoration: none; font-weight: 600; font-size: 15px;
+    transition: color var(--d-1) var(--ease), background var(--d-2) var(--ease), box-shadow var(--d-2) var(--ease);
   }
-  .nav a[aria-current='page'] { color: var(--texte); }
-  .nav a[aria-current='page']::after {
-    content: ''; position: absolute; left: 14px; right: 14px; bottom: 2px; height: 3px; border-radius: 3px;
-    background: var(--lampe); box-shadow: 0 0 12px var(--lampe-fond);
+  .nav a[aria-current='page'] { color: var(--texte); background: var(--s1); box-shadow: var(--ombre-1), inset 0 1px 0 var(--reflet); }
+  .nav a[aria-current='page']::before {
+    content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--ambre);
   }
-  @media (hover: hover) { .nav a:hover { color: var(--texte); background: var(--s1); } }
+  @media (hover: hover) { .nav a:not([aria-current='page']):hover { color: var(--texte); background: color-mix(in srgb, var(--s1) 60%, transparent); } }
   .actions-haut { display: flex; align-items: center; gap: var(--e-4); }
 
-  main { max-width: 1440px; margin: 0 auto; padding: 44px var(--gouttiere) 72px; outline: none; }
+  main { max-width: 1440px; margin: 0 auto; padding: 48px var(--gouttiere) 88px; outline: none; }
 
   .haut-mobile, .onglets-bas { display: none; }
 
   @media (max-width: 640px) {
     .haut, .nav { display: none; }
     .haut-mobile {
-      display: flex; align-items: center; justify-content: space-between; padding: calc(10px + env(safe-area-inset-top)) var(--gouttiere) 6px;
+      display: flex; align-items: center; justify-content: space-between; padding: calc(12px + env(safe-area-inset-top)) var(--gouttiere) 6px;
     }
-    main { padding: 16px var(--gouttiere) calc(var(--barre-onglets) + env(safe-area-inset-bottom) + 32px); }
+    main { padding: 16px var(--gouttiere) calc(var(--barre-onglets) + env(safe-area-inset-bottom) + 44px); }
+    /* Barre d'onglets flottante : une capsule de verre détachée des bords. */
     .onglets-bas {
-      position: fixed; z-index: 40; left: 0; right: 0; bottom: 0; display: grid; grid-template-columns: repeat(4, 1fr);
-      padding: 6px 8px env(safe-area-inset-bottom); min-height: var(--barre-onglets); background: var(--fond-verre); backdrop-filter: var(--flou-verre); -webkit-backdrop-filter: var(--flou-verre); border-top: 1px solid var(--bord);
+      position: fixed; z-index: 40; left: 12px; right: 12px; bottom: calc(10px + env(safe-area-inset-bottom));
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; padding: 6px; min-height: var(--barre-onglets);
+      border-radius: 26px; background: var(--fond-verre); backdrop-filter: var(--flou-verre); -webkit-backdrop-filter: var(--flou-verre);
+      border: 1px solid color-mix(in srgb, var(--bord-vif) 60%, transparent); box-shadow: var(--ombre-3), inset 0 1px 0 var(--reflet);
     }
+    @supports not (backdrop-filter: blur(1px)) { .onglets-bas { background: var(--s1); } }
     .onglets-bas a, .onglets-bas button {
-      display: grid; justify-items: center; align-content: center; gap: 2px; min-height: 52px; border: 0; background: transparent;
+      display: grid; justify-items: center; align-content: center; gap: 2px; min-height: 52px; border: 0; border-radius: 20px; background: transparent;
       color: var(--discret); font: 600 11px/1.2 var(--texte-police); text-decoration: none; position: relative;
+      transition: background var(--d-2) var(--ease), color var(--d-1) var(--ease);
     }
-    .onglets-bas [aria-current='page'] { color: var(--lampe); }
-    .onglets-bas [aria-current='page']::before {
-      content: ''; position: absolute; top: 0; width: 28px; height: 3px; border-radius: 0 0 3px 3px; background: var(--lampe); box-shadow: 0 0 12px var(--lampe-fond);
-    }
+    .onglets-bas [aria-current='page'] { color: var(--lampe); background: var(--lampe-fond); }
   }
-  @media (min-width: 641px) and (max-width: 860px) {
+  @media (min-width: 641px) and (max-width: 900px) {
     .haut { gap: 12px; }
-    .nav a { padding: 0 11px; }
+    .nav a { padding: 0 12px; }
+    .nav a[aria-current='page']::before { display: none; }
   }
 
   .moi { display: grid; gap: 2px; margin: 0 -8px; }

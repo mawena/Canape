@@ -53,13 +53,13 @@
 
 <style>
   dialog {
-    background: var(--s2); color: var(--texte); border: 1px solid var(--bord-vif); border-radius: var(--r-xl);
+    background: var(--s1); color: var(--texte); border: 1px solid var(--bord); border-radius: var(--r-xl);
     padding: var(--e-7) var(--e-7) var(--e-6); width: min(440px, calc(100vw - 32px)); max-height: calc(100dvh - 48px);
     box-shadow: var(--ombre-4); overflow: auto; margin: auto;
   }
   dialog.large { width: min(640px, calc(100vw - 32px)); }
   dialog[open] { animation: entree var(--d-2) var(--ease); }
-  dialog::backdrop { background: var(--voile); }
+  dialog::backdrop { background: var(--voile); backdrop-filter: blur(6px) saturate(1.2); -webkit-backdrop-filter: blur(6px) saturate(1.2); }
   .poignee { display: none; }
   header { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--e-3); margin-bottom: var(--e-2); }
   h2 { font: 700 1.375rem / 1.25 var(--texte-police); letter-spacing: -0.02em; }

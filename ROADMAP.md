@@ -279,3 +279,19 @@ par identifiant et mot de passe ne change pas.
 - [x] Essais unitaires (jeton, state/nonce/PKCE, compte non lié, mode désactivé) ; documentation (`docs/PORTIER.md`)
 - [x] Release 1.14.0
 - [ ] Déclarer le client `canape` dans Portier, activer sur le VPS (Charles)
+
+## Phase 27 — Direction artistique 3 : « la nuit, une lampe allumée »
+
+Pousser le design au plus haut : une identité de cinéma reconnaissable au lieu d'un bleu « logiciel » générique, sans
+revenir au tout sombre (refusé en phase 14). Clair par défaut, sombre en option, mêmes noms de jetons.
+
+- [x] Recherche (tendances 2026, Liquid Glass, OKLCH, éditorial) et parti pris : papier chaud, encre bleu nuit, indigo d'action, lampe ambre
+- [x] Nouveaux jetons des deux thèmes (contrastes AA vérifiés par script), grain de film, ombres en couches, verre
+- [x] Kit : boutons, champs, affiches, badges, onglets, cartes, modales, menus, états vides
+- [x] Navigation (barre du haut, onglets du téléphone) et transitions de page (View Transitions, mouvement réduit respecté)
+- [x] Écrans vedettes : accueil « Ce soir », connexion, inscription, invitation, règles (nuit + lampe + grain)
+- [x] Salle, sas et lecteur alignés (verre, lampe ambre), icônes et écrans de démarrage
+- [x] Version sobre demandée par Charles (moins d'effets : pas d'affiche inclinée, peu de halos, pas de rebond)
+- [x] Captures avant / après (ordinateur), DESIGN.md, README, CHANGELOG 1.15.0 à jour
+- [x] Essais Playwright : suite complète chromium + téléphone verte (61 réussis) ; la transition View Transitions perdait un clic rapide après navigation, remplacée par un fondu Web Animations
+- [x] Release (mineure)

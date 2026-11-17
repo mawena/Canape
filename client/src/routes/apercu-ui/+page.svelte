@@ -164,7 +164,7 @@
   section { display: grid; gap: var(--e-4); align-content: start; }
   .palette { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
   .teinte { min-height: 80px; border-radius: var(--r-m); border: 1px solid var(--bord); display: flex; align-items: flex-end; padding: 10px; }
-  .n { font-size: 12px; font-weight: 600; background: rgba(13, 12, 18, 0.75); color: var(--texte); padding: 2px 8px; border-radius: 999px; }
+  .n { font-size: 12px; font-weight: 600; background: rgba(10, 11, 28, 0.75); color: var(--texte); padding: 2px 8px; border-radius: 999px; }
   .rang { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
   .icones { gap: 8px; }
   .ic { display: grid; place-items: center; width: 44px; height: 44px; border-radius: var(--r-m); background: var(--s1); border: 1px solid var(--bord); color: var(--doux); }

@@ -48,12 +48,12 @@
   label { font-size: 14px; font-weight: 600; color: var(--doux); }
   .entree { position: relative; display: flex; }
   input {
-    width: 100%; min-height: 48px; padding: 0 16px; background: var(--s2); color: var(--texte);
-    border: 1px solid var(--bord-champ); border-radius: var(--r-m); font-size: 16px; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25);
-    transition: border-color var(--d-1) var(--ease);
+    width: 100%; min-height: 48px; padding: 0 16px; background: var(--s1); color: var(--texte);
+    border: 1px solid var(--bord-champ); border-radius: var(--r-m); font-size: 16px; box-shadow: inset 0 1px 2px rgba(20, 16, 10, 0.05);
+    transition: border-color var(--d-1) var(--ease), box-shadow var(--d-2) var(--ease);
   }
   input::placeholder { color: var(--discret); }
-  input:focus { outline: 3px solid var(--lampe-vive); outline-offset: 2px; border-color: var(--lampe); }
+  input:focus { outline: none; border-color: var(--lampe); box-shadow: 0 0 0 1px var(--lampe), 0 0 0 5px var(--lampe-fond); }
   input[aria-invalid='true'] { border-color: var(--mal); }
   input:disabled { opacity: 0.45; cursor: not-allowed; }
   .avec-bouton { padding-right: 112px; }

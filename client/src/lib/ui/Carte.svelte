@@ -25,7 +25,7 @@
 
 <style>
   .carte {
-    background: var(--s1); border: 1px solid var(--bord); border-radius: var(--r-l); box-shadow: inset 0 1px 0 var(--reflet);
+    background: var(--s1); border: 1px solid var(--bord); border-radius: var(--r-l); box-shadow: var(--ombre-1), inset 0 1px 0 var(--reflet);
     padding: var(--e-6); display: grid; gap: var(--e-4); min-width: 0;
   }
   .doree { border-color: var(--lampe); }
