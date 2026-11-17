@@ -36,10 +36,11 @@
   label { font-size: 14px; font-weight: 500; color: var(--doux); }
   .boite { position: relative; display: flex; align-items: center; }
   select {
-    width: 100%; min-height: 48px; padding: 0 44px 0 16px; background: var(--s2); color: var(--texte);
-    border: 1px solid var(--bord-champ); border-radius: var(--r-m); font-size: 16px; appearance: none; cursor: pointer;
+    width: 100%; min-height: 48px; padding: 0 44px 0 16px; background: var(--s1); color: var(--texte);
+    border: 1px solid var(--bord-champ); border-radius: var(--r-m); font-size: 16px; appearance: none; box-shadow: inset 0 1px 2px rgba(20, 16, 10, 0.05);
+    transition: border-color var(--d-1) var(--ease), box-shadow var(--d-2) var(--ease); cursor: pointer;
   }
-  select:focus { outline: 3px solid var(--lampe-vive); outline-offset: 2px; border-color: var(--lampe); }
+  select:focus { outline: none; border-color: var(--lampe); box-shadow: 0 0 0 1px var(--lampe), 0 0 0 5px var(--lampe-fond); }
   select:disabled { opacity: 0.45; cursor: not-allowed; }
   option { background: var(--s2); color: var(--texte); }
   .boite :global(.fleche) { position: absolute; right: 14px; color: var(--doux); pointer-events: none; }

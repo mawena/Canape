@@ -25,12 +25,13 @@
   .recherche { position: relative; display: flex; align-items: center; min-width: 0; }
   .recherche :global(.loupe) { position: absolute; left: 16px; color: var(--discret); pointer-events: none; }
   input {
-    width: 100%; min-height: 48px; padding: 0 48px 0 46px; background: var(--s2); color: var(--texte);
-    border: 1px solid var(--bord-champ); border-radius: var(--r-pill); font-size: 16px; appearance: none;
+    width: 100%; min-height: 48px; padding: 0 48px 0 46px; background: var(--s1); color: var(--texte);
+    border: 1px solid var(--bord-champ); border-radius: var(--r-pill); font-size: 16px; appearance: none; box-shadow: inset 0 1px 2px rgba(20, 16, 10, 0.05);
+    transition: border-color var(--d-1) var(--ease), box-shadow var(--d-2) var(--ease);
   }
   input::-webkit-search-cancel-button { display: none; }
   input::placeholder { color: var(--discret); }
-  input:focus { outline: 3px solid var(--lampe-vive); outline-offset: 2px; border-color: var(--lampe); }
+  input:focus { outline: none; border-color: var(--lampe); box-shadow: 0 0 0 1px var(--lampe), 0 0 0 5px var(--lampe-fond); }
   .effacer {
     position: absolute; right: 6px; display: grid; place-items: center; width: 36px; height: 36px;
     border: 0; border-radius: 50%; background: transparent; color: var(--doux);

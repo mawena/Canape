@@ -7,7 +7,7 @@
    * - `film` : un `Film` de `@canape/partage` (ou `{ id, titre, annee, duree, etat, aAffiche, visibilite? }`) ; sert de valeurs par défaut.
    * - `titre`, `annee`, `dureeSecondes`, `imageSrc` (URL ; `/api/films/<id>/affiche` si `film.aAffiche`), `couleur`, `etat`
    *   (`pret` | `analyse` | `erreur`), `preparation` (0–1, affiche « Préparation 62 % »), `partage`, `nouveau`.
-   * - `progression` : 0–1, barre de reprise (5 px lampe au pied). `sousTitre` : remplace « année · durée ».
+   * - `progression` : 0–1, barre de reprise (4 px ambre, en bas de l'affiche). `sousTitre` : remplace « année · durée ».
    * - `taille` : `normal` ou `petit` (rangées défilantes du téléphone). `selectionnable`/`selectionne`/`surSelection` : case en coin.
    */
   import { couleurValide, formaterDuree, teinteTitre } from './format.ts';
@@ -127,11 +127,20 @@
   .lien:focus-visible .affiche { outline: 3px solid var(--lampe-vive); outline-offset: 3px; }
   .affiche {
     position: relative; display: block; aspect-ratio: 2 / 3; border-radius: var(--r-affiche); overflow: hidden; isolation: isolate;
-    background: var(--s2); box-shadow: var(--ombre-2), 0 0 0 1px rgba(255, 255, 255, 0.06);
-    transition: transform var(--d-2) var(--ease), box-shadow var(--d-2) var(--ease);
+    background: var(--s2); box-shadow: var(--ombre-2);
+    transition: transform var(--d-3) var(--ease), box-shadow var(--d-3) var(--ease);
+  }
+  /* Filet intérieur (bord net sur papier comme sur nuit) et reflet de vitrine qui glisse au survol */
+  .affiche::after {
+    content: ''; position: absolute; inset: 0; z-index: 3; border-radius: inherit; pointer-events: none;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.16) 45%, transparent 60%) no-repeat;
+    background-size: 250% 100%; background-position: 130% 0; transition: background-position 700ms var(--ease);
   }
   @media (hover: hover) {
-    .lien:hover .affiche { transform: translateY(-4px); box-shadow: 0 18px 36px rgba(0, 0, 0, 0.5), 0 0 40px -6px var(--lueur); }
+    .lien:hover .affiche { transform: translateY(-6px); box-shadow: 0 2px 4px rgba(20, 16, 10, 0.08), 0 24px 40px -12px rgba(10, 10, 40, 0.45), 0 0 48px -6px var(--lueur); }
+    .lien:hover .affiche::after { background-position: -30% 0; }
+    .lien:hover .nom { color: var(--lampe); }
   }
   img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .affiche.sans { background: linear-gradient(160deg, var(--h1), var(--h2)); }
@@ -144,10 +153,10 @@
   .annee-affiche { position: absolute; left: 12px; bottom: 12px; z-index: 1; color: rgba(255, 255, 255, 0.85); font: 500 12px / 1 var(--texte-police); }
   .petit .titre-affiche { font-size: 19px; bottom: 28px; left: 9px; right: 9px; }
   .badges { position: absolute; top: 8px; left: 8px; z-index: 2; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
-  .progres { position: absolute; left: 0; right: 0; bottom: 0; height: 5px; background: rgba(0, 0, 0, 0.5); z-index: 2; }
-  .progres i { display: block; height: 100%; background: var(--lampe); }
+  .progres { position: absolute; left: 8px; right: 8px; bottom: 8px; height: 4px; border-radius: 4px; overflow: hidden; background: rgba(255, 255, 255, 0.28); z-index: 2; }
+  .progres i { display: block; height: 100%; border-radius: inherit; background: var(--ambre); box-shadow: 0 0 10px var(--ambre-lueur); }
   .textes { display: grid; gap: 2px; min-width: 0; }
-  .nom { font: 650 15px / 1.25 var(--texte-police); display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .nom { transition: color var(--d-1) var(--ease); font: 650 15px / 1.25 var(--texte-police); letter-spacing: -0.01em; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .detail { color: var(--discret); font-size: 14px; line-height: 20px; }
   .petit .nom { font-size: 14px; }
   .petit .detail { font-size: 13px; }

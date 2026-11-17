@@ -212,7 +212,7 @@
   .recherche, select { background: var(--s2); border: 1px solid var(--bord-champ); border-radius: var(--r-m); padding: 0 14px; color: var(--texte); height: 48px; font-size: 16px; }
   .recherche { flex: 1; min-width: 180px; }
   .recherche::placeholder { color: var(--discret); }
-  .recherche:focus, select:focus { outline: 3px solid var(--lampe-vive); outline-offset: 2px; border-color: var(--lampe); }
+  .recherche:focus, select:focus { outline: none; border-color: var(--lampe); box-shadow: 0 0 0 1px var(--lampe), 0 0 0 5px var(--lampe-fond); }
   .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
   .erreur { color: var(--mal, #ff7b6e); }
   .choix { display: grid; gap: var(--e-3); }

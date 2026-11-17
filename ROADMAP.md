@@ -279,3 +279,17 @@ par identifiant et mot de passe ne change pas.
 - [x] Essais unitaires (jeton, state/nonce/PKCE, compte non lié, mode désactivé) ; documentation (`docs/PORTIER.md`)
 - [x] Release 1.14.0
 - [ ] Déclarer le client `canape` dans Portier, activer sur le VPS (Charles)
+
+## Phase 27 — Direction artistique 3 : « la nuit, une lampe allumée »
+
+Pousser le design au plus haut : une identité de cinéma reconnaissable au lieu d'un bleu « logiciel » générique, sans
+revenir au tout sombre (refusé en phase 14). Clair par défaut, sombre en option, mêmes noms de jetons.
+
+- [ ] Recherche (tendances 2026, Liquid Glass, OKLCH, éditorial) et parti pris : papier chaud, encre bleu nuit, indigo d'action, lampe ambre
+- [ ] Nouveaux jetons des deux thèmes (contrastes AA vérifiés par script), grain de film, ombres en couches, verre
+- [ ] Kit : boutons, champs, affiches, badges, onglets, cartes, modales, menus, états vides
+- [ ] Navigation (barre du haut, onglets du téléphone) et transitions de page (View Transitions, mouvement réduit respecté)
+- [ ] Écrans vedettes : accueil « Ce soir », connexion, inscription, invitation, règles (nuit + lampe + grain)
+- [ ] Salle, sas et lecteur alignés (verre, lampe ambre), icônes et écrans de démarrage
+- [ ] Captures avant / après (ordinateur, téléphone), DESIGN.md à jour, essais Playwright verts
+- [ ] Release (mineure)
