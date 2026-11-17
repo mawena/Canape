@@ -62,6 +62,19 @@ export interface Config {
   turnSecret: string;
   tlsCert: string;
   tlsCle: string;
+  /** Connexion facultative par Portier (OpenID Connect) ; `null` = désactivée (défaut). */
+  portier: ConfigPortier | null;
+}
+
+export interface ConfigPortier {
+  /** Émetteur (`issuer`) sans « / » final, ex. `https://portier.mawena.cloud`. */
+  emetteur: string;
+  clientId: string;
+  clientSecret: string;
+  /** Adresse de retour (`redirect_uri`) déclarée chez Portier. */
+  retour: string;
+  /** Nom Portier (`preferred_username`) ou e-mail, en minuscules → identifiant du compte Canapé lié. */
+  comptes: Map<string, string>;
 }
 
 export const ICE_DEFAUT: ServeurIce[] = [{ urls: 'stun:stun.l.google.com:19302' }];
@@ -125,6 +138,57 @@ function choix<T extends string>(v: string | undefined, valeurs: readonly T[], d
 function partagePrives(v: string | undefined): number | null {
   if (v === undefined || v.trim() === '' || v.trim().toLowerCase() === 'toujours') return null;
   return decimal(v, 0, 'CANAPE_TORRENT_PARTAGE_PRIVES', 0, 1000);
+}
+
+/** `nom:identifiant, autre@exemple.fr:identifiant2` → table (clés en minuscules). */
+export function analyserComptesPortier(v: string): Map<string, string> {
+  const table = new Map<string, string>();
+  for (const brut of v.split(',')) {
+    const morceau = brut.trim();
+    if (!morceau) continue;
+    const i = morceau.lastIndexOf(':');
+    const cle = i > 0 ? morceau.slice(0, i).trim().toLowerCase() : '';
+    const identifiant = i > 0 ? morceau.slice(i + 1).trim() : '';
+    if (!cle || !identifiant) {
+      throw new Error(`CANAPE_PORTIER_COMPTES : « ${morceau} » n'est pas de la forme nom-portier:identifiant-canape.`);
+    }
+    table.set(cle, identifiant);
+  }
+  return table;
+}
+
+function configPortier(v: Record<string, string | undefined>, urlPublique: string): ConfigPortier | null {
+  if (!booleen(v['CANAPE_PORTIER'], false)) return null;
+  const emetteur = (v['CANAPE_PORTIER_EMETTEUR'] || 'https://portier.mawena.cloud').trim().replace(/\/+$/, '');
+  try {
+    const u = new URL(emetteur);
+    if (u.protocol !== 'https:' && !['localhost', '127.0.0.1', '[::1]'].includes(u.hostname)) throw new Error('https attendu');
+  } catch {
+    throw new Error(`CANAPE_PORTIER_EMETTEUR n'est pas une adresse https valide (« ${emetteur} »).`);
+  }
+  let clientSecret = v['CANAPE_PORTIER_SECRET'] || '';
+  const fichierSecret = v['CANAPE_PORTIER_SECRET_FICHIER'] || '';
+  if (!clientSecret && fichierSecret) {
+    try {
+      clientSecret = readFileSync(fichierSecret, 'utf8').trim();
+    } catch (e) {
+      throw new Error(`CANAPE_PORTIER_SECRET_FICHIER illisible (« ${fichierSecret} » : ${(e as Error).message}).`);
+    }
+  }
+  if (!clientSecret) throw new Error('CANAPE_PORTIER=1 demande CANAPE_PORTIER_SECRET ou CANAPE_PORTIER_SECRET_FICHIER.');
+  const retour = (v['CANAPE_PORTIER_RETOUR'] || `${urlPublique}/api/portier/retour`).trim();
+  try {
+    new URL(retour);
+  } catch {
+    throw new Error(`CANAPE_PORTIER_RETOUR n'est pas une adresse valide (« ${retour} »).`);
+  }
+  return {
+    emetteur,
+    clientId: (v['CANAPE_PORTIER_CLIENT_ID'] || 'canape').trim(),
+    clientSecret,
+    retour,
+    comptes: analyserComptesPortier(v['CANAPE_PORTIER_COMPTES'] || ''),
+  };
 }
 
 function decimal(v: string | undefined, defaut: number, nom: string, min: number, max: number): number {
@@ -212,5 +276,6 @@ export function chargerConfig(env: Record<string, string | undefined> = process.
     turnSecret: v['CANAPE_TURN_SECRET'] || '',
     tlsCert: v['CANAPE_TLS_CERT'] || '',
     tlsCle: v['CANAPE_TLS_CLE'] || '',
+    portier: configPortier(v, urlPublique),
   };
 }

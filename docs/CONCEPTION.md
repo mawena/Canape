@@ -122,6 +122,7 @@ Sur le VPS : `/etc/canape/canape.conf` lu par systemd.
 | `CANAPE_TMDB_CLE` | vide | clé TMDB (affiches, résumés) |
 | `CANAPE_ICE`, `CANAPE_TURN_URLS`, `CANAPE_TURN_SECRET` | STUN Google / vides | comme en 0.1 |
 | `CANAPE_TLS_CERT`, `CANAPE_TLS_CLE` | vides | HTTPS direct (sinon nginx) |
+| `CANAPE_PORTIER` et `CANAPE_PORTIER_*` | `0` | connexion facultative par Portier (OpenID Connect), en plus du mot de passe : voir `docs/PORTIER.md` |
 | `CANAPE_ENTRACTE_SECONDES` | `300` | **essais seulement** : durée de l'entracte d'une soirée (1 à 3600 ; « +5 min » ajoute la même durée) |
 
 ## Données (SQLite)

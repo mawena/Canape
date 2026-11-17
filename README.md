@@ -21,6 +21,7 @@ même temps, chacun avec son volume. Les caméras et les micros circulent direct
 
 **Comptes et accès**
 - Inscription libre (réglable) : n'importe qui peut créer son compte sur `/inscription` ; l'administrateur peut aussi inviter par lien (valable 7 jours, usage unique), fermer les inscriptions ou fixer leurs limites.
+- Connexion facultative par **Portier** (OpenID Connect, second facteur) en plus du mot de passe, pour les comptes liés ; désactivée par défaut.
 - Deux rôles : `admin` et `viewer` ; quota d'espace par compte, droit de téléverser retirable.
 - Un film est privé par défaut ; son propriétaire le partage avec certains comptes ou avec tous.
 
@@ -225,8 +226,22 @@ Réglages dans `/etc/canape/canape.conf` (format `CLÉ=valeur`, `#` pour un comm
 | `CANAPE_TURN_URLS` | vide | URL du relais TURN, séparées par des virgules |
 | `CANAPE_TURN_SECRET` | vide | secret partagé avec coturn (identifiants temporaires par navigateur) |
 | `CANAPE_TLS_CERT`, `CANAPE_TLS_CLE` | vides | HTTPS servi directement par Node (inutile derrière nginx) |
+| `CANAPE_PORTIER` | `0` | `1` : bouton « Se connecter via Portier » en plus du mot de passe (voir ci-dessous) |
+| `CANAPE_PORTIER_EMETTEUR` | `https://portier.mawena.cloud` | émetteur OpenID Connect de Portier |
+| `CANAPE_PORTIER_CLIENT_ID` | `canape` | client déclaré dans Portier |
+| `CANAPE_PORTIER_SECRET` ou `CANAPE_PORTIER_SECRET_FICHIER` | vides | secret du client (ou fichier qui le contient) |
+| `CANAPE_PORTIER_RETOUR` | `<CANAPE_URL_PUBLIQUE>/api/portier/retour` | adresse de retour à déclarer dans Portier |
+| `CANAPE_PORTIER_COMPTES` | vide | comptes liés : `nom-portier:identifiant-canape`, séparés par des virgules |
 
 Le contrat complet est dans [`docs/CONCEPTION.md`](docs/CONCEPTION.md), section « Configuration ».
+
+### Connexion par Portier (facultative)
+
+Avec `CANAPE_PORTIER=1`, la page de connexion propose aussi **« Se connecter via Portier »** (OpenID Connect,
+mot de passe + second facteur chez Portier). L'identifiant et le mot de passe Canapé marchent toujours. Aucun compte
+n'est créé : la personne Portier doit être liée à un compte Canapé existant par `CANAPE_PORTIER_COMPTES`
+(ex. `charles-gamligo:charles`), sinon la connexion est refusée. Adresse de retour à déclarer dans Portier :
+`https://<votre-domaine>/api/portier/retour`. Mise en place pas à pas : [`docs/PORTIER.md`](docs/PORTIER.md).
 
 ## Torrents et Transmission
 
@@ -317,6 +332,7 @@ docs/                 conception, design, recherche technique, guide de déploie
 - [`docs/DESIGN.md`](docs/DESIGN.md) : direction artistique et produit (maquette : `docs/maquettes/canape.html`).
 - [`docs/RECHERCHE-TECHNIQUE.md`](docs/RECHERCHE-TECHNIQUE.md) : recherche et mesures (conversion, écho, TURN…).
 - [`docs/DEPLOIEMENT.md`](docs/DEPLOIEMENT.md) : guide d'exploitation du serveur.
+- [`docs/PORTIER.md`](docs/PORTIER.md) : connexion facultative par Portier (OpenID Connect).
 - [`ROADMAP.md`](ROADMAP.md) : feuille de route.
 - [`CHANGELOG.md`](CHANGELOG.md) : journal des versions.
 
