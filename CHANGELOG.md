@@ -2,6 +2,25 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) ; versions selon [SemVer](https://semver.org/lang/fr/).
 
+## [1.16.0] — 2026-11-18
+
+Nouvelle direction artistique : « éditorial cinéma ». La 1.15.0 changeait trop peu à l'écran ; Canapé se lit maintenant
+comme un programme de cinéma imprimé, toujours sobre.
+
+### Modifié
+
+- **Couleurs** : papier crème, encre noire, un seul accent **rouge cinéma** ; thème sombre en noir chaud. « L'autre
+  personne » passe du rose au bleu. Contrastes AA vérifiés par script.
+- **Typographie** : tous les titres en serif (pages, sections, films, séances) ; surtitres, navigation, onglets et puces
+  en capitales espacées.
+- **Composition** : sections en rubriques sur un filet d'encre ; listes séparées par des filets ; presque plus d'ombres ;
+  angles vifs ; boutons en aplat rouge ou au trait.
+- **Navigation** : bandeau de journal en haut, pied de page imprimé sur téléphone ; page courante soulignée de rouge.
+- **Accueil** : « À l'affiche » sur le papier, grande affiche et très grand titre ; affiches plus grandes partout.
+- **Fiche film** : plus de fond flou coloré ; grand titre sur filet. **Séances** : liste de programme (date en grand).
+- **Pages publiques** sur papier ; **salle, sas, lecteur** en noir chaud. Logo, icônes, favicon et écrans de démarrage
+  refaits (papier, encre, rouge).
+
 ## [1.15.0] — 2026-11-17
 
 Nouvelle direction artistique, sobre : « la nuit, une lampe allumée ».

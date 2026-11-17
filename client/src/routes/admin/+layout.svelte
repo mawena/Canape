@@ -46,11 +46,11 @@
 
 <style>
   .admin { max-width: 960px; margin: 0 auto; display: grid; gap: var(--e-5); }
-  nav { display: flex; gap: 2px; padding: 4px; max-width: 100%; overflow-x: auto; scrollbar-width: none; justify-self: start; background: var(--s1); border: 1px solid var(--bord); border-radius: var(--r-m); }
+  nav { display: flex; gap: var(--e-6); max-width: 100%; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--bord); }
   nav::-webkit-scrollbar { display: none; }
-  nav a { display: inline-flex; align-items: center; min-height: 40px; color: var(--doux); text-decoration: none; padding: 0 16px; border-radius: 9px; font-weight: 600; font-size: 14.5px; white-space: nowrap; }
+  nav a { display: inline-flex; align-items: center; min-height: 44px; color: var(--doux); text-decoration: none; padding: 0; border-bottom: 2px solid transparent; margin-bottom: -1px; font: 650 12.5px/1 var(--texte-police); letter-spacing: 0.1em; text-transform: uppercase; white-space: nowrap; }
   nav a:hover:not([aria-current='page']) { color: var(--texte); }
-  nav a[aria-current='page'] { color: var(--texte); background: var(--s3); box-shadow: inset 0 1px 0 var(--reflet), 0 1px 3px rgba(0, 0, 0, 0.4); }
+  nav a[aria-current='page'] { color: var(--texte); border-bottom-color: var(--lampe); }
   main { display: grid; gap: var(--e-5); align-content: start; }
   .refus { max-width: 480px; margin: var(--e-8) auto; padding: 0 var(--e-4); }
 </style>

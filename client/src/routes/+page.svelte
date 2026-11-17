@@ -3,8 +3,8 @@
   import { phraseProgramme, programmeTrie, type EtatEnvie, type Film, type FilmAVoir, type ListeSeances, type ProgressionFilm, type ReponseLienSeance, type Seance } from '@canape/partage';
   import { api, ErreurApi } from '$lib/api/client.ts';
   import {
-    AfficheFilm, BarreProgression, Bouton, Badge, EnTetePage, EtatVide, Icone, Lueur, MiniAffiche, PileAvatars, Squelette, toast,
-    couleurDuTitre, formaterDans, formaterDuree, formaterHeure, formaterJourLong,
+    AfficheFilm, BarreProgression, Bouton, Badge, EnTetePage, EtatVide, Icone, MiniAffiche, PileAvatars, Squelette, toast,
+    formaterDans, formaterDuree, formaterHeure, formaterJourLong,
   } from '$lib/ui/index.ts';
   import BoutonAgenda from '$lib/seance/BoutonAgenda.svelte';
   import { accroche, autresPersonnes, filmsARreprendre, filmsPourLancer, ouvertureSalle, salleOuverte, seanceDeCeSoir } from '$lib/interface/accueil.ts';
@@ -122,7 +122,6 @@
   }
 
   const dateDuJour = $derived(formaterJourLong(maintenant));
-  const lueurCouleur = $derived(filmDeSeance?.aAffiche ? null : ceSoir ? couleurDuTitre(ceSoir.filmTitre ?? '') : null);
   const heureSeance = $derived(ceSoir?.prevueLe ? formaterHeure(new Date(ceSoir.prevueLe)) : null);
 </script>
 
@@ -153,7 +152,6 @@
     <!-- 1. La séance en cours ou la prochaine ; sinon le lancement rapide -->
     {#if ceSoir}
       <section class="hero ce-soir" aria-labelledby="titre-ce-soir" data-test="seance-hero" data-etat={enCours ? 'en-cours' : 'prevue'}>
-        <Lueur couleur={lueurCouleur} intensite={0.18} position="gauche" />
         <div class="affiche-hero">
           <AfficheFilm
             {...(filmDeSeance ? { film: filmDeSeance } : { titre: ceSoir.filmTitre ?? 'Film' })}
@@ -162,6 +160,7 @@
         </div>
         <div class="contenu">
           <div class="entete">
+            <p class="t-surtitre a-l-affiche">À l’affiche</p>
             <p class="puces">
               <Badge ton="lampe" icone="calendrier">
                 {enCours ? 'Séance en cours' : ceSoir.termineeLe === null && !ceSoir.prevueLe ? 'Séance prête' : `${maintenant.getHours() >= 18 ? 'Séance de ce soir' : 'Séance du jour'}${heureSeance ? ` · ${heureSeance}` : ''}`}
@@ -199,7 +198,7 @@
     <!-- 2. Reprendre : un geste -->
     {#if aReprendre.length > 0}
       <section class="bloc" aria-labelledby="titre-reprendre" data-test="reprendre">
-        <div class="tete-bloc"><h2 id="titre-reprendre" class="t-titre2">Reprendre</h2></div>
+        <div class="tete-bloc rubrique"><h2 id="titre-reprendre" class="t-titre2">Reprendre</h2></div>
         <ul class="reprises">
           {#each aReprendre.slice(0, 4) as p (p.film.id)}
             <li>
@@ -230,7 +229,7 @@
     <!-- 5. Ajoutés récemment -->
     {#if recents.length > 0}
       <section class="bloc" aria-labelledby="titre-recents">
-        <div class="tete-bloc">
+        <div class="tete-bloc rubrique">
           <h2 id="titre-recents" class="t-titre2">Ajoutés récemment</h2>
           <a class="voir-tout" href={liens.galerie}>Voir tous les films</a>
         </div>
@@ -256,76 +255,64 @@
 </div>
 
 <style>
-  .accueil { display: grid; gap: var(--e-7); }
-  .accueil > :global(header) { margin-bottom: calc(var(--e-2) * -1); }
+  .accueil { display: grid; gap: var(--e-9); }
+  .accueil > :global(header) { margin-bottom: calc(var(--e-6) * -1); }
 
+  /* « À l'affiche » : une page de programme imprimé. Pas de boîte : un filet d'encre au-dessus, un filet fin dessous,
+     une grande affiche et un grand titre à empattements sur le papier. */
   .hero {
-    position: relative; isolation: isolate; overflow: hidden; display: grid; grid-template-columns: 220px 1fr; gap: 36px; align-items: center;
-    padding: var(--e-8); border-radius: var(--r-xl); background: var(--s1); border: 1px solid var(--bord); box-shadow: var(--ombre-3);
+    position: relative; display: grid; grid-template-columns: minmax(200px, 280px) 1fr; gap: 48px; align-items: center;
+    padding: var(--e-7) 0; border-top: 2px solid var(--filet); border-bottom: 1px solid var(--bord);
   }
-  /* Carte vedette : fond nuit uni (léger dégradé). Thème sombre local
-     (jetons locaux) : texte clair, focus clair ; le bouton principal devient blanc à texte nuit. */
-  .hero.ce-soir {
-    --texte: #ffffff; --doux: #e4e3f5; --discret: #d4d3ec; --lampe-vive: #c7caff;
-    background: var(--hero-degrade); border-color: rgba(255, 255, 255, 0.08); color: #fff;
-    box-shadow: var(--ombre-3), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  }
-  .hero .puces :global(.badge) { background: rgba(255, 255, 255, 0.12); color: #fff; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16); }
-  .hero .compte { color: var(--ambre); }
-  .hero :global(.bouton.primaire) {
-    background: linear-gradient(180deg, #ffffff, #eeedf7); color: #1b1d5c; border-color: rgba(255, 255, 255, 0.6);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2), 0 8px 20px -8px rgba(0, 0, 0, 0.5);
-  }
-  .hero :global(.bouton.primaire:hover:not(:disabled)) { filter: none; background: #ffffff; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2), 0 10px 24px -8px rgba(0, 0, 0, 0.55); }
-  .hero :global(.bouton.secondaire) { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.4); color: #fff; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12); }
-  .hero :global(.bouton.secondaire:hover:not(:disabled)) { background: rgba(255, 255, 255, 0.2); border-color: rgba(255, 255, 255, 0.6); }
+  .a-l-affiche { color: var(--lampe); }
+  .hero .compte { color: var(--lampe); }
   .hero.chargement { align-items: start; }
   .lignes { display: grid; gap: 14px; }
   
   .affiche-hero :global(.affiche) { box-shadow: var(--lueur-hero); }
+  .entete { gap: var(--e-3); }
   .contenu { display: grid; gap: var(--e-3); min-width: 0; justify-items: start; }
   .puces { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
   .compte { font-weight: 600; color: var(--lampe); font-size: 16px; }
-  .hero h2 { font: 400 clamp(2.25rem, 5vw, 3.5rem) / 1 var(--titre); letter-spacing: -0.01em; text-wrap: balance; }
+  .hero h2 { font: 400 clamp(2.75rem, 6.5vw, 5.5rem) / 0.95 var(--titre); letter-spacing: -0.015em; text-wrap: balance; }
   .programme-soiree { margin: 0; font-weight: 600; opacity: 0.9; max-width: 52ch; }
-  .resume { color: var(--doux); max-width: 60ch; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .resume { color: var(--doux); font-size: 17px; line-height: 1.55; max-width: 58ch; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .qui { display: flex; align-items: center; gap: 14px; color: var(--doux); margin: 6px 0 4px; }
   .boutons { display: flex; gap: var(--e-3); flex-wrap: wrap; align-items: center; }
   .aide-hero { color: var(--discret); font-size: 14px; }
 
   .bloc { display: grid; gap: var(--e-5); }
   .tete-bloc { display: flex; align-items: baseline; justify-content: space-between; gap: var(--e-4); }
-  .voir-tout { color: var(--lampe); text-decoration: none; font-weight: 600; font-size: 15px; border-radius: var(--r-s); }
+  .voir-tout { color: var(--lampe); text-decoration: none; font: 650 12.5px/1.3 var(--texte-police); letter-spacing: 0.12em; text-transform: uppercase; border-radius: var(--r-s); }
   @media (hover: hover) { .voir-tout:hover { color: var(--lampe-vive); text-decoration: underline; text-underline-offset: 4px; } }
-  .rangee { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 28px 20px; }
+  .rangee { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 36px 24px; }
   .rangee > :global(:nth-child(n + 7)) { display: none; }
 
   .entete { display: grid; gap: var(--e-2); min-width: 0; justify-items: start; }
   .reprises { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--e-3); grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); }
   .reprise {
     display: flex; align-items: center; gap: 14px; padding: var(--e-4); min-height: 44px; border-radius: var(--r-l); text-decoration: none; color: var(--texte);
-    background: var(--s1); border: 1px solid var(--bord); box-shadow: var(--ombre-1);
-    transition: border-color var(--d-1) var(--ease), box-shadow var(--d-2) var(--ease), transform var(--d-2) var(--ease);
+    background: var(--s1); border: 1px solid var(--bord);
+    transition: border-color var(--d-1) var(--ease);
   }
   .reprise:focus-visible { outline: 3px solid var(--lampe); outline-offset: 2px; }
-  @media (hover: hover) { .reprise:hover { border-color: var(--bord-vif); box-shadow: var(--ombre-2); } }
+  @media (hover: hover) { .reprise:hover { border-color: var(--texte); } }
   .reprise .texte { display: grid; gap: 6px; min-width: 0; flex: 1; }
-  .reprise .nom { font-weight: 600; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+  .reprise .nom { font: 400 20px/1.15 var(--titre); display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
   .reprise .sous { color: var(--doux); font-size: 14px; }
-  .reprise .jouer { flex: none; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: var(--lampe-degrade); color: var(--lampe-sur); box-shadow: var(--halo-lampe); }
+  .reprise .jouer { flex: none; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: var(--lampe); color: var(--lampe-sur); }
   .alerte { display: flex; align-items: center; gap: 8px; color: var(--alerte); font-size: 14px; }
   .lien-bouton { background: none; border: 0; padding: 0 4px; color: var(--lampe); font: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; min-height: 24px; }
 
   @media (max-width: 640px) {
-    .accueil { gap: var(--e-6); }
-    .hero { grid-template-columns: 1fr; padding: var(--e-5); gap: var(--e-4); }
-    .hero { grid-template-columns: 84px 1fr; align-items: start; gap: var(--e-3) var(--e-4); }
+    .accueil { gap: var(--e-8); }
+    .hero { grid-template-columns: 96px 1fr; align-items: start; gap: var(--e-3) var(--e-4); padding: var(--e-5) 0; }
     .hero.chargement { grid-template-columns: 1fr; }
     .hero .contenu { display: contents; }
     .hero .entete { align-self: center; }
     .hero .resume, .hero .qui, .hero .boutons, .hero .aide-hero { grid-column: 1 / -1; }
     .hero .resume { display: none; }
-    .hero h2 { font-size: 1.875rem; }
+    .hero h2 { font-size: 2.25rem; }
     .accueil > :global(header) :global(h1) { font-size: clamp(2rem, 9vw, 2.5rem); }
     .reprise { padding: var(--e-3); }
     .rangee.defile {

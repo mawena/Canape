@@ -63,7 +63,7 @@
   const avecImage = $derived(!!src && !imageEnErreur);
   const teinte = $derived(teinteTitre(t));
   // Couleur dominante calculée par la médiathèque (`film.couleur`), sauf couleur donnée explicitement.
-  const lueur = $derived(couleurValide(couleur ?? film?.couleur ?? null) ?? (avecImage ? '#3b3fd8' : `hsl(${teinte} 60% 55%)`));
+  const lueur = $derived(couleurValide(couleur ?? film?.couleur ?? null) ?? (avecImage ? '#b3201b' : `hsl(${teinte} 60% 55%)`));
   const detail = $derived([a, d ? formaterDuree(d) : ''].filter(Boolean).join(' · '));
   const pctPrep = $derived(preparation === null ? null : Math.round(preparation * 100));
   const nomEtat = $derived(e === 'pret' ? 'prêt' : e === 'analyse' ? 'préparation en cours' : 'illisible');
@@ -127,16 +127,17 @@
   .lien:focus-visible .affiche { outline: 3px solid var(--lampe-vive); outline-offset: 3px; }
   .affiche {
     position: relative; display: block; aspect-ratio: 2 / 3; border-radius: var(--r-affiche); overflow: hidden; isolation: isolate;
-    background: var(--s2); box-shadow: var(--ombre-2);
+    background: var(--s2); box-shadow: 0 1px 2px rgba(20, 18, 16, 0.12);
     transition: transform var(--d-2) var(--ease), box-shadow var(--d-2) var(--ease);
   }
   /* Filet intérieur : un bord net sur papier comme sur nuit */
   .affiche::after {
     content: ''; position: absolute; inset: 0; z-index: 3; border-radius: inherit; pointer-events: none;
-    box-shadow: inset 0 0 0 1px rgba(20, 16, 10, 0.08);
+    box-shadow: inset 0 0 0 1px rgba(20, 16, 10, 0.1);
   }
   @media (hover: hover) {
-    .lien:hover .affiche { transform: translateY(-3px); box-shadow: var(--ombre-3), 0 0 32px -10px var(--lueur); }
+    .lien:hover .affiche { transform: translateY(-2px); box-shadow: var(--ombre-3); }
+    .lien:hover .nom { color: var(--lampe); }
   }
   img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .affiche.sans { background: linear-gradient(160deg, var(--h1), var(--h2)); }
@@ -152,13 +153,13 @@
   .progres { position: absolute; left: 8px; right: 8px; bottom: 8px; height: 4px; border-radius: 4px; overflow: hidden; background: rgba(255, 255, 255, 0.28); z-index: 2; }
   .progres i { display: block; height: 100%; border-radius: inherit; background: #fff; }
   .textes { display: grid; gap: 2px; min-width: 0; }
-  .nom { transition: color var(--d-1) var(--ease); font: 650 15px / 1.25 var(--texte-police); letter-spacing: -0.01em; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .nom { transition: color var(--d-1) var(--ease); font: 400 19px / 1.15 var(--titre); display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .detail { color: var(--discret); font-size: 14px; line-height: 20px; }
-  .petit .nom { font-size: 14px; }
+  .petit .nom { font-size: 17px; }
   .petit .detail { font-size: 13px; }
   .case { position: absolute; top: 8px; right: 8px; z-index: 3; width: 28px; height: 28px; cursor: pointer; }
   .case input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
-  .coche { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: rgba(10, 11, 28, 0.8); border: 2px solid #fff; color: transparent; }
+  .coche { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: rgba(20, 18, 16, 0.8); border: 2px solid #fff; color: transparent; }
   .case input:checked + .vh + .coche { background: var(--lampe); border-color: var(--lampe); color: var(--lampe-sur); }
   .case input:focus-visible + .vh + .coche { outline: 3px solid var(--lampe-vive); outline-offset: 3px; }
 </style>

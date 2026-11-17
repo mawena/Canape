@@ -17,7 +17,7 @@
 </script>
 
 <section class="bloc" aria-labelledby="titre-a-voir" data-test="a-voir-ensemble">
-  <div class="tete">
+  <div class="tete rubrique">
     <h2 id="titre-a-voir" class="t-titre2">À voir ensemble</h2>
     <a class="voir-tout" href={liens.galerie}>Choisir dans la galerie</a>
   </div>
@@ -57,19 +57,19 @@
 <style>
   .bloc { display: grid; gap: var(--e-5); }
   .tete { display: flex; align-items: baseline; justify-content: space-between; gap: var(--e-4); }
-  .voir-tout { color: var(--lampe); text-decoration: none; font-weight: 600; font-size: 15px; border-radius: var(--r-s); }
+  .voir-tout { color: var(--lampe); text-decoration: none; font: 650 12.5px/1.3 var(--texte-police); letter-spacing: 0.12em; text-transform: uppercase; border-radius: var(--r-s); }
   @media (hover: hover) { .voir-tout:hover { color: var(--lampe-vive); text-decoration: underline; text-underline-offset: 4px; } }
   .liste { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--e-3); grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr)); }
   .carte {
     display: flex; gap: 14px; align-items: flex-start; padding: var(--e-4); border-radius: var(--r-l); background: var(--s1); border: 1px solid var(--bord);
     box-shadow: var(--ombre-1, none);
   }
-  .carte.plebiscite { border-color: var(--rose); background: linear-gradient(135deg, var(--rose-fond), transparent 60%), var(--s1); }
+  .carte.plebiscite { border-color: var(--rose); border-left-width: 3px; }
   .affiche { flex: none; border-radius: var(--r-s); }
   .affiche:focus-visible, .nom:focus-visible { outline: 3px solid var(--lampe); outline-offset: 2px; }
   .corps { display: grid; gap: 10px; min-width: 0; flex: 1; }
   .titre-ligne { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
-  .nom { color: var(--texte); font-weight: 650; text-decoration: none; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .nom { color: var(--texte); font: 400 20px/1.15 var(--titre); text-decoration: none; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   @media (hover: hover) { .nom:hover { text-decoration: underline; text-underline-offset: 3px; } }
   .qui { margin: 0; display: flex; align-items: center; gap: 10px; color: var(--doux); font-size: 14px; }
   .actions { display: flex; flex-wrap: wrap; gap: 8px; }

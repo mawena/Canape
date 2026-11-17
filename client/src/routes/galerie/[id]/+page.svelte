@@ -173,10 +173,7 @@
     <Chargement />
   {:else}
     {@const f = film}
-    <div class="fond" aria-hidden="true">
-      {#if f.aFond}<img src={urlImage(f, 'fond')} alt="" />{/if}
-    </div>
-    <article class="fiche" style:--lueur={f.couleur ?? '#3b3fd8'}>
+    <article class="fiche" style:--lueur={f.couleur ?? '#b3201b'}>
       <div class="affiche-bloc">
         <div class="affiche">
           {#if f.aAffiche}<img src={urlImage(f, 'affiche')} alt={`Affiche de ${f.titre}`} />{:else}<span>{f.titre}</span>{/if}
@@ -338,26 +335,24 @@
 
 <style>
   main { position: relative; max-width: 1100px; margin: 0 auto; padding: 0 0 64px; }
-  .retour a { color: var(--doux); text-decoration: none; display: inline-flex; align-items: center; min-height: 44px; font-weight: 600; }
+  .retour a { color: var(--doux); text-decoration: none; display: inline-flex; align-items: center; min-height: 44px; font: 650 12.5px/1 var(--texte-police); letter-spacing: 0.1em; text-transform: uppercase; }
   .retour a:hover { color: var(--texte); }
-  .fond { position: absolute; top: -44px; left: 50%; width: 100vw; transform: translateX(-50%); height: 520px; overflow: hidden; z-index: -1; mask-image: linear-gradient(#000, transparent); -webkit-mask-image: linear-gradient(#000, transparent); opacity: 0.4; }
-  .fond img { width: 100%; height: 100%; object-fit: cover; filter: blur(28px) saturate(1.3); transform: scale(1.15); }
-  .fiche { display: grid; gap: 28px; margin-top: 12px; }
-  @media (min-width: 760px) { .fiche { grid-template-columns: 280px minmax(0, 1fr); } }
+  .fiche { display: grid; gap: 48px; margin-top: 12px; padding-top: var(--e-7); border-top: 2px solid var(--filet); }
+  @media (min-width: 760px) { .fiche { grid-template-columns: 320px minmax(0, 1fr); } }
   .affiche-bloc { display: grid; justify-items: center; align-content: start; }
-  .affiche { width: min(280px, 60vw); aspect-ratio: 2 / 3; border-radius: var(--r-l); overflow: hidden; background: var(--s2); box-shadow: 0 30px 70px color-mix(in srgb, var(--lueur) 40%, transparent), 0 8px 24px rgba(6, 7, 18, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.07); display: grid; place-items: end start; }
+  .affiche { width: min(320px, 70vw); aspect-ratio: 2 / 3; border-radius: var(--r-affiche); overflow: hidden; background: var(--s2); box-shadow: var(--lueur-hero); display: grid; place-items: end start; }
   .affiche img { width: 100%; height: 100%; object-fit: cover; }
   .affiche span { padding: 16px; font-family: var(--titre, 'Instrument Serif', Georgia, serif); font-size: 1.6rem; }
-  h1 { font-family: var(--titre, 'Instrument Serif', Georgia, serif); font-size: clamp(2rem, 5vw, 3rem); line-height: 1.05; margin: 0; font-weight: 400; }
+  h1 { font-family: var(--titre, 'Instrument Serif', Georgia, serif); font-size: clamp(2.75rem, 6.5vw, 5rem); line-height: 0.97; letter-spacing: -0.015em; margin: 0; font-weight: 400; }
   .sous-titre { color: var(--doux, #c0bacb); margin: 6px 0 14px; }
-  .resume { max-width: 65ch; color: var(--texte, #f7f3ee); line-height: 1.55; }
+  .resume { max-width: 62ch; color: var(--texte, #f7f3ee); font-size: 17px; line-height: 1.6; }
   .puces { list-style: none; padding: 0; margin: 14px 0; display: flex; flex-wrap: wrap; gap: 8px; }
-  .puce { display: inline-flex; align-items: center; gap: 6px; min-height: 30px; padding: 0 12px; border-radius: 999px; background: var(--s2); border: 1px solid var(--bord); font-size: 0.8125rem; font-weight: 600; color: var(--doux); margin: 0; }
+  .puce { display: inline-flex; align-items: center; gap: 6px; min-height: 26px; padding: 0 8px; border-radius: 2px; border: 1px solid var(--bord-vif); font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em; color: var(--doux); margin: 0; }
   .puce.alerte { color: var(--alerte, #ffd166); }
   .puce.mal { color: var(--mal, #ff7b6e); }
   .actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 24px 0; }
   .section { border-top: 1px solid var(--bord, #2f2c3b); padding: 14px 0; }
-  .section summary { cursor: pointer; font-weight: 650; min-height: 44px; display: flex; align-items: center; }
+  .section summary { cursor: pointer; font: 650 12.5px/1 var(--texte-police); letter-spacing: 0.12em; text-transform: uppercase; min-height: 44px; display: flex; align-items: center; }
   .section h3 { font-family: inherit; font-size: 0.9rem; font-weight: 650; color: var(--doux); margin: 14px 0 6px; }
   .liste { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
   .discret { color: var(--discret, #9f99ad); }

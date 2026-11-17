@@ -182,60 +182,55 @@
   .logo-attente { display: block; animation: respire 1.8s ease-in-out infinite; }
   @keyframes respire { 50% { opacity: 0.45; } }
 
+  /* Bandeau de journal : papier, logo, rubriques en capitales espacées, filet d'encre dessous. */
   .haut {
-    position: sticky; top: 0; z-index: 40; display: flex; align-items: center; gap: 28px; height: var(--barre-haute);
+    position: sticky; top: 0; z-index: 40; display: flex; align-items: stretch; gap: 40px; height: var(--barre-haute);
     padding: 0 var(--gouttiere); padding-top: env(safe-area-inset-top);
     background: var(--fond-verre); backdrop-filter: var(--flou-verre); -webkit-backdrop-filter: var(--flou-verre);
-    border-bottom: 1px solid color-mix(in srgb, var(--bord) 70%, transparent);
+    border-bottom: 1px solid var(--filet);
   }
-  @supports not (backdrop-filter: blur(1px)) { .haut { background: var(--s1); } }
-  .marque { display: inline-flex; border-radius: var(--r-s); text-decoration: none; }
-  /* Navigation en segments : la page courante est une pastille claire posée sur un rail (avec le point de lampe). */
-  .nav {
-    display: flex; gap: 2px; margin-right: auto; padding: 4px; border-radius: var(--r-pill);
-    background: color-mix(in srgb, var(--s3) 55%, transparent); box-shadow: inset 0 1px 2px rgba(20, 16, 10, 0.06);
-  }
+  @supports not (backdrop-filter: blur(1px)) { .haut { background: var(--fond); } }
+  .marque { display: inline-flex; align-items: center; border-radius: var(--r-s); text-decoration: none; }
+  /* Rubriques : la page courante est soulignée de rouge, au ras du filet. */
+  .nav { display: flex; gap: 32px; margin-right: auto; }
   .nav a {
-    position: relative; display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 16px; border-radius: var(--r-pill);
-    color: var(--doux); text-decoration: none; font-weight: 600; font-size: 15px;
-    transition: color var(--d-1) var(--ease), background var(--d-2) var(--ease), box-shadow var(--d-2) var(--ease);
+    display: inline-flex; align-items: center; border-bottom: 2px solid transparent; margin-bottom: -1px; padding-top: 2px;
+    color: var(--doux); text-decoration: none; font: 650 12.5px/1 var(--texte-police); letter-spacing: 0.12em; text-transform: uppercase;
+    transition: color var(--d-1) var(--ease), border-color var(--d-1) var(--ease);
   }
-  .nav a[aria-current='page'] { color: var(--texte); background: var(--s1); box-shadow: var(--ombre-1), inset 0 1px 0 var(--reflet); }
-  .nav a[aria-current='page']::before {
-    content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--ambre);
-  }
-  @media (hover: hover) { .nav a:not([aria-current='page']):hover { color: var(--texte); background: color-mix(in srgb, var(--s1) 60%, transparent); } }
+  .nav a[aria-current='page'] { color: var(--texte); border-bottom-color: var(--lampe); }
+  @media (hover: hover) { .nav a:not([aria-current='page']):hover { color: var(--texte); } }
   .actions-haut { display: flex; align-items: center; gap: var(--e-4); }
 
-  main { max-width: 1440px; margin: 0 auto; padding: 48px var(--gouttiere) 88px; outline: none; }
+  main { max-width: 1320px; margin: 0 auto; padding: 48px var(--gouttiere) 96px; outline: none; }
 
   .haut-mobile, .onglets-bas { display: none; }
 
   @media (max-width: 640px) {
     .haut, .nav { display: none; }
     .haut-mobile {
-      display: flex; align-items: center; justify-content: space-between; padding: calc(12px + env(safe-area-inset-top)) var(--gouttiere) 6px;
+      display: flex; align-items: center; justify-content: space-between; padding: calc(12px + env(safe-area-inset-top)) var(--gouttiere) 10px;
+      border-bottom: 1px solid var(--filet); margin: 0 var(--gouttiere); padding-left: 0; padding-right: 0;
     }
-    main { padding: 16px var(--gouttiere) calc(var(--barre-onglets) + env(safe-area-inset-bottom) + 44px); }
-    /* Barre d'onglets flottante : une capsule de verre détachée des bords. */
+    main { padding: 20px var(--gouttiere) calc(var(--barre-onglets) + env(safe-area-inset-bottom) + 32px); }
+    /* Onglets du bas : un pied de page imprimé, filet d'encre dessus, onglet courant marqué de rouge. */
     .onglets-bas {
-      position: fixed; z-index: 40; left: 12px; right: 12px; bottom: calc(10px + env(safe-area-inset-bottom));
-      display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; padding: 6px; min-height: var(--barre-onglets);
-      border-radius: 26px; background: var(--fond-verre); backdrop-filter: var(--flou-verre); -webkit-backdrop-filter: var(--flou-verre);
-      border: 1px solid color-mix(in srgb, var(--bord-vif) 60%, transparent); box-shadow: var(--ombre-3), inset 0 1px 0 var(--reflet);
+      position: fixed; z-index: 40; left: 0; right: 0; bottom: 0; padding-bottom: env(safe-area-inset-bottom);
+      display: grid; grid-template-columns: repeat(4, 1fr); min-height: var(--barre-onglets);
+      background: var(--fond-verre); backdrop-filter: var(--flou-verre); -webkit-backdrop-filter: var(--flou-verre);
+      border-top: 1px solid var(--filet);
     }
-    @supports not (backdrop-filter: blur(1px)) { .onglets-bas { background: var(--s1); } }
+    @supports not (backdrop-filter: blur(1px)) { .onglets-bas { background: var(--fond); } }
     .onglets-bas a, .onglets-bas button {
-      display: grid; justify-items: center; align-content: center; gap: 2px; min-height: 52px; border: 0; border-radius: 20px; background: transparent;
-      color: var(--discret); font: 600 11px/1.2 var(--texte-police); text-decoration: none; position: relative;
-      transition: background var(--d-2) var(--ease), color var(--d-1) var(--ease);
+      display: grid; justify-items: center; align-content: center; gap: 3px; min-height: var(--barre-onglets); border: 0; border-top: 2px solid transparent; margin-top: -1px; background: transparent;
+      color: var(--discret); font: 650 10.5px/1.2 var(--texte-police); letter-spacing: 0.08em; text-transform: uppercase; text-decoration: none; position: relative;
+      transition: color var(--d-1) var(--ease), border-color var(--d-1) var(--ease);
     }
-    .onglets-bas [aria-current='page'] { color: var(--lampe); background: var(--lampe-fond); }
+    .onglets-bas [aria-current='page'] { color: var(--lampe); border-top-color: var(--lampe); }
   }
   @media (min-width: 641px) and (max-width: 900px) {
-    .haut { gap: 12px; }
-    .nav a { padding: 0 12px; }
-    .nav a[aria-current='page']::before { display: none; }
+    .haut { gap: 20px; }
+    .nav { gap: 18px; }
   }
 
   .moi { display: grid; gap: 2px; margin: 0 -8px; }
@@ -243,7 +238,7 @@
     display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 12px; border: 0; border-radius: var(--r-m);
     background: transparent; color: var(--texte); font: 400 16px/1 var(--texte-police); text-decoration: none; text-align: left;
   }
-  .moi a:hover, .moi button:hover { background: var(--s3); }
+  .moi a:hover, .moi button:hover { background: var(--s2); }
   .moi .sortie { color: var(--mal); }
   .theme-moi { display: grid; gap: 8px; padding: 8px 12px 12px; color: var(--doux); font-size: 14px; font-weight: 600; }
 </style>

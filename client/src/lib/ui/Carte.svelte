@@ -25,10 +25,10 @@
 
 <style>
   .carte {
-    background: var(--s1); border: 1px solid var(--bord); border-radius: var(--r-l); box-shadow: var(--ombre-1), inset 0 1px 0 var(--reflet);
+    background: var(--s1); border: 1px solid var(--bord); border-radius: var(--r-l);
     padding: var(--e-6); display: grid; gap: var(--e-4); min-width: 0;
   }
-  .doree { border-color: var(--lampe); }
-  h2 { font: 700 1.25rem / 1.2 var(--texte-police); letter-spacing: -0.02em; }
+  .doree { border-color: var(--texte); border-top: 3px solid var(--lampe); }
+  h2 { font: 400 1.625rem / 1.1 var(--titre); letter-spacing: -0.005em; }
   footer { display: flex; gap: var(--e-3); justify-content: flex-end; flex-wrap: wrap; }
 </style>
