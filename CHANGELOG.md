@@ -2,6 +2,21 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) ; versions selon [SemVer](https://semver.org/lang/fr/).
 
+## [1.14.0] — 2026-11-17
+
+Se connecter via Portier.
+
+### Ajouté
+
+- **« Se connecter via Portier »** sur la page de connexion, **en plus** de l'identifiant et du mot de passe (qui
+  marchent comme avant). Portier (OpenID Connect, mot de passe + second facteur) ouvre la session Canapé habituelle du
+  compte lié par `CANAPE_PORTIER_COMPTES` (nom Portier ou e-mail vérifié) ; aucun compte n'est créé, une personne non
+  liée est refusée avec un message clair. Flux Authorization Code + PKCE S256, `state` et `nonce`, jeton d'identité
+  RS256 vérifié par Canapé lui-même (sans nouvelle dépendance).
+- Réglages `CANAPE_PORTIER`, `CANAPE_PORTIER_EMETTEUR`, `CANAPE_PORTIER_CLIENT_ID`, `CANAPE_PORTIER_SECRET` (ou
+  `CANAPE_PORTIER_SECRET_FICHIER`), `CANAPE_PORTIER_RETOUR`, `CANAPE_PORTIER_COMPTES` ; désactivé par défaut, et alors
+  rien ne change. Mise en place : `docs/PORTIER.md` (adresse de retour à déclarer : `<adresse publique>/api/portier/retour`).
+
 ## [1.13.0] — 2026-11-16
 
 Recaler ses sous-titres.
