@@ -23,7 +23,7 @@
 
 <style>
   .badge {
-    display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 0 11px; border-radius: var(--r-pill);
+    display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 0 11px; letter-spacing: 0.005em; border-radius: var(--r-pill);
     background: var(--s2); color: var(--doux); font: 600 13px/1 var(--texte-police); white-space: nowrap;
   }
   .ok { background: var(--ok-fond); color: var(--ok); }
@@ -31,5 +31,5 @@
   .mal { background: var(--mal-fond); color: var(--mal); }
   .lampe { background: var(--lampe-fond); color: var(--lampe); }
   .rose { background: var(--rose-fond); color: var(--rose); }
-  .sur-image { background: rgba(8, 12, 24, 0.78); backdrop-filter: blur(8px); }
+  .sur-image { background: rgba(10, 11, 28, 0.72); backdrop-filter: blur(10px) saturate(1.4); -webkit-backdrop-filter: blur(10px) saturate(1.4); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1); }
 </style>

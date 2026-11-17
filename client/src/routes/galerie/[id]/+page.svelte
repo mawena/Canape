@@ -176,7 +176,7 @@
     <div class="fond" aria-hidden="true">
       {#if f.aFond}<img src={urlImage(f, 'fond')} alt="" />{/if}
     </div>
-    <article class="fiche" style:--lueur={f.couleur ?? '#3b82f6'}>
+    <article class="fiche" style:--lueur={f.couleur ?? '#3b3fd8'}>
       <div class="affiche-bloc">
         <div class="affiche">
           {#if f.aAffiche}<img src={urlImage(f, 'affiche')} alt={`Affiche de ${f.titre}`} />{:else}<span>{f.titre}</span>{/if}
@@ -345,7 +345,7 @@
   .fiche { display: grid; gap: 28px; margin-top: 12px; }
   @media (min-width: 760px) { .fiche { grid-template-columns: 280px minmax(0, 1fr); } }
   .affiche-bloc { display: grid; justify-items: center; align-content: start; }
-  .affiche { width: min(280px, 60vw); aspect-ratio: 2 / 3; border-radius: var(--r-l); overflow: hidden; background: var(--s2); box-shadow: 0 30px 70px color-mix(in srgb, var(--lueur) 40%, transparent), 0 8px 24px rgba(6, 5, 10, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.07); display: grid; place-items: end start; }
+  .affiche { width: min(280px, 60vw); aspect-ratio: 2 / 3; border-radius: var(--r-l); overflow: hidden; background: var(--s2); box-shadow: 0 30px 70px color-mix(in srgb, var(--lueur) 40%, transparent), 0 8px 24px rgba(6, 7, 18, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.07); display: grid; place-items: end start; }
   .affiche img { width: 100%; height: 100%; object-fit: cover; }
   .affiche span { padding: 16px; font-family: var(--titre, 'Instrument Serif', Georgia, serif); font-size: 1.6rem; }
   h1 { font-family: var(--titre, 'Instrument Serif', Georgia, serif); font-size: clamp(2rem, 5vw, 3rem); line-height: 1.05; margin: 0; font-weight: 400; }
@@ -363,7 +363,7 @@
   .discret { color: var(--discret, #9f99ad); }
   dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; }
   dt { color: var(--discret, #9f99ad); } dd { margin: 0; overflow-wrap: anywhere; }
-  .lien { background: none; border: 0; color: var(--lampe, #1f5ce0); text-decoration: underline; padding: 0 4px; }
+  .lien { background: none; border: 0; color: var(--lampe); text-decoration: underline; padding: 0 4px; }
   fieldset { border: 0; padding: 0; margin: 12px 0; display: grid; gap: 8px; }
   .radio { display: inline-flex; gap: 8px; align-items: center; }
   .comptes { margin: 8px 0 12px 4px; }
@@ -375,7 +375,7 @@
   .rangee { display: flex; gap: 8px; }
   .candidats { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 6px; max-height: 220px; overflow: auto; }
   .candidats button { width: 100%; text-align: left; background: var(--s1, #15141c); border: 1px solid var(--bord, #2f2c3b); border-radius: 10px; padding: 8px 10px; display: grid; gap: 2px; }
-  .candidats button:hover { border-color: var(--lampe, #1f5ce0); }
+  .candidats button:hover { border-color: var(--lampe); }
   .candidats small { color: var(--discret, #9f99ad); }
   .boutons { display: flex; justify-content: flex-end; gap: 8px; }
 </style>

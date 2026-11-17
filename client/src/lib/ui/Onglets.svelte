@@ -1,7 +1,7 @@
 <script lang="ts">
   /**
    * <Onglets libelle="Filtrer" elements={[{ id: 'tous', libelle: 'Tous', nombre: 12 }]} bind:valeur />
-   * Onglets « pilule » (fond `--s1`, actif `--s3`, 36 px). Deux modes selon les éléments :
+   * Onglets en segments (rail `--s3` translucide, actif : pastille `--s1` en relief, 40 px). Deux modes selon les éléments :
    * - sans `href` : `role="tablist"`, flèches ← →, `valeur` liable, `surChoix(id)` ;
    * - avec `href` : navigation (`<nav>` de liens), l'élément dont l'id vaut `valeur` porte `aria-current="page"`.
    * `defilant` : la rangée défile horizontalement (téléphone).
@@ -63,15 +63,15 @@
 <style>
   .onglets {
     display: inline-flex; gap: 2px; padding: 4px; max-width: 100%; overflow-x: auto; scrollbar-width: none;
-    background: var(--s1); border: 1px solid var(--bord); border-radius: var(--r-m);
+    background: color-mix(in srgb, var(--s3) 60%, transparent); border-radius: var(--r-pill); box-shadow: inset 0 1px 2px rgba(20, 16, 10, 0.06);
   }
   .onglets::-webkit-scrollbar { display: none; }
   a, button {
-    display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 16px; border: 0; border-radius: 9px;
+    display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 16px; border: 0; border-radius: var(--r-pill);
     background: transparent; color: var(--doux); font: 600 14.5px/1 var(--texte-police); text-decoration: none; white-space: nowrap;
     transition: background var(--d-1) var(--ease), color var(--d-1) var(--ease);
   }
-  .actif { background: var(--s3); color: var(--texte); box-shadow: inset 0 1px 0 var(--reflet), 0 1px 3px rgba(0, 0, 0, 0.4); }
+  .actif { background: var(--s1); color: var(--texte); box-shadow: var(--ombre-1), inset 0 1px 0 var(--reflet); }
   @media (hover: hover) { a:not(.actif):hover, button:not(.actif):hover { color: var(--texte); } }
   .nombre { color: var(--discret); font-size: 13px; }
   .actif .nombre { color: var(--doux); }

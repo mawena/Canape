@@ -6,8 +6,8 @@
 export type PreferenceTheme = 'clair' | 'sombre' | 'auto';
 
 const CLE = 'canape.theme';
-const COULEUR_CLAIR = '#f5f7fb';
-const COULEUR_SOMBRE = '#0b1220';
+const COULEUR_CLAIR = '#f7f5f1';
+const COULEUR_SOMBRE = '#0c0e1a';
 
 function lire(): PreferenceTheme {
   try {
