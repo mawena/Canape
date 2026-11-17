@@ -2,7 +2,7 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) ; versions selon [SemVer](https://semver.org/lang/fr/).
 
-## [1.16.0] — 2026-11-17
+## [1.16.0] — 2026-11-18
 
 Nouvelle direction artistique : « éditorial cinéma ». La 1.15.0 changeait trop peu à l'écran ; Canapé se lit maintenant
 comme un programme de cinéma imprimé, toujours sobre.
