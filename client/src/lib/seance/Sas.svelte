@@ -160,7 +160,7 @@
 </main>
 
 <style>
-  .sas { min-height: 100dvh; display: grid; place-items: center; padding: 16px; background: radial-gradient(800px 480px at 50% 0%, rgba(143, 149, 255, 0.14), transparent 70%), var(--fond, #0d0c12); color: var(--texte, #f7f3ee); }
+  .sas { min-height: 100dvh; display: grid; place-items: center; padding: 16px; background: radial-gradient(800px 480px at 50% 0%, rgba(255, 122, 104, 0.14), transparent 70%), var(--fond, #0d0c12); color: var(--texte, #f7f3ee); }
   .carte { width: min(520px, 100%); background: var(--s1, #15141c); border-radius: var(--r-xl, 28px); padding: 28px; display: grid; gap: 16px; border: 1px solid var(--bord); box-shadow: var(--ombre-4); }
   h1 { font-family: 'Instrument Serif', var(--titre, Georgia, serif); font-size: 2rem; font-weight: 400; margin: 0; }
   .sous { margin: -8px 0 0; color: var(--doux, #c0bacb); }

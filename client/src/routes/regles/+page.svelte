@@ -7,7 +7,7 @@
 
 <svelte:head><title>Règles d'usage · Canapé</title></svelte:head>
 
-<main class="grain" data-test="page-regles">
+<main data-test="page-regles">
   <a class="marque" href={session.utilisateur ? '/' : '/connexion'} aria-label="Canapé"><Logo taille={44} mot /></a>
   <Carte titre="Les règles d'usage.">
     <p class="intro">Canapé sert à regarder des films à plusieurs, chacun chez soi, au même instant. Quelques règles simples pour que ça reste agréable.</p>
@@ -37,10 +37,10 @@
 <style>
   main {
     min-height: 100%; display: grid; align-content: start; justify-items: center; gap: var(--e-5); padding: var(--e-7) var(--e-4);
-    background: radial-gradient(640px 460px at 50% 12%, rgba(255, 255, 255, 0.08), transparent 70%), var(--hero-degrade);
+    background: var(--fond); border-top: 6px solid var(--lampe);
   }
-  .marque { text-decoration: none; --texte: #fff; --logo-1: #c7caff; --logo-2: #fbcfe8; --logo-assise: #fff; }
-  main :global(.carte) { width: min(640px, calc(100vw - 2 * var(--e-4))); box-shadow: var(--ombre-3); border-radius: var(--r-xl); padding: var(--e-7); }
+  .marque { text-decoration: none; }
+  main :global(.carte) { width: min(640px, calc(100vw - 2 * var(--e-4))); border: 1px solid var(--texte); border-radius: var(--r-l); padding: var(--e-7); }
   main :global(.carte h2) { font: 400 clamp(1.9rem, 5vw, 2.4rem) / 1.08 var(--titre); letter-spacing: -0.01em; }
   .intro { color: var(--doux); margin: 0 0 var(--e-4); }
   ol { margin: 0; padding-left: 1.3em; display: grid; gap: var(--e-3); line-height: 1.5; }

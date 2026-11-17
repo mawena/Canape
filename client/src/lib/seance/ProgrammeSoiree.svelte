@@ -279,7 +279,7 @@
   @media (max-width: 640px) {
     /* La feuille du bas passe devant toute la barre (le voile sombre la ferme d'une touche). */
     .rond { z-index: auto; width: 48px; height: 48px; }
-    .voile { background: rgba(6, 7, 18, 0.55); }
+    .voile { background: rgba(10, 9, 8, 0.55); }
     .panneau, .panneau.vers-droite { position: fixed; left: 0; right: 0; bottom: 0; width: auto; max-height: 82dvh; border-radius: 22px 22px 0 0; border-bottom: 0; padding-bottom: calc(20px + env(safe-area-inset-bottom)); animation: monte 200ms var(--ease, ease-out); }
     .poignee { display: block; width: 36px; height: 4px; border-radius: 2px; background: var(--bord-champ); margin: -6px auto 0; }
     .action { flex-basis: 100%; }

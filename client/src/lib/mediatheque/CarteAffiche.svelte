@@ -18,7 +18,7 @@
   const details = $derived([film.annee ? String(film.annee) : '', formaterDuree(film.duree)].filter(Boolean).join(' · '));
   const etat = $derived(film.etat === 'pret' ? 'prêt' : film.etat === 'erreur' ? 'illisible' : 'analyse en cours');
   const libelle = $derived(`${film.titre}${film.annee ? `, ${film.annee}` : ''}${film.duree ? `, ${formaterDuree(film.duree)}` : ''}, ${etat}`);
-  const lueur = $derived(film.couleur ?? '#3b3fd8');
+  const lueur = $derived(film.couleur ?? '#b3201b');
 </script>
 
 <div class="boite">
@@ -51,9 +51,9 @@
   .carte:focus-visible { outline: 3px solid var(--lampe); outline-offset: 3px; }
   .affiche {
     position: relative; aspect-ratio: 2 / 3; border-radius: var(--r-affiche); overflow: hidden; background: var(--s2);
-    box-shadow: var(--ombre-2), inset 0 0 0 1px rgba(255, 255, 255, 0.1); transition: transform var(--d-2) var(--ease), box-shadow var(--d-2) var(--ease);
+    box-shadow: 0 1px 2px rgba(20, 18, 16, 0.12); transition: transform var(--d-2) var(--ease), box-shadow var(--d-2) var(--ease);
   }
-  .carte:hover .affiche, .carte:focus-visible .affiche { transform: translateY(-3px); box-shadow: var(--ombre-3), 0 0 32px -10px var(--lueur); }
+  .carte:hover .affiche, .carte:focus-visible .affiche { transform: translateY(-2px); box-shadow: var(--ombre-3); }
   img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .sans { background: linear-gradient(160deg, hsl(var(--teinte) 38% 30%), hsl(var(--teinte) 38% 12%)); display: flex; flex-direction: column; justify-content: flex-end; padding: 14px; gap: 4px; }
   .titre-genere { font-family: var(--titre, 'Instrument Serif', Georgia, serif); font-size: 1.5rem; line-height: 1.1; color: #fff; display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; position: relative; z-index: 1; }
@@ -63,17 +63,18 @@
   .badges { position: absolute; top: 8px; left: 8px; right: 62px; display: flex; gap: 4px; flex-wrap: wrap; z-index: 2; }
   /* Le cœur suit l'affiche quand elle se soulève */
   .coin { position: absolute; top: 3px; right: 3px; z-index: 3; display: flex; transition: transform var(--d-2) var(--ease); }
-  .boite:has(.carte:hover) .coin, .boite:has(.carte:focus-visible) .coin { transform: translateY(-4px); }
+  .boite:has(.carte:hover) .coin, .boite:has(.carte:focus-visible) .coin { transform: translateY(-2px); }
   /* À la souris, l'affiche reste soulevée quand le pointeur passe sur le cœur ; au doigt, toucher le cœur ne la soulève pas */
   @media (hover: hover) {
-    .boite:hover .affiche { transform: translateY(-3px); box-shadow: var(--ombre-3), 0 0 32px -10px var(--lueur); }
-    .boite:hover .coin { transform: translateY(-4px); }
+    .boite:hover .affiche { transform: translateY(-2px); box-shadow: var(--ombre-3); }
+    .boite:hover .titre { color: var(--lampe); }
+    .boite:hover .coin { transform: translateY(-2px); }
   }
-  .puce { display: inline-flex; align-items: center; gap: 4px; background: rgba(10, 11, 28, 0.72); backdrop-filter: blur(10px) saturate(1.4); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1); border-radius: 999px; padding: 4px 10px; font-size: 0.75rem; font-weight: 600; }
+  .puce { display: inline-flex; align-items: center; gap: 4px; background: rgba(20, 18, 16, 0.86); border-radius: 2px; padding: 4px 8px; font-size: 0.6875rem; font-weight: 650; letter-spacing: 0.08em; text-transform: uppercase; }
   .alerte { color: var(--alerte, #ffd166); }
   .mal { color: var(--mal, #ff7b6e); }
   .rose { color: var(--rose, #ff8fb4); }
-  .titre { margin: 10px 0 2px; font-weight: 650; font-size: 0.95rem; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .titre { margin: 12px 0 2px; font: 400 1.2rem/1.15 var(--titre); transition: color var(--d-1) var(--ease); display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .details { margin: 0; font-size: 0.875rem; color: var(--discret, #9f99ad); }
   @media (prefers-reduced-motion: reduce) { .affiche, .coin { transition: none; transform: none !important; } }
 </style>

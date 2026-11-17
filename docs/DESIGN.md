@@ -1,11 +1,53 @@
-# Design — Canapé (1.0, version 2, puis version 3)
+# Design — Canapé (1.0, versions 2, 3, puis version 4)
 
 Direction artistique et produit de Canapé 1.0. Ce document est le contrat de l'agent « interface » : les valeurs
 (couleurs, tailles, durées) sont exactes et reprises telles quelles dans `docs/maquettes/canape.html`, qui est la
 référence visuelle (à ouvrir dans un navigateur). En cas d'écart entre les deux, c'est ce document qui l'emporte.
 
-Sommaire : **Version 3 (phase 27)** · Version 2 (phase 14) · 1 Positionnement · 2 Recherche · 3 Système de design · 4 Composants · 5 Écrans · 6 Ton et textes ·
+Sommaire : **Version 4 (phase 28)** · Version 3 (phase 27) · Version 2 (phase 14) · 1 Positionnement · 2 Recherche · 3 Système de design · 4 Composants · 5 Écrans · 6 Ton et textes ·
 7 Accessibilité et PWA · 8 Fonctions supplémentaires recommandées · 9 Sources.
+
+---
+
+## Version 4 (phase 28) : « éditorial cinéma »
+
+La version 3 en sobre changeait trop peu à l'écran. La version 4 garde la sobriété (peu d'effets) mais change la
+composition : Canapé se lit comme un **programme de cinéma imprimé**. Prime sur les versions précédentes.
+
+**Parti pris**
+
+- Papier crème, encre noire chaude, **un seul accent : le rouge cinéma** (action, page courante, surtitre « À l'affiche »).
+- Le serif (Instrument Serif) porte **tous les titres** : page, rubrique, film, carte. Le Figtree reste pour le texte
+  courant ; les surtitres, rubriques de navigation, onglets et puces sont en **capitales espacées**.
+- Les sections sont des **rubriques** : un filet d'encre de 2 px au-dessus, titre serif, lien « tout voir » en capitales
+  rouges à droite (classe globale `.rubrique`). Les pages s'ouvrent sur un grand titre posé sur un filet.
+- Peu de boîtes : listes séparées par des filets fins, pas d'ombres sauf les affiches et les fenêtres flottantes.
+  Angles vifs (rayons 4 / 6 / 8, affiches 3).
+- Boutons : primaire en aplat rouge, secondaire au trait d'encre (s'inverse au survol).
+- Navigation : bandeau de journal (filet d'encre dessous, rubriques en capitales, page courante soulignée de rouge) ;
+  sur téléphone, pied de page imprimé (filet dessus, onglet courant marqué de rouge).
+- Accueil : « À l'affiche » sur le papier (grande affiche, très grand titre serif), plus de carte nuit.
+- Pages publiques (connexion, inscription, invitation, règles) : papier, bandeau rouge en haut, carte au trait.
+- Salle, sas et lecteur : toujours sombres, en noir chaud, accent rouge éclairci.
+- Le bleu remplace le rose pour « l'autre personne », pour ne pas se confondre avec l'accent.
+
+**Palette (thème clair → sombre)**
+
+| Jeton | Clair | Sombre |
+|---|---|---|
+| `--fond` | `#f4efe6` | `#12100e` |
+| `--s1` / `--s2` / `--s3` | `#fbf8f2` / `#ece6db` / `#e2dace` | `#1a1815` / `#221f1b` / `#2d2924` |
+| `--texte` / `--doux` / `--discret` | `#141210` / `#4a443c` / `#5f584e` | `#f1ebe0` / `#b8b0a3` / `#9a9285` |
+| `--lampe` (accent) / `--lampe-vive` | `#b3201b` / `#8f1813` | `#ff7a68` / `#ffa194` |
+| `--filet` | `#141210` | `#f1ebe0` |
+| `--rose` (l'autre personne) | `#2b59c3` | `#8fb3ff` |
+
+Contrastes vérifiés par script (WCAG 2.x) : texte 16,3:1, doux 8,4:1 (6,9:1 sur `--s3`), discret ≥ 5,1:1, rouge sur papier
+5,8:1 (4,8:1 sur `--s3`), blanc sur rouge 6,7:1, contours de champ ≥ 3,6:1 ; sombre : texte 16:1, rouge 7,5:1 (5,7:1 sur
+`--s3`). États clairs ajustés : `--ok #0f6633`, `--mal #a3191b`, `--info #025a8c` (≥ 5:1 sur `--s3`).
+
+**Icônes** : papier crème, coussins encre et rouge, assise d'encre (plus de point ambre). `theme-color` `#f4efe6` /
+`#12100e`.
 
 ---
 

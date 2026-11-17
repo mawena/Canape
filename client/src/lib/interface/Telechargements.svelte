@@ -16,7 +16,7 @@
 
 {#if actifs.length > 0}
   <section class="dl" aria-labelledby="titre-dl" data-test="accueil-telechargements">
-    <div class="tete">
+    <div class="tete rubrique">
       <h2 id="titre-dl" class="t-titre2">{titreTelechargements(actifs.length)}</h2>
       <a class="voir-tout" href={liens.galerie}>Voir dans la galerie</a>
     </div>
@@ -38,7 +38,7 @@
 <style>
   .dl { display: grid; gap: var(--e-4); }
   .tete { display: flex; align-items: baseline; justify-content: space-between; gap: var(--e-4); flex-wrap: wrap; }
-  .voir-tout { color: var(--lampe); text-decoration: none; font-weight: 600; font-size: 15px; min-height: 24px; }
+  .voir-tout { color: var(--lampe); text-decoration: none; font: 650 12.5px/1.3 var(--texte-police); letter-spacing: 0.12em; text-transform: uppercase; min-height: 24px; }
   ul { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--e-3); grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); }
   li { display: flex; gap: 12px; align-items: flex-start; padding: var(--e-4); border-radius: var(--r-l); background: var(--s1); border: 1px solid var(--bord); box-shadow: var(--ombre-1, none); color: var(--lampe); }
   .corps { display: grid; gap: 8px; min-width: 0; flex: 1; color: var(--texte); }

@@ -67,7 +67,7 @@
       </div>
     </div>
   {:else}
-    <div class="tete">
+    <div class="tete rubrique">
       <h2 id="titre-lancer" class="t-titre2">{titre}</h2>
       <p class="aide">Touche un film : la séance est créée tout de suite et tu reçois le lien.</p>
     </div>
@@ -94,7 +94,7 @@
 </section>
 
 <style>
-  .lancer { display: grid; gap: var(--e-4); padding: var(--e-6); border-radius: var(--r-xl); background: var(--s1); border: 1px solid var(--bord); box-shadow: var(--ombre-2); }
+  .lancer { display: grid; gap: var(--e-4); }
   .tete { display: grid; gap: 4px; }
   .aide { color: var(--doux); font-size: 15px; }
   .aide a { color: var(--lampe); font-weight: 600; }
@@ -103,8 +103,8 @@
     flex: none; width: 112px; display: grid; justify-items: center; align-content: start; gap: 8px; padding: 6px 6px 8px; min-height: 44px;
     background: none; border: 2px solid transparent; border-radius: var(--r-m); color: var(--texte); font: inherit; cursor: pointer; scroll-snap-align: start;
   }
-  .film :global(.mini) { box-shadow: var(--ombre-2); }
-  .film.choisi { border-color: var(--lampe); background: color-mix(in srgb, var(--lampe) 10%, transparent); }
+  .film :global(.mini) { box-shadow: 0 1px 2px rgba(20, 18, 16, 0.12); }
+  .film.choisi { border-color: var(--lampe); background: var(--lampe-fond); }
   .film:focus-visible { outline: 3px solid var(--lampe); outline-offset: 2px; }
   @media (hover: hover) { .film:hover:not(.choisi) { background: var(--s2); } }
   .nom { font-size: 13px; line-height: 1.25; text-align: center; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
@@ -118,7 +118,6 @@
   .actions { display: flex; gap: var(--e-3); flex-wrap: wrap; align-items: center; }
   .lien-bouton { background: none; border: 0; padding: 0 6px; min-height: 44px; color: var(--lampe); font: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
   @media (max-width: 640px) {
-    .lancer { padding: var(--e-4); }
     .barre { flex-direction: column; align-items: stretch; gap: var(--e-2); }
     .options { justify-content: center; }
     .actions :global(.bouton) { flex: 1 1 100%; }

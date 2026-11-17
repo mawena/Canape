@@ -1,5 +1,5 @@
 /*
- * Jetons de design de Canapé, version 3 (phase 27) : clair par défaut, sombre en option (docs/DESIGN.md, « Version 3 »).
+ * Jetons de design de Canapé, version 4 (phase 28, éditorial cinéma) : clair par défaut, sombre en option (docs/DESIGN.md, « Version 4 »).
  * Aucune ressource externe : les polices sont hébergées dans /polices/.
  * À importer une seule fois (dans +layout.svelte).
  */
@@ -27,8 +27,8 @@
 }
 
 :root {
-  /* Rayons : champs et boutons 12, cartes 20, grandes surfaces 28 ; pastilles et avatars ronds */
-  --r-s: 8px; --r-m: 12px; --r-l: 20px; --r-xl: 28px; --r-affiche: 12px; --r-pill: 999px;
+  /* Rayons : angles vifs d'imprimé (champs et boutons 6, cartes 8, affiches 3) ; avatars ronds */
+  --r-s: 4px; --r-m: 6px; --r-l: 8px; --r-xl: 10px; --r-affiche: 3px; --r-pill: 999px;
 
   /* Espacements (base 4 px) */
   --e-1: 4px; --e-2: 8px; --e-3: 12px; --e-4: 16px; --e-5: 20px; --e-6: 24px;
@@ -49,147 +49,150 @@
   --barre-onglets: 64px;
 }
 /*
- * Couleurs, deux thèmes (docs/DESIGN.md, « Version 3 ») : clair par défaut (« programme du soir » : papier chaud, encre
- * bleu nuit, indigo d'action, lampe ambre), sombre en option (« la salle » : nuit bleutée, lumière chaude).
- * L'attribut `data-theme` de <html> (posé avant le premier rendu par app.html) choisit le thème ;
+ * Couleurs, deux thèmes (docs/DESIGN.md, « Version 4 — éditorial cinéma ») : clair par défaut (un programme de cinéma
+ * imprimé : papier crème, encre noire, un seul accent rouge cinéma), sombre en option (la salle : noir chaud, même rouge
+ * éclairci). L'attribut `data-theme` de <html> (posé avant le premier rendu par app.html) choisit le thème ;
  * un élément peut aussi porter `data-theme="sombre"` pour rester sombre dans un thème clair
- * (la salle, le lecteur, les pastilles sur une affiche). Les noms de jetons sont les mêmes dans les deux.
- * Contrastes vérifiés par script (WCAG 2.x, AA) : voir DESIGN.md, tableau « Version 3 ».
+ * (la salle, le lecteur, les pastilles sur une affiche). Les noms de jetons sont les mêmes dans les deux
+ * (`lampe` désigne l'accent d'action, aujourd'hui rouge ; le nom est gardé pour ne rien casser).
+ * Contrastes vérifiés par script (WCAG 2.x, AA) : voir DESIGN.md, tableau « Version 4 ».
  */
 :root, [data-theme='clair'] {
   color-scheme: light;
 
-  /* Surfaces : papier chaud, cartes blanches ; les plans « montent » vers le blanc */
-  --fond: #f7f5f1;
-  --s1: #ffffff;
-  --s2: #f3f0ea;
-  --s3: #e9e5dd;
-  --bord: #e8e3da;          /* séparateurs décoratifs seulement */
-  --bord-vif: #d8d0c3;      /* contour d'une carte survolée ou mise en avant */
-  --bord-champ: #7a7466;    /* contours des champs et boutons : 3,7:1 minimum sur toutes les surfaces */
-  --reflet: rgba(255, 255, 255, 0.95);  /* filet de lumière en haut des surfaces */
+  /* Surfaces : papier crème ; les cartes restent du papier, séparées par des filets plutôt que par des ombres */
+  --fond: #f4efe6;
+  --s1: #fbf8f2;
+  --s2: #ece6db;
+  --s3: #e2dace;
+  --bord: #ddd4c5;          /* filets fins, séparateurs */
+  --bord-vif: #c9bfae;      /* contour d'une carte survolée ou mise en avant */
+  --bord-champ: #857b6d;    /* contours des champs et boutons : 3,6:1 minimum */
+  --filet: #141210;         /* filet épais d'encre (bandeau, titres de rubrique) */
+  --reflet: transparent;
 
-  /* Texte : encre bleu nuit */
-  --texte: #16152b;
-  --doux: #4b4a63;
-  --discret: #5d5c74;
+  /* Texte : encre noire chaude */
+  --texte: #141210;
+  --doux: #4a443c;
+  --discret: #5f584e;
 
-  /* L'indigo : seule couleur d'action (le nom `lampe` est gardé pour ne rien casser) */
-  --lampe: #3b3fd8;
-  --lampe-vive: #2f31b8;    /* survol, anneau de focus */
+  /* Le rouge cinéma : seule couleur d'action */
+  --lampe: #b3201b;
+  --lampe-vive: #8f1813;    /* survol, anneau de focus */
   --lampe-sur: #ffffff;
-  --lampe-fond: rgba(59, 63, 216, 0.09);
-  --lampe-degrade: linear-gradient(180deg, #4448e0 0%, #3b3fd8 100%);
+  --lampe-fond: rgba(179, 32, 27, 0.08);
+  --lampe-degrade: #b3201b;
 
-  /* La lampe ambre : lumière décorative (halos, filets, points), jamais seule porteuse d'un texte sur clair */
-  --ambre: #f2a23a;
-  --ambre-texte: #8f4a06;
-  --ambre-fond: rgba(242, 162, 58, 0.14);
-  --ambre-lueur: rgba(255, 176, 72, 0.55);
+  /* Anciens jetons « ambre » : ramenés au rouge (un seul accent) */
+  --ambre: #b3201b;
+  --ambre-texte: #b3201b;
+  --ambre-fond: rgba(179, 32, 27, 0.08);
+  --ambre-lueur: transparent;
 
-  /* La nuit : cartes vedettes, connexion, invitation (texte blanc : 10:1 minimum) */
-  --nuit: #14163a;
-  --hero-degrade: linear-gradient(160deg, #1c1f52 0%, #22266b 100%);
+  /* L'encre : surfaces sombres ponctuelles (badges sur affiche, bandeau d'invitation) */
+  --nuit: #141210;
+  --hero-degrade: #1a1714;
 
   /* États (texte lisible sur `--s3` au pire, AA) */
-  --ok: #13753a;
+  --ok: #0f6633;
   --alerte: #8f4a06;
-  --mal: #c62222;
+  --mal: #a3191b;
   --mal-sur: #ffffff;
-  --info: #0369a1;
-  --rose: #c2185b;          /* réservé à l'autre personne */
-  --ok-fond: rgba(19, 117, 58, 0.1);
+  --info: #025a8c;
+  --rose: #2b59c3;          /* réservé à l'autre personne (bleu, pour ne pas se confondre avec l'accent) */
+  --ok-fond: rgba(15, 102, 51, 0.1);
   --alerte-fond: rgba(217, 119, 6, 0.13);
-  --mal-fond: rgba(198, 34, 34, 0.09);
-  --info-fond: rgba(3, 105, 161, 0.1);
-  --rose-fond: rgba(194, 24, 91, 0.09);
+  --mal-fond: rgba(163, 25, 27, 0.08);
+  --info-fond: rgba(2, 90, 140, 0.1);
+  --rose-fond: rgba(43, 89, 195, 0.1);
 
   /* Couleurs de présence (ordre d'arrivée) ; texte #16101c dessus */
-  --presence-1: #ffb347; --presence-2: #ff8fb4; --presence-3: #8fc7f0;
-  --presence-4: #b4a2f0; --presence-5: #9ad9a0; --presence-6: #f0d27a;
+  --presence-1: #f2b45a; --presence-2: #f08f8a; --presence-3: #8fbfe0;
+  --presence-4: #b9a8e0; --presence-5: #9ccf9f; --presence-6: #e8cf86;
   --sur-presence: #16101c;
 
-  --voile: rgba(20, 20, 43, 0.5);
+  --voile: rgba(20, 18, 16, 0.5);
 
-  /* Élévations : ombres en couches, chaudes et douces (une ombre de contact, une ombre portée) */
-  --ombre-1: 0 1px 1px rgba(40, 32, 20, 0.05), 0 1px 3px rgba(40, 32, 20, 0.06);
-  --ombre-2: 0 1px 2px rgba(40, 32, 20, 0.05), 0 4px 10px -2px rgba(40, 32, 20, 0.07), 0 14px 28px -10px rgba(30, 28, 80, 0.12);
-  --ombre-3: 0 1px 2px rgba(40, 32, 20, 0.05), 0 8px 18px -6px rgba(40, 32, 20, 0.09), 0 28px 48px -18px rgba(30, 28, 80, 0.2);
-  --ombre-4: 0 2px 4px rgba(40, 32, 20, 0.06), 0 16px 32px -8px rgba(40, 32, 20, 0.12), 0 48px 96px -24px rgba(30, 28, 80, 0.32);
-  --halo-lampe: 0 1px 2px rgba(30, 28, 120, 0.25), 0 4px 12px -4px rgba(59, 63, 216, 0.35);
-  --halo-lampe-fort: 0 1px 2px rgba(30, 28, 120, 0.25), 0 6px 16px -4px rgba(59, 63, 216, 0.45);
-  --lueur-hero: 0 20px 40px -14px rgba(5, 6, 30, 0.6);
+  /* Élévations : presque rien ; le papier est plat, seules les fenêtres flottantes ont une ombre */
+  --ombre-1: none;
+  --ombre-2: 0 1px 2px rgba(20, 18, 16, 0.06);
+  --ombre-3: 0 2px 4px rgba(20, 18, 16, 0.06), 0 12px 28px -12px rgba(20, 18, 16, 0.22);
+  --ombre-4: 0 4px 8px rgba(20, 18, 16, 0.08), 0 28px 60px -20px rgba(20, 18, 16, 0.35);
+  --halo-lampe: none;
+  --halo-lampe-fort: none;
+  --lueur-hero: 0 12px 30px -14px rgba(20, 18, 16, 0.45);
 
   /* Verre et fond de page */
-  --flou-verre: blur(22px) saturate(1.6);
-  --fond-verre: rgba(250, 248, 244, 0.76);
-  --halo-fond-1: rgba(255, 176, 72, 0.05);
-  --halo-fond-2: rgba(91, 95, 230, 0.04);
+  --flou-verre: blur(16px) saturate(1.2);
+  --fond-verre: rgba(244, 239, 230, 0.88);
+  --halo-fond-1: transparent;
+  --halo-fond-2: transparent;
 
   /* Logo */
-  --logo-1: #3b3fd8; --logo-2: #ec4899; --logo-assise: #16152b;
+  --logo-1: #141210; --logo-2: #b3201b; --logo-assise: #141210;
 }
 
 [data-theme='sombre'] {
   color-scheme: dark;
   color: var(--texte);
 
-  /* Surfaces : nuit bleutée, presque neutre */
-  --fond: #0c0e1a;
-  --s1: #13162a;
-  --s2: #191d35;
-  --s3: #232843;
-  --bord: #22273f;
-  --bord-vif: #2f3554;
-  --bord-champ: #6c7396;    /* 3,1:1 minimum sur toutes les surfaces */
-  --reflet: rgba(255, 255, 255, 0.06);
+  /* Surfaces : noir chaud, comme une salle éteinte */
+  --fond: #12100e;
+  --s1: #1a1815;
+  --s2: #221f1b;
+  --s3: #2d2924;
+  --bord: #2f2b26;
+  --bord-vif: #423c35;
+  --bord-champ: #7a7064;    /* 3,6:1 minimum */
+  --filet: #f1ebe0;
+  --reflet: transparent;
 
-  /* Texte : blanc chaud, comme une lumière de lampe */
-  --texte: #f3f1ec;
-  --doux: #b9b8c9;
-  --discret: #9796ad;
+  /* Texte : papier */
+  --texte: #f1ebe0;
+  --doux: #b8b0a3;
+  --discret: #9a9285;
 
-  --lampe: #8f95ff;
-  --lampe-vive: #b3b7ff;
-  --lampe-sur: #0c0e1a;
-  --lampe-fond: rgba(143, 149, 255, 0.16);
-  --lampe-degrade: linear-gradient(180deg, #989dff 0%, #8f95ff 100%);
+  --lampe: #ff7a68;
+  --lampe-vive: #ffa194;
+  --lampe-sur: #12100e;
+  --lampe-fond: rgba(255, 122, 104, 0.14);
+  --lampe-degrade: #ff7a68;
 
-  --ambre: #ffb547;
-  --ambre-texte: #ffb547;
-  --ambre-fond: rgba(255, 181, 71, 0.14);
-  --ambre-lueur: rgba(255, 176, 72, 0.4);
+  --ambre: #ff7a68;
+  --ambre-texte: #ff7a68;
+  --ambre-fond: rgba(255, 122, 104, 0.14);
+  --ambre-lueur: transparent;
 
-  --nuit: #0a0b1e;
-  --hero-degrade: linear-gradient(160deg, #171a45 0%, #1d215c 100%);
+  --nuit: #0b0a09;
+  --hero-degrade: #0b0a09;
 
   --ok: #4ade80;
   --alerte: #fbbf24;
   --mal: #ff7b72;
   --mal-sur: #2a0d0a;
   --info: #7dd3fc;
-  --rose: #ff8fc0;
+  --rose: #8fb3ff;
   --ok-fond: rgba(74, 222, 128, 0.14);
   --alerte-fond: rgba(251, 191, 36, 0.14);
   --mal-fond: rgba(255, 123, 114, 0.14);
   --info-fond: rgba(125, 211, 252, 0.14);
-  --rose-fond: rgba(255, 143, 192, 0.14);
+  --rose-fond: rgba(143, 179, 255, 0.14);
 
-  --voile: rgba(4, 5, 14, 0.74);
+  --voile: rgba(6, 5, 4, 0.74);
 
-  --ombre-1: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --ombre-2: 0 8px 20px rgba(0, 0, 0, 0.38), 0 1px 0 var(--reflet) inset;
-  --ombre-3: 0 14px 36px rgba(0, 0, 0, 0.5), 0 1px 0 var(--reflet) inset;
-  --ombre-4: 0 32px 90px rgba(0, 0, 0, 0.62), 0 1px 0 var(--reflet) inset;
-  --halo-lampe: 0 6px 22px -6px rgba(143, 149, 255, 0.55);
-  --halo-lampe-fort: 0 8px 28px -6px rgba(143, 149, 255, 0.7);
-  --lueur-hero: 0 20px 40px -14px rgba(0, 0, 0, 0.6);
+  --ombre-1: none;
+  --ombre-2: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --ombre-3: 0 14px 36px rgba(0, 0, 0, 0.5);
+  --ombre-4: 0 32px 90px rgba(0, 0, 0, 0.62);
+  --halo-lampe: none;
+  --halo-lampe-fort: none;
+  --lueur-hero: 0 20px 40px -14px rgba(0, 0, 0, 0.7);
 
-  --fond-verre: rgba(16, 18, 36, 0.74);
-  --halo-fond-1: rgba(255, 170, 70, 0.03);
-  --halo-fond-2: rgba(110, 100, 255, 0.06);
+  --fond-verre: rgba(18, 16, 14, 0.86);
+  --halo-fond-1: transparent;
+  --halo-fond-2: transparent;
 
-  --logo-1: #8f95ff; --logo-2: #f472b6; --logo-assise: #e9e7f2;
+  --logo-1: #f1ebe0; --logo-2: #ff7a68; --logo-assise: #f1ebe0;
 }
 
 /*
@@ -233,10 +236,6 @@ html { -webkit-text-size-adjust: 100%; scroll-padding-bottom: 96px; }
 html, body { height: 100%; margin: 0; }
 body {
   background-color: var(--fond);
-  background-image:
-    radial-gradient(1000px 560px at 92% -12%, var(--halo-fond-1), transparent 70%),
-    radial-gradient(900px 640px at -12% 18%, var(--halo-fond-2), transparent 70%);
-  background-attachment: fixed;
   color: var(--texte);
   font: 400 16px/1.5 var(--texte-police);
   font-feature-settings: "ss01", "cv11";
@@ -246,7 +245,7 @@ body {
 }
 h1, h2, h3, h4, p { margin: 0; }
 h1 { font-family: var(--titre); font-weight: 400; text-wrap: balance; }
-h2 { font-family: var(--texte-police); font-weight: 700; letter-spacing: -0.02em; text-wrap: balance; }
+h2 { font-family: var(--titre); font-weight: 400; letter-spacing: -0.005em; text-wrap: balance; }
 p { text-wrap: pretty; }
 h3, h4 { font-family: var(--texte-police); font-weight: 650; letter-spacing: -0.005em; }
 [hidden] { display: none !important; }
@@ -255,7 +254,7 @@ button { cursor: pointer; }
 a { color: var(--lampe); text-underline-offset: 0.2em; text-decoration-thickness: 1px; }
 input[type='checkbox'], input[type='radio'] { accent-color: var(--lampe); }
 img, svg { max-width: 100%; }
-::selection { background: color-mix(in srgb, var(--ambre) 35%, transparent); color: var(--texte); }
+::selection { background: color-mix(in srgb, var(--lampe) 22%, transparent); color: var(--texte); }
 :focus-visible { outline: 3px solid var(--lampe-vive); outline-offset: 3px; border-radius: var(--r-s); }
 .vh {
   position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);
@@ -269,16 +268,25 @@ img, svg { max-width: 100%; }
 ::-webkit-scrollbar-thumb { background: var(--s3); border-radius: 999px; border: 2px solid var(--fond); }
 ::-webkit-scrollbar-track { background: transparent; }
 
-/* Échelle typographique (classes utilitaires) : le serif ne sert qu'aux grands titres (affiche, titre 1) */
+/* Échelle typographique (classes utilitaires) : le serif porte tous les titres (affiche, titre 1, rubriques) */
 .t-affiche { font: 400 clamp(2.75rem, 7vw, 4.5rem) / 0.97 var(--titre); letter-spacing: -0.01em; }
 .t-titre1 { font: 400 clamp(2.25rem, 5vw, 3.5rem) / 1.02 var(--titre); letter-spacing: -0.01em; }
-.t-titre2 { font: 700 clamp(1.25rem, 2.4vw, 1.5rem) / 1.2 var(--texte-police); letter-spacing: -0.02em; }
+.t-titre2 { font: 400 clamp(1.75rem, 3vw, 2.25rem) / 1.05 var(--titre); letter-spacing: -0.005em; }
 .t-titre3 { font: 650 1.125rem / 1.3 var(--texte-police); letter-spacing: -0.01em; }
 .t-petit { font-size: 0.875rem; line-height: 1.43; }
 .t-legende { font: 500 0.75rem / 1.33 var(--texte-police); }
 
-/* Surtitre : une ligne discrète au-dessus d'un titre (la date, le contexte) */
-.t-surtitre { font: 500 0.9375rem / 1.3 var(--texte-police); color: var(--doux); }
+/* Surtitre : capitales espacées au-dessus d'un titre (la date, la rubrique), comme dans un programme imprimé */
+.t-surtitre { font: 650 0.75rem / 1.3 var(--texte-police); letter-spacing: 0.14em; text-transform: uppercase; color: var(--doux); }
+
+/* Rubrique : titre de section posé sur un filet d'encre, lien « tout voir » à droite */
+.rubrique {
+  display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--e-2) var(--e-4);
+  border-top: 2px solid var(--filet); padding-top: var(--e-3);
+}
+.rubrique > :is(h2, h3) { font: 400 clamp(1.75rem, 3vw, 2.25rem) / 1.05 var(--titre); letter-spacing: -0.005em; }
+.rubrique > a { font: 650 0.75rem / 1.3 var(--texte-police); letter-spacing: 0.12em; text-transform: uppercase; text-decoration: none; }
+.rubrique > a:hover { text-decoration: underline; }
 
 /* Grain de film (surfaces « nuit ») : sous le contenu, au-dessus du fond de l'élément (qui devient un contexte isolé). */
 .grain { position: relative; isolation: isolate; }
