@@ -4,8 +4,8 @@ import { goto } from '$app/navigation';
 import type { EtatApi, Utilisateur } from '@canape/partage';
 import { api, surNonConnecte } from '$lib/api/client.ts';
 
-const etat = $state<{ utilisateur: Utilisateur | null; installationRequise: boolean; inscriptionOuverte: boolean; charge: boolean; version: string }>({
-  utilisateur: null, installationRequise: false, inscriptionOuverte: false, charge: false, version: '',
+const etat = $state<{ utilisateur: Utilisateur | null; installationRequise: boolean; inscriptionOuverte: boolean; portier: boolean; charge: boolean; version: string }>({
+  utilisateur: null, installationRequise: false, inscriptionOuverte: false, portier: false, charge: false, version: '',
 });
 let promesse: Promise<void> | null = null;
 let branche = false;
@@ -27,6 +27,8 @@ export const session = {
   get estAdmin(): boolean { return etat.utilisateur?.role === 'admin'; },
   get installationRequise(): boolean { return etat.installationRequise; },
   get inscriptionOuverte(): boolean { return etat.inscriptionOuverte; },
+  /** Connexion par Portier proposée (en plus du mot de passe). */
+  get portier(): boolean { return etat.portier; },
   get charge(): boolean { return etat.charge; },
   get version(): string { return etat.version; },
 
@@ -38,6 +40,7 @@ export const session = {
       etat.utilisateur = e.utilisateur;
       etat.installationRequise = e.installationRequise;
       etat.inscriptionOuverte = e.inscriptionOuverte === true;
+      etat.portier = e.portier === true;
       etat.version = e.version;
       etat.charge = true;
     }, (e: unknown) => { promesse = null; throw e; });

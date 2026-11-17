@@ -258,5 +258,24 @@ Des sous-titres en avance ou en retard se recalent chez soi, sans toucher aux au
 - [x] Décalage par pas de 0,5 s (± 60 s), appliqué aux repères de la piste affichée, retenu par film et par piste
 - [x] Boutons « Plus tôt » / « Plus tard » / « Remettre à zéro » dans la salle et dans « Regarder seul »
 - [x] Essais (unitaires, Playwright)
-- [ ] Release 1.13.0 (faite le 16/11/2026) et mise en production
+- [x] Release 1.13.0 (faite le 16/11/2026) et mise en production
 
+
+---
+
+# Canapé 1.14 — connexion par Portier
+
+Choisi le 17/11/2026.
+
+## Phase 26 — « Se connecter via Portier », en plus du mot de passe
+
+Portier (OpenID Connect, mot de passe + second facteur) devient une deuxième porte d'entrée, facultative ; la connexion
+par identifiant et mot de passe ne change pas.
+
+- [x] Configuration facultative (`CANAPE_PORTIER*`), désactivée par défaut : désactivée, rien ne change
+- [x] Serveur : départ et retour (Authorization Code + PKCE S256, state, nonce, secret client), jeton d'identité RS256 vérifié avec la crypto de Node
+- [x] Comptes liés par `CANAPE_PORTIER_COMPTES` (nom Portier ou e-mail vérifié), jamais de création, refus propre sinon
+- [x] Interface : bouton « Se connecter via Portier » sur la page de connexion, messages d'échec
+- [x] Essais unitaires (jeton, state/nonce/PKCE, compte non lié, mode désactivé) ; documentation (`docs/PORTIER.md`)
+- [x] Release 1.14.0
+- [ ] Déclarer le client `canape` dans Portier, activer sur le VPS (Charles)

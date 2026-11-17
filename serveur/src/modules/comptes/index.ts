@@ -75,7 +75,8 @@ const moduleComptes: FastifyPluginAsync = async (app) => {
       const { sessionId: _s, ...sans } = u;
       utilisateur = sans;
     }
-    return { version, utilisateur, installationRequise: nombreComptes(db) === 0, inscriptionOuverte: raisonFermeture(db, config) === null };
+    return { version, utilisateur, installationRequise: nombreComptes(db) === 0, inscriptionOuverte: raisonFermeture(db, config) === null,
+      ...(config.portier ? { portier: true } : {}) };
   });
 
   // ---- Connexion / déconnexion ------------------------------------------------------------------------------
