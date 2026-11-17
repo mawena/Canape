@@ -294,4 +294,4 @@ revenir au tout sombre (refusé en phase 14). Clair par défaut, sombre en optio
 - [x] Version sobre demandée par Charles (moins d'effets : pas d'affiche inclinée, peu de halos, pas de rebond)
 - [x] Captures avant / après (ordinateur), DESIGN.md, README, CHANGELOG 1.15.0 à jour
 - [x] Essais Playwright : suite complète chromium + téléphone verte (61 réussis) ; la transition View Transitions perdait un clic rapide après navigation, remplacée par un fondu Web Animations
-- [ ] Release (mineure)
+- [x] Release (mineure)
