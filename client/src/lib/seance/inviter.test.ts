@@ -9,6 +9,7 @@ test('seul l’hôte peut inviter', () => {
   assert.equal(peutInviter(seance, 8), false);
   assert.equal(peutInviter(seance, null), false);
   assert.equal(peutInviter(null, 7), false);
+  assert.equal(peutInviter(seance, 8, true), true);
 });
 
 test('plus d’invitation une fois la séance terminée', () => {

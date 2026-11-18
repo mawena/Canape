@@ -60,6 +60,7 @@
       const moi = await lireMoi();
       if (!moi) { await goto(urlConnexion(`/seances/${id}`)); return; }
       moiId = moi.id;
+      salle.admin = moi.role === 'admin';
       await salle.chargerSeance();
       await salle.rafraichirPeripheriques();
       pret = true;
@@ -80,7 +81,7 @@
     if (v) return untrack(() => salle.lierVideo(v));
   });
 
-  const inviter = $derived(peutInviter(salle.seance, moiId));
+  const inviter = $derived(peutInviter(salle.seance, moiId, salle.admin));
   const portrait = $derived(largeur <= 640 && hauteur > largeur);
   const paysageTel = $derived(hauteur <= 520 && largeur > hauteur);
   const cote = $derived(coteChat(salle.prefs.coin));

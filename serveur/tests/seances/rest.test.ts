@@ -137,6 +137,37 @@ describe('séances : REST', () => {
     assert.ok(!apres.aVenir.some((s: { id: string }) => s.id === id));
   });
 
+  test('liste : une séance dépassée passe dans « récentes » (4 h après l\'heure prévue ; 12 h sans date)', async () => {
+    const ids = (pour: UtilisateurTest) => get(env.app, '/api/seances', pour).then((r) => r.json());
+    const heure = 3_600_000;
+    const passee = (await post(env.app, '/api/seances', { filmId: film, prevueLe: new Date(Date.now() - 5 * heure).toISOString() }, hote)).json().id;
+    const tardive = (await post(env.app, '/api/seances', { filmId: film, prevueLe: new Date(Date.now() - 2 * heure).toISOString() }, hote)).json().id;
+    const sansDate = (await post(env.app, '/api/seances', { filmId: film }, hote)).json().id;
+    const vieille = (await post(env.app, '/api/seances', { filmId: film }, hote)).json().id;
+    env.db.prepare('UPDATE seances SET cree_le = ? WHERE id = ?').run(new Date(Date.now() - 13 * heure).toISOString(), vieille);
+    const l = await ids(hote);
+    const aVenir = l.aVenir.map((s: { id: string }) => s.id);
+    const recentes = l.recentes.map((s: { id: string }) => s.id);
+    assert.ok(recentes.includes(passee) && !aVenir.includes(passee));
+    assert.ok(aVenir.includes(tardive));
+    assert.ok(aVenir.includes(sansDate));
+    assert.ok(recentes.includes(vieille) && !aVenir.includes(vieille));
+  });
+
+  test('admin : supprime une séance même s\'il y est invité ; « toutes » réservé aux admins', async () => {
+    const id = (await post(env.app, '/api/seances', { filmId: film, invites: [] }, hote)).json().id;
+    env.db.prepare('INSERT INTO seances_participants (seance_id, utilisateur_id) VALUES (?, ?)').run(id, admin.id);
+    assert.equal((await patch(env.app, `/api/seances/${id}`, { titre: 'Par l\'admin' }, admin)).statusCode, 200);
+    const tous = (l: { aVenir: Array<{ id: string }>; enCours: Array<{ id: string }>; recentes: Array<{ id: string }> }) => [...l.aVenir, ...l.enCours, ...l.recentes].map((s) => s.id);
+    const autreId = (await post(env.app, '/api/seances', { filmId: film }, autre)).json().id;
+    assert.ok(tous((await get(env.app, '/api/seances?toutes=1', admin)).json()).includes(autreId));
+    assert.ok(!tous((await get(env.app, '/api/seances', admin)).json()).includes(autreId));
+    assert.ok(!tous((await get(env.app, '/api/seances?toutes=1', hote)).json()).includes(autreId));
+    assert.equal((await supprimer(env.app, `/api/seances/${autreId}`, hote)).statusCode, 404);
+    assert.equal((await supprimer(env.app, `/api/seances/${id}`, admin)).statusCode, 204);
+    assert.equal((await supprimer(env.app, `/api/seances/${autreId}`, autre)).statusCode, 204);
+  });
+
   test('modification par l\'hôte ou un admin, puis suppression', async () => {
     const id = (await post(env.app, '/api/seances', { filmId: film }, hote)).json().id;
     const r = await patch(env.app, `/api/seances/${id}`, { titre: 'Nouveau', prevueLe: '2030-05-01T20:00:00Z', invites: [invite.id] }, hote);

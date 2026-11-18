@@ -2,6 +2,21 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) ; versions selon [SemVer](https://semver.org/lang/fr/).
 
+## [1.17.0] — 2026-11-18
+
+### Ajouté
+
+- **Supprimer une séance** depuis la liste des séances (bouton « Supprimer », avec confirmation) : l'hôte supprime les
+  siennes, un administrateur n'importe laquelle. Les invités ne voient pas le bouton.
+- **Administrateur : « Toutes les séances »** dans la liste, pour voir et gérer les séances de tout le monde.
+
+### Corrigé
+
+- Une séance dont l'heure est passée restait « à venir » : elle passe dans « Passées » 4 h après l'heure prévue (12 h
+  après sa création pour une séance sans date) si elle n'a pas été lancée.
+- Un administrateur invité à une séance perdait ses droits d'hôte (modifier, supprimer, gérer le programme) : il les a
+  toujours, comme partout ailleurs.
+
 ## [1.16.0] — 2026-11-18
 
 Nouvelle direction artistique : « éditorial cinéma ». La 1.15.0 changeait trop peu à l'écran ; Canapé se lit maintenant

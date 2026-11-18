@@ -49,6 +49,8 @@ describe('programme : gestes de l’hôte', () => {
     assert.equal(peutGererProgramme({ hoteId: 1, termineeLe: null }, 2), false);
     assert.equal(peutGererProgramme({ hoteId: 1, termineeLe: '2026-11-13T22:00:00Z' }, 1), false);
     assert.equal(peutGererProgramme(null, 1), false);
+    assert.equal(peutGererProgramme({ hoteId: 1, termineeLe: null }, 2, true), true);
+    assert.equal(peutGererProgramme({ hoteId: 1, termineeLe: '2026-11-13T22:00:00Z' }, 2, true), false);
     assert.equal(peutGererProgramme({ hoteId: 1, termineeLe: null }, null), false);
   });
   test('état de chaque film', () => {
