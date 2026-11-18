@@ -309,3 +309,12 @@ La 1.15.0 ne changeait presque rien à l'écran (« je vois pas vraiment de chan
 - [x] Pages publiques, salle, sas, lecteur, icônes alignés
 - [x] Captures avant / après, essais touchés, documentation, release
 
+## Phase 29 — Gestion des séances
+
+Charles : une séance passée restait « à venir » ; il veut supprimer ses séances, et l'admin toutes (l'admin peut tout
+faire, les autres comptes restent limités à leurs séances).
+
+- [x] Classement : séance non lancée « passée » 4 h après l'heure prévue (12 h sans date)
+- [x] Droits : l'admin garde ses droits d'hôte même s'il est invité ; client (hôte seul) aligné
+- [x] Liste : bouton « Supprimer » avec confirmation (hôte ou admin), « Toutes les séances » pour l'admin
+- [x] Essais (serveur, client, e2e), documentation, release 1.17.0

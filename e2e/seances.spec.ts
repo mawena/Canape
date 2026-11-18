@@ -40,4 +40,27 @@ test.describe('Séances', () => {
     await t.page.goto('/rejoindre/jeton-qui-nexiste-pas');
     await expect(t.page.getByRole('heading', { name: 'Impossible de rejoindre' })).toBeVisible();
   });
+
+  test("l'invité ne peut pas supprimer ; l'hôte supprime après confirmation", async ({ ouvrir, monde }) => {
+    const filmId = await televerser(monde.serveur, monde.requeteAdmin, FILM_WEBM);
+    const r = await monde.requeteAdmin.post(`${monde.serveur.url}/api/seances`, {
+      data: { filmId, titre: 'À effacer', invites: [monde.viewer.id] }, headers: { Origin: monde.serveur.url },
+    });
+    const creee = await r.json() as { id: string };
+
+    // L'invité voit la séance, sans « Supprimer ».
+    const viewer = await ouvrir(monde.viewer);
+    await viewer.page.goto('/seances');
+    await expect(viewer.page.getByTestId('seance').filter({ hasText: 'À effacer' })).toBeVisible();
+    await expect(viewer.page.getByTestId('supprimer-seance')).toHaveCount(0);
+
+    // L'hôte (ici l'admin) supprime après confirmation.
+    const { page } = await ouvrir(monde.admin);
+    await page.goto('/seances');
+    const ligne = page.getByTestId('seance').filter({ hasText: 'À effacer' });
+    await ligne.getByTestId('supprimer-seance').click();
+    await page.getByTestId('confirmer-suppression-seance').click();
+    await expect(ligne).toHaveCount(0);
+    expect((await monde.requeteAdmin.get(`${monde.serveur.url}/api/seances/${creee.id}`)).status()).toBe(404);
+  });
 });

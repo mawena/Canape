@@ -5,9 +5,9 @@ import { formaterTempsEnsemble } from './souvenir.ts';
 
 export { formaterMinuteur };
 
-/** L'hôte (et lui seul, comme pour « Inviter ») gère le programme et l'entracte, tant que la séance n'est pas terminée. */
-export function peutGererProgramme(seance: Pick<Seance, 'hoteId' | 'termineeLe'> | null | undefined, moiId: number | null | undefined): boolean {
-  return !!seance && moiId != null && seance.hoteId === moiId && seance.termineeLe === null;
+/** L'hôte (ou un administrateur, comme pour « Inviter ») gère le programme et l'entracte, tant que la séance n'est pas terminée. */
+export function peutGererProgramme(seance: Pick<Seance, 'hoteId' | 'termineeLe'> | null | undefined, moiId: number | null | undefined, admin = false): boolean {
+  return !!seance && moiId != null && (admin || seance.hoteId === moiId) && seance.termineeLe === null;
 }
 
 /** Le bouton « Programme » : tout le monde dès deux films ; l'hôte aussi avec un seul film (pour en ajouter). */

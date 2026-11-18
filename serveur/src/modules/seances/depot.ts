@@ -105,9 +105,10 @@ export type RoleSeance = 'hote' | 'participant' | 'admin';
 /** Rôle de l'utilisateur dans la séance, ou `null` (aucun droit). */
 export function roleDans(app: FastifyInstance, l: Pick<LigneSeance, 'id' | 'hote_id'>, u: Pick<UtilisateurConnecte, 'id' | 'role'>): RoleSeance | null {
   if (l.hote_id === u.id) return 'hote';
+  // L'administrateur a tous les droits de l'hôte, même s'il est aussi invité.
+  if (u.role === 'admin') return 'admin';
   const p = app.db.prepare('SELECT 1 AS x FROM seances_participants WHERE seance_id = ? AND utilisateur_id = ?').get(l.id, u.id);
-  if (p) return 'participant';
-  return u.role === 'admin' ? 'admin' : null;
+  return p ? 'participant' : null;
 }
 
 /** Séance + rôle, ou 404 (pas d'indice d'existence). */

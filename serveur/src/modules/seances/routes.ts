@@ -46,7 +46,16 @@ function listeFilms(v: unknown, vide: boolean): string[] {
   return [...new Set(v as string[])];
 }
 
-const SIX_HEURES = 6 * 3_600_000;
+const HEURE = 3_600_000;
+/** Une séance datée reste « à venir » jusqu'à 4 h après l'heure prévue (le temps d'un film en retard) ; sans date, 12 h après sa création. */
+const MARGE_PREVUE = 4 * HEURE;
+const MARGE_SANS_DATE = 12 * HEURE;
+
+/** Pas encore commencée, pas terminée, et pas dépassée. */
+export function estAVenir(l: Pick<LigneSeance, 'terminee_le' | 'position' | 'prevue_le' | 'cree_le'>, maintenant: number): boolean {
+  if (l.terminee_le !== null || l.position !== 0) return false;
+  return l.prevue_le === null ? Date.parse(l.cree_le) >= maintenant - MARGE_SANS_DATE : Date.parse(l.prevue_le) >= maintenant - MARGE_PREVUE;
+}
 
 export function enregistrerRoutes(app: FastifyInstance, salles: Salles): void {
   const db = app.db;
@@ -71,24 +80,26 @@ export function enregistrerRoutes(app: FastifyInstance, salles: Salles): void {
   const sortie = (l: LigneSeance): Seance => versSeance(app, l, salles.presents(l.id));
 
   // ---- Liste ----
-  app.get('/api/seances', pre, async (req): Promise<ListeSeances> => {
+  app.get<{ Querystring: { toutes?: string } }>('/api/seances', pre, async (req): Promise<ListeSeances> => {
     const u = req.utilisateur;
-    const lignes = db.prepare(
+    // `?toutes=1` : un administrateur voit les séances de tout le monde (pour les gérer).
+    const toutes = req.query.toutes === '1' && u.role === 'admin';
+    const lignes = toutes ? db.prepare('SELECT s.id FROM seances s ORDER BY s.cree_le DESC').all() as Array<{ id: string }> : db.prepare(
       `SELECT s.id FROM seances s WHERE s.hote_id = ? OR EXISTS
          (SELECT 1 FROM seances_participants p WHERE p.seance_id = s.id AND p.utilisateur_id = ?)
        ORDER BY s.cree_le DESC`,
     ).all(u.id, u.id) as Array<{ id: string }>;
-    const toutes = lignes.map((l) => ligneSeance(app, l.id)).filter((l): l is LigneSeance => l !== null);
+    const seances = lignes.map((l) => ligneSeance(app, l.id)).filter((l): l is LigneSeance => l !== null);
     const maintenant = Date.now();
     const aVenir: Seance[] = []; const enCours: Seance[] = []; const recentes: Seance[] = [];
-    for (const l of toutes) {
+    for (const l of seances) {
       const s = sortie(l);
       if (l.terminee_le === null && s.presents > 0) enCours.push(s);
-      else if (l.terminee_le === null && l.position === 0 && (l.prevue_le === null || Date.parse(l.prevue_le) >= maintenant - SIX_HEURES)) aVenir.push(s);
+      else if (estAVenir(l, maintenant)) aVenir.push(s);
       else recentes.push(s);
     }
     aVenir.sort((a, b) => (a.prevueLe ?? '9999').localeCompare(b.prevueLe ?? '9999') || b.creeLe.localeCompare(a.creeLe));
-    return { aVenir, enCours, recentes: recentes.slice(0, 20) };
+    return { aVenir, enCours, recentes: recentes.slice(0, toutes ? 100 : 20) };
   });
 
   // ---- Création ----

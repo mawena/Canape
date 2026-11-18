@@ -63,6 +63,8 @@ export class Salle {
   liaison: EtatLiaison = $state('connexion');
   seance: Seance | null = $state(null);
   moi: PersonneSalle | null = $state(null);
+  /** Compte administrateur : mêmes droits que l'hôte (posé par la page après lecture du compte). */
+  admin = $state(false);
   autres: PersonneSalle[] = $state([]);
   etat: EtatSeance | null = $state(null);
   plan: PlanDeLecture | null = $state(null);
@@ -190,7 +192,7 @@ export class Salle {
   get suivant(): FilmProgramme | null { return filmSuivant(this.programme, this.rangCourant); }
   get enEntracte(): boolean { return (this.etat?.entracteFin ?? null) !== null; }
   /** L'hôte gère le programme et l'entracte. */
-  get estHote(): boolean { return peutGererProgramme(this.seance, this.moi?.utilisateur.id ?? null); }
+  get estHote(): boolean { return peutGererProgramme(this.seance, this.moi?.utilisateur.id ?? null, this.admin); }
   /** Films de la soirée déjà lancés (écran de fin) : le souvenir fait foi, sinon le programme. */
   get nbFilmsVus(): number { return this.souvenir?.nbFilms ?? filmsLances(this.programme, this.rangCourant); }
 
