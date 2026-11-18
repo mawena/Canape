@@ -2,6 +2,14 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) ; versions selon [SemVer](https://semver.org/lang/fr/).
 
+## [1.17.1] — 2026-11-18
+
+### Modifié
+
+- **Nouveau logo « la séance »** : un écran rouge cinéma, et devant, deux personnes sur un canapé vu de dos. Il dit
+  ce qu'est Canapé (regarder un film ensemble, chez soi) et reste lisible en tout petit. Bandeau, favicon, icônes de
+  l'application et écrans de démarrage refaits.
+
 ## [1.17.0] — 2026-11-18
 
 ### Ajouté

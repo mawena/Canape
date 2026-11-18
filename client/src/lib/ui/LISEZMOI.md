@@ -29,7 +29,7 @@ Règles : le rouge cinéma (`--lampe`) est la **seule** couleur d'accent (action
 | `Badge` | `ton` neutre·ok·alerte·mal·lampe·rose, `icone`, `surImage` |
 | `BarreProgression` | `valeur` 0–1 ou `null`, `ton`, `fine`, `libelle` |
 | `Chargement`, `Squelette` | anneau d'attente (150 ms de délai) ; squelettes `ligne`·`rond`·`affiche`·`bloc`·`carte-affiche` |
-| `Logo`, `Lueur` | « deux coussins » (`mot`) ; halo décoratif de la couleur d'un film |
+| `Logo`, `Lueur` | « la séance » : écran rouge, deux personnes sur un canapé (`mot`) ; halo décoratif de la couleur d'un film |
 
 `format.ts` (réexporté par l'index) : `formaterDuree` (« 1 h 52 »), `formaterChrono` (« 1:12:48 »), `formaterTaille` (« 4,2 Go »), `formaterDateSeance`, `formaterDans`, `formaterJourLong`, `formaterMois`, `salutation`, `listerNoms`, `teinteTitre`, `couleurDuTitre`, `couleurValide`.
 
