@@ -129,7 +129,7 @@
   --halo-fond-2: transparent;
 
   /* Logo */
-  --logo-1: #141210; --logo-2: #b3201b; --logo-assise: #141210;
+  --logo-1: #141210; --logo-2: #b3201b;
 }
 
 [data-theme='sombre'] {
@@ -192,7 +192,7 @@
   --halo-fond-1: transparent;
   --halo-fond-2: transparent;
 
-  --logo-1: #f1ebe0; --logo-2: #ff7a68; --logo-assise: #f1ebe0;
+  --logo-1: #f1ebe0; --logo-2: #ff7a68;
 }
 
 /*

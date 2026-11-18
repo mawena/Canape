@@ -46,7 +46,11 @@ Contrastes vérifiés par script (WCAG 2.x) : texte 16,3:1, doux 8,4:1 (6,9:1 su
 5,8:1 (4,8:1 sur `--s3`), blanc sur rouge 6,7:1, contours de champ ≥ 3,6:1 ; sombre : texte 16:1, rouge 7,5:1 (5,7:1 sur
 `--s3`). États clairs ajustés : `--ok #0f6633`, `--mal #a3191b`, `--info #025a8c` (≥ 5:1 sur `--s3`).
 
-**Icônes** : papier crème, coussins encre et rouge, assise d'encre (plus de point ambre). `theme-color` `#f4efe6` /
+**Logo « la séance » (1.17.1)** : un écran rouge cinéma (`--logo-2`), et devant, deux têtes et un canapé à accoudoirs
+vus de dos, à l'encre (`--logo-1`). Il dit le projet d'un coup d'œil (regarder un film ensemble, chez soi) et reste lisible
+à 16 px (trois masses : écran, têtes, canapé). Grille 32 × 32 ; tracé unique dans `Logo.svelte` et dans les icônes.
+
+**Icônes** : le logo « la séance » sur papier crème (dans la zone sûre de l'icône maskable). `theme-color` `#f4efe6` /
 `#12100e`.
 
 ---
