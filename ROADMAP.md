@@ -318,3 +318,8 @@ faire, les autres comptes restent limités à leurs séances).
 - [x] Droits : l'admin garde ses droits d'hôte même s'il est invité ; client (hôte seul) aligné
 - [x] Liste : bouton « Supprimer » avec confirmation (hôte ou admin), « Toutes les séances » pour l'admin
 - [x] Essais (serveur, client, e2e), documentation, release 1.17.0
+
+## Phase 30 — Logo « la séance »
+
+- [x] Pistes comparées (actuel, écran, canapé de face) ; retenue : écran rouge, deux têtes, canapé à accoudoirs vu de dos
+- [x] `Logo.svelte`, icônes, favicon, écrans de démarrage, documentation, release 1.17.1
